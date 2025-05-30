@@ -1,32 +1,39 @@
-// Report.js
+// src/Pages/Report.js
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import './css/Report.css';  // Make sure to import the styles
+import './css/Report.css';
 
 export default function Report() {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch the financial data from the backend API
   useEffect(() => {
     axios.get('http://localhost:5000/api/financial_status_data')
-      .then(res => setData(res.data))
-      .catch(err => console.error('Error fetching financial data:', err));
+      .then(res => {
+        setData(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Error fetching financial data');
+        setLoading(false);
+      });
   }, []);
 
-  // Extract years to display separate charts
   const years = [...new Set(data.map(item => item.year))];
+
+  if (loading) return <div className="loading-message">Loading data...</div>;
+  if (error) return <div className="error-message">{error}</div>;
+  if (data.length === 0) return <div className="no-data-message">No data available</div>;
 
   return (
     <div className="report-container">
       <h1 className="report-heading">Financial Report by Year</h1>
 
-      <button
-        onClick={() => navigate('/')}
-        className="back-button"
-      >
+      <button onClick={() => navigate('/')} className="back-button">
         ⬅ Back to Dashboard
       </button>
 
