@@ -1,66 +1,140 @@
 .members-container {
+  max-width: 1000px;
+  margin: 0 auto;
   padding: 20px;
+  background-color: #fff;
 }
 
 .members-heading {
-  font-size: 1.5rem;
-  margin-bottom: 15px;
+  text-align: center;
+  color: #4f46e5;
+  margin-bottom: 20px;
+}
+
+/* Add Member Button */
+.add-member-btn {
+  margin-bottom: 20px;
+  padding: 10px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-member-btn:hover {
+  background-color: #218838;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 30px;
+  width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Form Styling */
+.member-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .member-form input {
   padding: 10px;
-  margin: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
 }
 
 .member-form button {
-  padding: 10px 20px;
-  background-color: #4f46e5;
+  padding: 10px;
+  background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
 .member-form button:hover {
-  background-color: #3b39b0;
+  background-color: #0056b3;
 }
 
+/* Table Styling */
 .members-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #fff;
+  margin-top: 20px;
 }
 
-.members-table th, .members-table td {
-  padding: 12px 16px;
+.members-table th,
+.members-table td {
   border: 1px solid #ddd;
-  text-align: left;
+  padding: 10px;
+  text-align: left; /* Align content to the right */
 }
 
 .members-table th {
   background-color: #f5f5f5;
+  color: #333;
 }
 
-.edit-button, .delete-button {
+/* Action Buttons */
+.edit-button,
+.delete-button {
   padding: 6px 12px;
-  margin: 5px;
-  background-color: #ffbb33;
-  color: white;
+  margin: 0 4px;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
+.edit-button {
+  background-color: #f0ad4e;
+  color: white;
+}
+
 .edit-button:hover {
-  background-color: #e69500;
+  background-color: #ec971f;
 }
 
 .delete-button {
-  background-color: #f44336;
+  background-color: #d9534f;
+  color: white;
 }
 
 .delete-button:hover {
-  background-color: #d32f2f;
+  background-color: #c9302c;
 }

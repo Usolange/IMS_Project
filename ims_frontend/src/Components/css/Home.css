@@ -1,0 +1,81 @@
+/* Center content container */
+.home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f4f7fa;
+  padding: 20px;
+}
+
+/* Card-like box */
+.welcome-card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+/* Title enhancements */
+.welcome-card h1 {
+  margin-bottom: 10px;
+  color: #222;
+}
+
+.highlight {
+  color: #007bff;
+}
+
+/* Buttons */
+.action-buttons {
+  margin: 20px 0;
+}
+
+.form-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0 10px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.form-button.green {
+  background-color: #28a745;
+}
+
+.form-button:hover {
+  background-color: #0056b3;
+}
+
+.form-button.green:hover {
+  background-color: #1e7e34;
+}
+
+.forgot-link {
+  margin-top: 10px;
+}
+
+.form-link {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.95rem;
+}
+
+.form-link:hover {
+  color: #0056b3;
+}
+
+/* Modal common section */
+.form-section {
+  text-align: center;
+}
