@@ -2,8 +2,8 @@ const express = require('express');
 const db = require('../config/db');
 const router = express.Router();
 
-// POST: Add monthly times as one record
-router.post('/ikMonthlyTime', async (req, res) => {
+// POST: Add monthly times
+router.post('/', async (req, res) => {
   try {
     const { ikimina_name, monthlytime_dates, monthlytime_time, f_id } = req.body;
 
@@ -17,21 +17,19 @@ router.post('/ikMonthlyTime', async (req, res) => {
 
     const datesString = monthlytime_dates.join(',');
 
-    await db.promise().query(`
-      INSERT INTO ikimina_monthly_time 
+    await db.execute(
+      `INSERT INTO ikimina_monthly_time 
       (ikimina_name, monthlytime_date, monthlytime_time, f_id)
-      VALUES (?, ?, ?, ?)
-    `, [ikimina_name, datesString, monthlytime_time, f_id]);
+      VALUES (?, ?, ?, ?)`,
+      [ikimina_name, datesString, monthlytime_time, f_id]
+    );
 
     res.status(201).json({ message: 'Monthly time added successfully!' });
   } catch (error) {
-    console.error('🔥 Error saving monthly time:', error.message, error.stack);
+    console.error('🔥 Error saving monthly time:', error.message);
     res.status(500).json({ message: 'Internal server error while adding monthly time.' });
   }
 });
-
-
-
 
 // GET: Retrieve all monthly times
 router.get('/select', async (req, res) => {

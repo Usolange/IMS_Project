@@ -1,3 +1,7 @@
+const express = require('express');
+const db = require('../config/db');
+
+const router = express.Router();
 router.post('/', async (req, res) => {
   const { ikimina_name, weeklytime_days, weeklytime_time, f_id } = req.body;
 
@@ -35,3 +39,4 @@ router.post('/', async (req, res) => {
     });
   }
 });
+module.exports = router; 

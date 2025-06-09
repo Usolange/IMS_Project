@@ -3,16 +3,15 @@ import Layout from './Components/Layout';
 import Dashboard from './Components/Dashboard';
 import Report from './Components/Report';
 import Members from './Components/Member/Members';
-import Login from './Components/Home/Login';
-import Register from './Components/Home/Register';
-import ForgotPassword from './Components/Home/ForgotPassword';
-import Homepage from './Components/Home/Homepage';
-import Profile from './Components/Home/Profile';
-import Logout from './Components/Home/Logout';
-import ProtectedRoute from './ProtectedRoute'; // Import your custom ProtectedRoute component
-import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute'; // Import RoleProtectedRoute for role-based access control
-import AdminDashboard from './Components/AdminDashboard';
-
+import Login from './Components/Profile/Login';
+import Register from './Components/Profile/Register';
+import ForgotPassword from './Components/Profile/ForgotPassword';
+import HomePage from './Components/Profile/HomePage';
+import Profile from './Components/Profile/Profile';
+// import Logout from './Components/Profile/Logout'; Import your custom ProtectedRoute component
+import RoleProtectedRoute from './RoleProtectedRoute'; // Import RoleProtectedRoute for role-based access control
+import AdminDashboard from './Components/Users/Admin/AdminDashoard';
+import CategoryManagement from './Components/Users/Admin/CategoryManagement';
 
 
 
@@ -20,7 +19,7 @@ export default function App() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Homepage />} />
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -33,7 +32,7 @@ export default function App() {
         <Route path="/report" element={<RoleProtectedRoute><Report /></RoleProtectedRoute>} />
 
         {/* Admin Routes with Role Protection */}
-        <Route path="/admin/dashboard" element={<RoleProtectedRoute requiredRole="admin"><AdminDashboard /></RoleProtectedRoute>} />
+        <Route path="/adminDashboard" element={<RoleProtectedRoute requiredRole="admin"><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/admin/category-management" element={<RoleProtectedRoute requiredRole="admin"><CategoryManagement /></RoleProtectedRoute>} />
         <Route path="/members" element={<RoleProtectedRoute requiredRole="admin"><Members /></RoleProtectedRoute>} />
       </Route>

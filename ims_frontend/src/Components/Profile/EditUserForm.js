@@ -8,30 +8,36 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
- 
-
-
   useEffect(() => {
-  const userData = localStorage.getItem('user');
-  if (userData) {
-    const parsedUser = JSON.parse(userData);
-    console.log(parsedUser);  // Debugging line to see the user data
-    setUser(parsedUser);
-  }
-}, []);
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      console.log(parsedUser);  // Debugging line to see the user data
+      setUser(parsedUser);
+    }
+  }, []);
 
-  const handleEditClick = () => setIsEditing(true);
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setSuccessMessage('');  // Clear the success message when editing starts
+  };
+  
   const handleCancel = () => setIsEditing(false);
 
   const handleSave = async (updatedData) => {
     try {
+      if (!user || !user.id) {
+        console.error('User ID is missing');
+        return alert('Unable to update profile: User data is incomplete.');
+      }
+
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        http://localhost:5000/api/supperAdmin/${user.id},
+        `http://localhost:5000/api/supperAdmin/${user.id}`,
         updatedData,
         {
           headers: {
-            Authorization: Bearer ${token}
+            Authorization: `Bearer ${token}`  // Correct syntax for Bearer token
           }
         }
       );
@@ -41,6 +47,8 @@ export default function Profile() {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setIsEditing(false);
       setSuccessMessage('Profile updated successfully!');
+      
+      // Hide the success message after 4 seconds
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (err) {
       console.error('Failed to update profile:', err);
@@ -80,7 +88,6 @@ export default function Profile() {
           </tr>
         </tbody>
       </table>
-
 
       <button onClick={handleEditClick} className="edit-profile-btn">
         Edit Profile

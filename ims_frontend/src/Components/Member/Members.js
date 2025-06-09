@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MemberForm from './MemberForm';
 import MemberTable from './MemberTable';
-import '../css/Members.css';
+import '../CSS/Members.css';
 
 export default function Members() {
   const [members, setMembers] = useState([]);

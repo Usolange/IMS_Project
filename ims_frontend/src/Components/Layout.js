@@ -1,7 +1,7 @@
 // src/Components/Layout.js
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import './css/Layout.css';
+import './CSS/Layout.css';
 
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);

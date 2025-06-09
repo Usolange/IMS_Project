@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import './css/Dashboard.css';
+import './CSS/Dashboard.css';
 
 export default function Dashboard() {
   const [moneyData, setMoneyData] = useState([]);

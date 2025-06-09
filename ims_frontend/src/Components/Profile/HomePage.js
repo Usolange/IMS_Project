@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
-import '../css/Home.css';
-import '../css/Form.css';
+import '../CSS/Home.css';
+import '../CSS/Form.css';
 
-export default function Home() {
+export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState('');
 

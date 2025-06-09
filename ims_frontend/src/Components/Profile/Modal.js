@@ -1,6 +1,6 @@
 // src/Components/Profile/Modal.js
 import React from 'react';
-import '../css/Modal.css';
+import '../CSS/Modal.css';
 
 export default function Modal({ isOpen, closeModal, children }) {
   if (!isOpen) return null;
