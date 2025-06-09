@@ -1,47 +1,124 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../CSS/Form.css';
 
-export default function Login() {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+export default function Login({ switchToRegister, onCancel }) {
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  const refs = {
+    identifier: useRef(null),
+    password: useRef(null),
+  };
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    try {
-      const res = await axios.post('http://localhost:5000/api/login', {
-        identifier,
-        password
-      });
+    const newErrors = {};
+    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Please provide your email, username, or phone';
+    if (!formData.password.trim()) newErrors.password = '⚠️ Please enter your password';
 
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      if (newErrors.identifier) refs.identifier.current?.focus();
+      else if (newErrors.password) refs.password.current?.focus();
+      return;
+    }
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/login', formData);
+
+      // Store token and user info
       localStorage.setItem('token', res.data.token);
-      navigate('/dashboard');
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+
+      const user = res.data.user;
+
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'member') {
+        navigate('/dashboard');
+      } else if (user.role === 'ikimina') {
+        navigate('/ikimina/dashboard');
+      } else {
+        navigate('/dashboard'); // Default fallback
+      }
     } catch (err) {
-      alert(err.response?.data?.error || 'Login failed');
+      const errorMessage =
+        err.response?.data?.message || '❌ Login failed. Please check your credentials.';
+      setErrors({ server: errorMessage });
     }
   };
 
   return (
     <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
+      <h2 className="form-title">Login</h2>
+      <form onSubmit={handleLogin} className="form-container" noValidate>
         <input
+          name="identifier"
+          ref={refs.identifier}
           type="text"
           placeholder="Email / Username / Phone"
-          value={identifier}
-          onChange={e => setIdentifier(e.target.value)}
-          required
+          value={formData.identifier}
+          onChange={handleChange}
+          className="form-input"
+          aria-describedby="error-identifier"
+          aria-invalid={!!errors.identifier}
+          autoComplete="username"
         />
+        {errors.identifier && (
+          <div id="error-identifier" className="error" aria-live="polite">
+            {errors.identifier}
+          </div>
+        )}
+
         <input
+          name="password"
+          ref={refs.password}
           type="password"
           placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
+          value={formData.password}
+          onChange={handleChange}
+          className="form-input"
+          aria-describedby="error-password"
+          aria-invalid={!!errors.password}
+          autoComplete="current-password"
         />
-        <button type="submit">Login</button>
+        {errors.password && (
+          <div id="error-password" className="error" aria-live="polite">
+            {errors.password}
+          </div>
+        )}
+
+        {errors.server && (
+          <div className="error" aria-live="polite">
+            {errors.server}
+          </div>
+        )}
+
+        <div className="login-buttons-container">
+          <button type="submit" className="login-button">Login</button>
+          {onCancel && (
+            <button type="button" className="cancel-button-login" onClick={onCancel}>
+              Cancel
+            </button>
+          )}
+        </div>
+
+        <div className="form-switch-text-register">
+          Don't have an account?{' '}
+          <button type="button" className="form-link-register" onClick={switchToRegister}>
+            Register here
+          </button>
+        </div>
       </form>
     </div>
   );
