@@ -1,10 +1,8 @@
 // routes/supperAdmin.js
-
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-
 // ————————————————
 // ✅ LOGIN API (plain‑text)
 // ————————————————
@@ -157,3 +155,5 @@ router.post('/register', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error, please try again later.' });
   }
 });
+
+module.exports = router;

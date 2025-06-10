@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../CSS/Form.css';
 
+
+import '../CSS/Login.css';
 export default function Login({ switchToRegister, onCancel }) {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -22,8 +23,8 @@ export default function Login({ switchToRegister, onCancel }) {
     e.preventDefault();
 
     const newErrors = {};
-    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Identifier is required';
-    if (!formData.password.trim()) newErrors.password = '⚠️ Password is required';
+    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Please! Please enter your Email or Username';
+    if (!formData.password.trim()) newErrors.password = '⚠️ Please! Please enter your Password';
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
@@ -43,11 +44,11 @@ export default function Login({ switchToRegister, onCancel }) {
 
       // Redirect based on role
       if (user.role === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/adminDashboard');
       } else if (user.role === 'member') {
         navigate('/dashboard');
       } else if (user.role === 'ikimina') {
-        navigate('/ikimina/dashboard');
+        navigate('/ikiminaashboard');
       } else {
         navigate('/dashboard');
       }
@@ -57,6 +58,8 @@ export default function Login({ switchToRegister, onCancel }) {
       setErrors({ server: errorMessage });
     }
   };
+
+
 
   return (
     <div>

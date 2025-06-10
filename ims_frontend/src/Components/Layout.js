@@ -1,4 +1,3 @@
-// src/Components/Layout.js
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import './CSS/Layout.css';
@@ -7,9 +6,8 @@ export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [userName, setUserName] = useState('');
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
 
-
+  // Fetch user info from localStorage on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user?.name) {
@@ -17,17 +15,17 @@ export default function Layout() {
     }
   }, []);
 
+  // Toggle the sidebar visibility
   const toggleSidebar = () => {
-    setSidebarVisible(v => !v);
+    setSidebarVisible((prev) => !prev);
   };
 
+  // Handle user logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
-
-  
 
   return (
     <div className="layout-container">
@@ -36,7 +34,7 @@ export default function Layout() {
         <div className="header-left">
           Ikimina Admin
           <button className="menu-toggle" onClick={toggleSidebar}>
-            ☰
+            {isSidebarVisible ? '❌' : '☰'}
           </button>
         </div>
         <div className="header-right">
@@ -54,7 +52,7 @@ export default function Layout() {
             <button className="profile-button">👤</button>
             <div className="dropdown-content">
               <Link to="/profile">Profile</Link>
-              <button onClick={handleLogout}>Logout</button>
+              <Link to="/" onClick={handleLogout}>Logout</Link>
             </div>
           </div>
         </div>

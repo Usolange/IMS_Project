@@ -1,3 +1,4 @@
+/* Form container */
 .form-container {
   display: flex;
   flex-direction: column;
@@ -6,12 +7,14 @@
   padding: 10px;
 }
 
+/* Label styling */
 .form-label {
   font-weight: 600;
   color: #333;
   margin-bottom: 4px;
 }
 
+/* Input and select field styling */
 .form-input,
 .form-select {
   padding: 10px;
@@ -21,6 +24,7 @@
   width: 100%;
 }
 
+/* Form button styling */
 .form-button {
   padding: 10px;
   font-size: 1rem;
@@ -34,4 +38,82 @@
 
 .form-button:hover {
   background-color: #0056b3;
+}
+
+/* Success and error messages */
+.form-success, .form-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1rem;
+  border-width: 1px;
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Success message styling */
+.form-success {
+  color: #28a745;
+  border-color: #28a745; /* Green border for success */
+}
+
+.form-success .message-content {
+  display: flex;
+  align-items: center;
+}
+
+.form-success .message-content::before {
+  content: "✔️";  /* Success icon */
+  margin-right: 10px;
+}
+
+/* Error message styling */
+.form-error {
+  color: #dc3545;
+  border-color: #dc3545; /* Red border for error */
+}
+
+.form-error .message-content {
+  display: flex;
+  align-items: center;
+}
+
+.form-error .message-content::before {
+  content: "❌";  /* Error icon */
+  margin-right: 10px;
+}
+
+/* Error message under input fields */
+.form-error {
+  font-size: 0.875rem;  /* Smaller font size for field-specific error messages */
+  margin-top: 5px;
+}
+
+/* Message fading effect (optional) */
+.form-success, .form-error {
+  opacity: 1;
+}
+
+.form-success.fade, .form-error.fade {
+  opacity: 0;
+}
+
+
+.form-switch-text-register {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.form-link-register {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+}
+
+.form-link-register:hover {
+  text-decoration: underline;
 }

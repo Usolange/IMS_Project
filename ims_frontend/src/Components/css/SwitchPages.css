@@ -1,0 +1,18 @@
+.form-switch-text-register {
+  font-size: 0.9rem;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.form-link-register {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.form-link-register:hover {
+  color: #3c3a9b;
+}
