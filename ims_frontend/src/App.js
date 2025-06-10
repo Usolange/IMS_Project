@@ -8,7 +8,7 @@ import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
 import HomePage from './Components/Profile/HomePage';
 import Profile from './Components/Profile/Profile';
-// import Logout from './Components/Profile/Logout'; Import your custom ProtectedRoute component
+import Logout from './Components/Profile/Logout'; 
 import RoleProtectedRoute from './RoleProtectedRoute'; // Import RoleProtectedRoute for role-based access control
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import CategoryManagement from './Components/Users/Admin/CategoryManagement';
@@ -23,6 +23,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/logout" element={<Logout />} />
 
       {/* Protected Layout with nested routes */}
       <Route element={<Layout />}>

@@ -1,9 +1,10 @@
 // routes/supperAdmin.js
 
 const express = require('express');
-const router  = express.Router();
-const jwt     = require('jsonwebtoken');
-const db      = require('../config/db');
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const db = require('../config/db');
+const authenticateToken = require('./middleware/auth');
 
 // ————————————————
 // ✅ LOGIN API (plain‑text)
@@ -34,12 +35,12 @@ router.post('/login', async (req, res) => {
         return res.json({
           token,
           user: {
-            id:       admin.sad_id,
-            name:     admin.sad_names,
-            email:    admin.sad_email,
-            phone:    admin.sad_phone,
+            id: admin.sad_id,
+            name: admin.sad_names,
+            email: admin.sad_email,
+            phone: admin.sad_phone,
             username: admin.sad_username,
-            role:     'admin'
+            role: 'admin'
           }
         });
       }
@@ -63,13 +64,13 @@ router.post('/login', async (req, res) => {
         return res.json({
           token,
           user: {
-            id:      m.m_id,
-            name:    m.m_names,
-            email:   m.m_email,
-            phone:   m.m_phone_number,
+            id: m.m_id,
+            name: m.m_names,
+            email: m.m_email,
+            phone: m.m_phone_number,
             type_id: m.m_type_id,
-            iki_id:  m.iki_id,
-            role:    'member'
+            iki_id: m.iki_id,
+            role: 'member'
           }
         });
       }
@@ -93,7 +94,7 @@ router.post('/login', async (req, res) => {
         return res.json({
           token,
           user: {
-            id:   ik.iki_id,
+            id: ik.iki_id,
             name: ik.iki_name,
             email: ik.iki_email,
             role: 'ikimina'
@@ -130,7 +131,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       message: 'Supper‑admin registered',
       user: {
-        id:       result.insertId,
+        id: result.insertId,
         name,
         email,
         phone,
@@ -144,9 +145,9 @@ router.post('/register', async (req, res) => {
 });
 
 // ————————————————
-// ✅ UPDATE SUPER‑ADMIN PROFILE
+// ✅ UPDATE SUPER‑ADMIN PROFILE (protected with authenticateToken)
 // ————————————————
-router.put('/supperAdmin/:id', async (req, res) => {
+router.put('/supperAdmin/:id', authenticateToken, async (req, res) => {
   const { name, email, username, phone } = req.body;
   const id = req.params.id;
   if (!name || !email || !username) {
@@ -174,5 +175,6 @@ router.put('/supperAdmin/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 module.exports = router;

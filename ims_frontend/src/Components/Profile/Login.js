@@ -22,8 +22,8 @@ export default function Login({ switchToRegister, onCancel }) {
     e.preventDefault();
 
     const newErrors = {};
-    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Please provide your email, username, or phone';
-    if (!formData.password.trim()) newErrors.password = '⚠️ Please enter your password';
+    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Identifier is required';
+    if (!formData.password.trim()) newErrors.password = '⚠️ Password is required';
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
@@ -33,7 +33,7 @@ export default function Login({ switchToRegister, onCancel }) {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/login', formData);
+      const res = await axios.post('http://localhost:5000/api/supperAdmin/login', formData);
 
       // Store token and user info
       localStorage.setItem('token', res.data.token);
@@ -49,7 +49,7 @@ export default function Login({ switchToRegister, onCancel }) {
       } else if (user.role === 'ikimina') {
         navigate('/ikimina/dashboard');
       } else {
-        navigate('/dashboard'); // Default fallback
+        navigate('/dashboard');
       }
     } catch (err) {
       const errorMessage =

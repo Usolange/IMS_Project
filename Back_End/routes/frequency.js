@@ -2,6 +2,7 @@
 const express = require('express');
 const db = require('../config/db');
 const router = express.Router();
+const authenticateToken = require('./middleware/auth');
 
 // GET all frequency categories
 router.get('/', async (req, res) => {

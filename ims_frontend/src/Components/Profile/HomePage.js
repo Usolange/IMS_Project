@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import Register from './Register';
 import ForgotPassword from './ForgotPassword';
+import Login from './Login'; // Import your custom Login form
 import '../CSS/Home.css';
 import '../CSS/Form.css';
 
@@ -17,7 +18,7 @@ export default function HomePage() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top when closing modal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -49,28 +50,22 @@ export default function HomePage() {
       <Modal isOpen={isModalOpen} closeModal={closeModal}>
         {modalContent === 'login' && (
           <div className="form-section">
-            <h2 className="form-title">Login</h2>
-            <form className="form-container">
-              <label className="form-label">Email</label>
-              <input type="email" placeholder="Email" className="form-input" />
-              <label className="form-label">Password</label>
-              <input type="password" placeholder="Password" className="form-input" />
-              <button type="submit" className="form-button">Submit</button>
-            </form>
+            <Login
+              switchToRegister={() => setModalContent('register')}
+              onCancel={closeModal}
+            />
           </div>
         )}
 
         {modalContent === 'register' && (
           <div className="form-section">
-            <h2 className="form-title">Register</h2>
-            <Register />
+            <Register onCancel={closeModal} />
           </div>
         )}
 
         {modalContent === 'forgot-password' && (
           <div className="form-section">
-            <h2 className="form-title">Forgot Password</h2>
-            <ForgotPassword />
+            <ForgotPassword onCancel={closeModal} />
           </div>
         )}
       </Modal>

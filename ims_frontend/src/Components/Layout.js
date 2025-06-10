@@ -1,14 +1,33 @@
 // src/Components/Layout.js
-import React, { useState } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import './CSS/Layout.css';
 
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
+  const [userName, setUserName] = useState('');
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user'));
+
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.name) {
+      setUserName(user.name);
+    }
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarVisible(v => !v);
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  
 
   return (
     <div className="layout-container">
@@ -16,8 +35,7 @@ export default function Layout() {
       <header className="header">
         <div className="header-left">
           Ikimina Admin
-
-           <button className="menu-toggle" onClick={toggleSidebar}>
+          <button className="menu-toggle" onClick={toggleSidebar}>
             ☰
           </button>
         </div>
@@ -31,12 +49,12 @@ export default function Layout() {
             <span className="search-icon">🔍</span>
           </div>
           <div className="notification-icon">🔔</div>
-          <div className="user-name">John Doe</div>
+          <div className="user-name">{userName || 'Guest'}</div>
           <div className="profile-dropdown">
             <button className="profile-button">👤</button>
             <div className="dropdown-content">
-              <Link to="/">Profile</Link>
-              <Link to="/">Logout</Link>
+              <Link to="/profile">Profile</Link>
+              <button onClick={handleLogout}>Logout</button>
             </div>
           </div>
         </div>
@@ -44,7 +62,7 @@ export default function Layout() {
 
       {/* Sidebar */}
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
-          <nav className="sidebar-nav">
+        <nav className="sidebar-nav">
           <Link to="/" className="nav-link">Dashboard</Link>
           <Link to="/report" className="nav-link">Reports</Link>
           <Link to="/members" className="nav-link">Members</Link>
