@@ -1,83 +1,111 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, ChevronLeft } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import './CSS/Layout.css';
 
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [userName, setUserName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Fetch user info from localStorage on mount
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (user?.name) {
-      setUserName(user.name);
-    }
+    if (user?.name) setUserName(user.name);
   }, []);
 
-  // Toggle the sidebar visibility
-  const toggleSidebar = () => {
-    setSidebarVisible((prev) => !prev);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // Handle user logout
+  const toggleSidebar = () => setSidebarVisible(prev => !prev);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+      navigate('/login');
+    }, 2000);
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim() === '') return;
+    console.log('Searching for:', searchQuery);
+  };
+
+  const handleDropdownSelect = (action) => {
+    setShowDropdown(false);
+    if (action === 'logout') handleLogout();
   };
 
   return (
-    <div className="layout-container">
-      {/* Header */}
-      <header className="header">
-        <div className="header-left">
-          Ikimina Admin
-          <button className="menu-toggle" onClick={toggleSidebar}>
-            {isSidebarVisible ? '❌' : '☰'}
-          </button>
-        </div>
-        <div className="header-right">
-          <div className="search-wrapper">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search..."
-            />
-            <span className="search-icon">🔍</span>
-          </div>
-          <div className="notification-icon">🔔</div>
-          <div className="user-name">{userName || 'Guest'}</div>
-          <div className="profile-dropdown">
-            <button className="profile-button">👤</button>
-            <div className="dropdown-content">
-              <Link to="/profile">Profile</Link>
-              <Link to="/" onClick={handleLogout}>Logout</Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Sidebar */}
+    <div className="app-layout">
+     
+        <button className="sidebar-toggle-button" onClick={toggleSidebar}>
+          {isSidebarVisible ? <ChevronLeft size={35} /> : <Menu size={20} />}
+        </button>
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
-        <nav className="sidebar-nav">
-          <Link to="/" className="nav-link">Dashboard</Link>
-          <Link to="/report" className="nav-link">Reports</Link>
-          <Link to="/members" className="nav-link">Members</Link>
-          <Link to="/loans" className="nav-link">Loans</Link>
-          <Link to="/settings" className="nav-link">Settings</Link>
+        
+        <nav className="sidebar-menu">
+          <Link to="/" className="sidebar-item">Dashboard</Link>
+          <Link to="/report" className="sidebar-item">Reports</Link>
+          <Link to="/members" className="sidebar-item">Members</Link>
+          <Link to="/loans" className="sidebar-item">Loans</Link>
+          <Link to="/settings" className="sidebar-item">Settings</Link>
         </nav>
       </aside>
 
-      {/* Main content */}
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
+        <header className="navbar">
+           <div className="navbar-title">Ikimina Admin</div>
+          <div className="navbar-links">
+            <div className="search-wrapper">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button className="search-icon" onClick={handleSearch}>🔍</button>
+            </div>
+            <div className="notification-icon">🔔</div>
+            <div className="username">{userName || 'Guest'}</div>
+            <div className="profile-dropdown-wrapper" ref={dropdownRef}>
+              <button className="profile-button" onClick={() => setShowDropdown(prev => !prev)}>👤</button>
+              {showDropdown && (
+                <div className="dropdown-content">
+                  <Link to="/profile" className="dropdown-link">Profile</Link>
+                  <button className="dropdown-link" onClick={() => handleDropdownSelect('logout')}>Logout</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
 
-      {/* Footer */}
-      <footer className="footer">
-        © 2025 Ikimina Management System
-      </footer>
+        <main className="main-content">
+          <Outlet />
+        </main>
+
+        <footer className="footer">
+          © 2025 Ikimina Management System
+        </footer>
+      </div>
+
+      {showToast && <div className="toast-message">👋 Logged out successfully</div>}
     </div>
   );
 }
+
+
