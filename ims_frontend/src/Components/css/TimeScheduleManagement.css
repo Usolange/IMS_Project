@@ -1,304 +1,211 @@
 .time-schedule-container {
-  max-width: 480px;
-  margin: 1.5rem auto;
-  background-color: #fff;
-  padding: 1rem 1.5rem; /* reduced padding */
-  border-radius: 8px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
 .time-schedule-title {
   text-align: center;
-  font-size: 1.75rem;
+  margin-bottom: 20px;
   font-weight: 700;
-  margin-bottom: 1rem; /* reduced margin */
+  font-size: 1.8rem;
+  color: #333;
 }
 
-.time-schedule-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* slightly reduced gap */
+.form-table {
+  width: 100%;
+  max-width: 600px;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  margin-bottom: 30px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
+.form-table td {
+  vertical-align: middle;
+  padding: 4px 10px;
 }
 
 .form-label {
   font-weight: 600;
-  margin-bottom: 0.4rem; /* reduced margin */
-  color: #333;
+  padding-right: 10px;
+  white-space: nowrap;
 }
 
 .form-input,
-.form-select {
-  padding: 0.4rem 0.6rem; /* reduced padding */
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
+.form-multiselect {
   width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
   box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus {
-  border-color: #2563eb; /* Blue-600 */
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+.form-multiselect {
+  height: 100px;
 }
 
-/* Frequency Category wrapper: wider select, button on right */
-.frequency-select-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.frequency-select-wrapper select,
-.frequency-select-wrapper .form-input {
-  flex-grow: 1;
-  min-width: 0; /* allow shrinking */
-}
-
-.btn-add-category {
-  flex-shrink: 0;
-  background-color: #16a34a; /* Green-600 */
-  color: white;
-  padding: 0.4rem 0.8rem; /* reduced padding */
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-
-.btn-add-category:hover {
-  background-color: #15803d; /* Green-700 */
-}
-
-/* Button general styles */
 .btn {
+  padding: 10px 20px;
+  font-size: 15px;
   cursor: pointer;
+  border-radius: 5px;
   border: none;
-  border-radius: 6px;
-  font-weight: 600;
+  background-color: #0053ba;
+  color: white;
   transition: background-color 0.3s ease;
 }
 
-.btn-add-date {
-  background-color: #16a34a; /* Green-600 */
-  color: white;
-  padding: 0.4rem 0.8rem; /* reduced padding */
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.3s ease;
-  flex-shrink: 0;
+.btn:hover:not(:disabled) {
+  background-color: #003f8a;
 }
 
-.btn-add-date:hover {
-  background-color: #15803d; /* Green-700 */
-}
-
-/* Submit button */
-.btn-submit {
-  background-color: #2563eb; /* Blue-600 */
-  color: white;
-  padding: 0.6rem 1rem; /* reduced padding */
-  width: 100%;
-  border-radius: 6px;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background-color: #1d4ed8; /* Blue-700 */
-}
-
-.btn-submit:disabled {
-  background-color: #93c5fd; /* Blue-300 */
+.btn:disabled {
+  background-color: #999;
   cursor: not-allowed;
 }
 
-/* Back button */
-.btn-back {
-  background-color: transparent;
-  color: #2563eb;
-  margin-top: 0.5rem; /* reduced margin */
-  font-size: 0.95rem;
-  text-align: left;
-  padding: 0;
-  cursor: pointer;
-  border: none;
-}
-
-.btn-back:hover {
-  text-decoration: underline;
-}
-
-/* Multi-select full width */
-.multi-select {
+.btn-primary {
   width: 100%;
-}
-
-/* Monthly date picker wrapper with wider input and button on right */
-.monthly-date-picker-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.monthly-date-picker-wrapper .form-input,
-.monthly-date-picker-wrapper .multi-select {
-  flex-grow: 1;
-  min-width: 0;
-  padding: 0.4rem 0.6rem; /* reduced padding */
-  font-size: 1rem;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-}
-
-/* Add button aligned right, no shrinking */
-.btn-add-date {
-  flex-shrink: 0;
-  background-color: #16a34a;
-  color: white;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-
-.btn-add-date:hover {
-  background-color: #15803d;
-}
-
-/* Monthly dates list */
-.monthly-dates-list {
-  margin-top: 0.5rem; /* reduced margin */
-  max-height: 140px; /* reduced height */
-  overflow-y: auto;
-  border: 1px solid #e5e7eb; /* Gray-200 */
-  border-radius: 6px;
-  padding: 0.4rem; /* reduced padding */
-}
-
-.monthly-date-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.2rem 0.4rem; /* reduced padding */
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 0.95rem;
-}
-
-.monthly-date-item:last-child {
-  border-bottom: none;
-}
-
-.btn-remove-date {
-  background: none;
-  color: #dc2626; /* Red-600 */
   font-weight: 700;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+  margin-left: 5px;
+  background-color: #007bff;
+}
+
+.btn-small:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  color: #007bff;
+  text-decoration: underline;
   cursor: pointer;
-  padding: 0 0.2rem; /* reduced padding */
+  font-size: 13px;
+  padding: 0;
 }
 
-.btn-remove-date:hover {
-  color: #b91c1c; /* Red-700 */
+.btn-link:hover {
+  color: #0056b3;
 }
 
-.empty-message {
-  color: #6b7280; /* Gray-500 */
-  font-style: italic;
-  text-align: center;
-  padding: 0.5rem 0; /* reduced padding */
-}
-
-/* Label spacing */
-.form-label {
+.message-success {
+  color: green;
   font-weight: 600;
-  margin-bottom: 0.4rem;
-  color: #333;
+  margin-top: 10px;
 }
 
-/* Modal styles */
+.message-error {
+  color: red;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.schedules-display h3 {
+  margin-top: 25px;
+  font-weight: 700;
+  color: #222;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.schedule-table th,
+.schedule-table td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.schedule-table th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background-color: rgba(0,0,0,0.4);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 10000;
 }
 
 .modal-content {
-  background-color: white;
-  padding: 1.25rem 1.5rem; /* reduced padding */
-  border-radius: 8px;
-  width: 320px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem; /* reduced gap */
+  background: white;
+  padding: 25px;
+  border-radius: 6px;
+  width: 400px;
+  max-width: 90%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .modal-title {
+  margin-bottom: 15px;
   font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: 0.4rem; /* reduced margin */
+  font-size: 1.3rem;
+  color: #222;
 }
 
 .modal-input {
-  padding: 0.4rem 0.6rem; /* reduced padding */
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.modal-message {
-  font-weight: 600;
-}
-
-.modal-message.success {
-  color: #16a34a;
-}
-
-.modal-message.error {
-  color: #dc2626;
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem; /* reduced gap */
+  gap: 10px;
 }
 
 .btn-cancel {
-  background-color: #f3f4f6; /* Gray-100 */
-  color: #374151; /* Gray-700 */
-  padding: 0.4rem 0.8rem; /* reduced padding */
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
+  background-color: #999;
 }
 
 .btn-cancel:hover:not(:disabled) {
-  background-color: #e5e7eb; /* Gray-200 */
+  background-color: #666;
 }
 
 .btn-confirm {
-  background-color: #16a34a;
-  color: white;
-  padding: 0.4rem 0.8rem; /* reduced padding */
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
+  background-color: #28a745;
 }
 
 .btn-confirm:hover:not(:disabled) {
-  background-color: #15803d;
+  background-color: #19692c;
+}
+
+.modal-message {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.modal-message.success {
+  color: green;
+}
+
+.modal-message.error {
+  color: red;
 }

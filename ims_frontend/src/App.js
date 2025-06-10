@@ -14,6 +14,9 @@ import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import CategoryManagement from './Components/Users/Admin/CategoryManagement';
+import TimeScheduleManagement from './Components/Users/Admin/TimeScheduleManagement';
+
+
 
 export default function App() {
   return (
@@ -38,6 +41,7 @@ export default function App() {
         {/* Admin-only */}
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/CategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><CategoryManagement /></RoleProtectedRoute>} />
+        <Route path="/timeScheduleManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeScheduleManagement /></RoleProtectedRoute>} />
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
 
         {/* Unauthorized fallback */}

@@ -4,178 +4,185 @@ import DatePicker from 'react-datepicker';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
-import '../../CSS/TimeScheduleManagement.css'
-import Modal from '../../Home/Modal';
+import '../../CSS/TimeScheduleManagement.css';
 
-export default function TimeScheduleManagement() {
-  const [frequencies, setFrequencies] = useState([]);
-  const [selectedFrequencyObj, setSelectedFrequencyObj] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(new Date());
-  const [selectedDays, setSelectedDays] = useState([]);
-  const [sadId, setSadId] = useState(null);
-  const [ikiminaName, setIkiminaName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  // Modal states
-  const [modalOpen, setModalOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [addingCategory, setAddingCategory] = useState(false);
-  const [categoryMessage, setCategoryMessage] = useState('');
-
+function AddCategoryModal({
+  isOpen,
+  onClose,
+  onAddCategory,
+  loading,
+  message,
+  setNewCategoryName,
+  newCategoryName,
+}) {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user?.id) {
-      setSadId(user.id);
-    }
+    if (isOpen && inputRef.current) inputRef.current.focus();
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h3 className="modal-title">Add New Frequency Category</h3>
+        <input
+          type="text"
+          placeholder="Category name"
+          value={newCategoryName}
+          ref={inputRef}
+          onChange={(e) => setNewCategoryName(e.target.value)}
+          className="modal-input"
+          disabled={loading}
+        />
+        {message && (
+          <p className={`modal-message ${message.startsWith('✅') ? 'success' : 'error'}`}>
+            {message}
+          </p>
+        )}
+        <div className="modal-actions">
+          <button onClick={onClose} className="btn btn-cancel" disabled={loading}>
+            Cancel
+          </button>
+          <button onClick={onAddCategory} className="btn btn-confirm" disabled={loading}>
+            {loading ? 'Adding...' : 'Add Category'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function TimeScheduleManagement() {
+  const navigate = useNavigate();
+
+  const [frequencies, setFrequencies] = useState([]);
+  const [selectedFrequencyObj, setSelectedFrequencyObj] = useState(null);
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [ikiminaName, setIkiminaName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  const [dailySchedules, setDailySchedules] = useState([]);
+  const [weeklySchedules, setWeeklySchedules] = useState([]);
+  const [monthlySchedules, setMonthlySchedules] = useState([]);
+
+  useEffect(() => {
+    // Fetch frequencies on mount
+    fetchFrequencies();
+    // Fetch schedules on mount
+    fetchSchedules();
   }, []);
-
-  useEffect(() => {
-    if (sadId) fetchFrequencies();
-  }, [sadId]);
-
-  useEffect(() => {
-    if (modalOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [modalOpen]);
 
   const fetchFrequencies = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/frequencyCategory', {
-        headers: { 'x-sad-id': sadId }
-      });
-      setFrequencies(res.data);
+      const response = await axios.get('/api/frequencies'); // Change to your API endpoint
+      setFrequencies(response.data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching frequencies:', error);
     }
   };
 
-  // Add new category in modal
-  const addNewCategory = async () => {
-    const trimmedName = newCategoryName.trim();
-    if (!trimmedName) {
-      setCategoryMessage('Category name cannot be empty.');
-      return;
-    }
-    setAddingCategory(true);
-    setCategoryMessage('');
+  const fetchSchedules = async () => {
     try {
-      await axios.post('http://localhost:5000/api/frequencyCategory/newCategory',
-        { categoryName: trimmedName },
-        { headers: { 'x-sad-id': sadId } }
-      );
-      setCategoryMessage('✅ Category added successfully!');
-      setNewCategoryName('');
-      await fetchFrequencies();
-
-      // Select newly added category
-      const newCat = frequencies.find(f => f.f_category.toLowerCase() === trimmedName.toLowerCase());
-      if (newCat) setSelectedFrequencyObj(newCat);
-      setModalOpen(false);
+      const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+        axios.get('/api/schedules/daily'),
+        axios.get('/api/schedules/weekly'),
+        axios.get('/api/schedules/monthly'),
+      ]);
+      setDailySchedules(dailyRes.data);
+      setWeeklySchedules(weeklyRes.data);
+      setMonthlySchedules(monthlyRes.data);
     } catch (error) {
-      setCategoryMessage('❌ Failed to add category. It might already exist.');
-      console.error(error);
-    } finally {
-      setAddingCategory(false);
+      console.error('Error fetching schedules:', error);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!sadId) {
-      alert('User ID not found. Please log in again.');
-      return;
-    }
-
     if (!ikiminaName.trim()) {
-      alert('Please enter Ikimina name.');
+      setMessage('❌ Please enter the Ikimina Name.');
       return;
     }
-
     if (!selectedFrequencyObj) {
-      alert('Please select a frequency category.');
+      setMessage('❌ Please select a frequency category.');
+      return;
+    }
+    if (!selectedTime) {
+      setMessage('❌ Please select a time.');
+      return;
+    }
+    if (
+      selectedFrequencyObj.f_category.toLowerCase() === 'weekly' &&
+      selectedDays.length === 0
+    ) {
+      setMessage('❌ Please select at least one day of the week.');
+      return;
+    }
+    if (
+      selectedFrequencyObj.f_category.toLowerCase() === 'monthly' &&
+      selectedDays.length === 0
+    ) {
+      setMessage('❌ Please select at least one date.');
       return;
     }
 
     setLoading(true);
-    const f_id = selectedFrequencyObj?.f_id;
+    setMessage('');
 
     try {
-      if (selectedFrequencyObj?.f_category.toLowerCase() === 'daily') {
-        console.log({
-          ikimina_name: ikiminaName,
-          dtime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
-        await axios.post('http://localhost:5000/api/ikDailyTime', {
-          ikimina_name: ikiminaName,
-          dtime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
-      } else if (selectedFrequencyObj?.f_category.toLowerCase() === 'weekly') {
-        if (selectedDays.length === 0) {
-          alert('Please select at least one day.');
-          setLoading(false);
-          return;
-        }
-        console.log({
-          ikimina_name: ikiminaName,
-          weeklytime_days: selectedDays,
-          weeklytime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
-        await axios.post('http://localhost:5000/api/ikWeeklyTime', {
-          ikimina_name: ikiminaName,
-          weeklytime_days: selectedDays,
-          weeklytime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
-      } else if (selectedFrequencyObj?.f_category.toLowerCase() === 'monthly') {
-        if (selectedDays.length === 0) {
-          alert('Please select at least one day.');
-          setLoading(false);
-          return;
-        }
-        const invalidDay = selectedDays.find(day => day < 1 || day > 31);
-        if (invalidDay !== undefined) {
-          alert('Days must be between 1 and 31.');
-          setLoading(false);
-          return;
-        }
-        console.log({
-          ikimina_name: ikiminaName,
-          monthlytime_days: selectedDays,
-          monthlytime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
-        await axios.post('http://localhost:5000/api/ikMonthlyTime', {
-          ikimina_name: ikiminaName,
-          monthlytime_dates: selectedDays, // ✅ must match backend name!
-          monthlytime_time: selectedTime.toTimeString().slice(0, 5),
-          f_id,
-        });
+      // Prepare data for API
+      const payload = {
+        ikimina_name: ikiminaName,
+        frequency_id: selectedFrequencyObj.f_id,
+        days: selectedFrequencyObj.f_category.toLowerCase() === 'daily' ? [] : selectedDays,
+        time: selectedTime.toTimeString().slice(0, 5), // format HH:mm
+      };
 
-      }
+      // Send to backend API
+      await axios.post('/api/time-schedule', payload);
 
-      alert('✅ Time configuration saved successfully!');
+      setMessage('✅ Time schedule saved successfully!');
+      setIkiminaName('');
       setSelectedFrequencyObj(null);
       setSelectedDays([]);
-      setSelectedTime(new Date());
-      setIkiminaName('');
-      setCategoryMessage('');
+      setSelectedTime(null);
+
+      // Refresh schedules list
+      fetchSchedules();
     } catch (error) {
-      console.error('Error saving time:', error);
-      const msg = error.response?.data?.message || 'Failed to save time configuration.';
-      alert('❌ ' + msg);
+      setMessage('❌ Failed to save time schedule. Try again.');
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      setMessage('❌ Please enter a category name.');
+      return;
+    }
+    setLoading(true);
+    setMessage('');
+    try {
+      await axios.post('/api/frequencies', { f_category: newCategoryName.trim() });
+      setMessage('✅ Category added successfully!');
+      setNewCategoryName('');
+      setModalOpen(false);
+      fetchFrequencies();
+    } catch (error) {
+      setMessage('❌ Failed to add category. Try again.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -183,200 +190,279 @@ export default function TimeScheduleManagement() {
         <h2 className="time-schedule-title">Set Ikimina Time</h2>
 
         <form onSubmit={handleSubmit} className="time-schedule-form">
-          <div className="form-group">
-            <label htmlFor="ikiminaName" className="form-label">Ikimina Name:</label>
-            <input
-              id="ikiminaName"
-              type="text"
-              value={ikiminaName}
-              onChange={(e) => setIkiminaName(e.target.value)}
-              required
-              className="form-input"
-              placeholder="Enter Ikimina Name"
-            />
-          </div>
+          <table className="form-table">
+            <tbody>
+              <tr>
+                <td>
+                  <label htmlFor="ikiminaName" className="form-label">
+                    Ikimina Name:
+                  </label>
+                </td>
+                <td>
+                  <input
+                    id="ikiminaName"
+                    type="text"
+                    value={ikiminaName}
+                    onChange={(e) => setIkiminaName(e.target.value)}
+                    required
+                    className="form-input"
+                    placeholder="Enter Ikimina description"
+                    disabled={loading}
+                  />
+                </td>
+              </tr>
 
-          <div className="form-group">
-            <label htmlFor="frequencySelect" className="form-label">Frequency Category:</label>
-            <div className="frequency-select-wrapper">
-              <select
-                id="frequencySelect"
-                className="form-select"
-                value={selectedFrequencyObj?.f_id || ''}
-                onChange={(e) => {
-                  const selected = frequencies.find(f => f.f_id === parseInt(e.target.value));
-                  setSelectedFrequencyObj(selected);
-                }}
-                required
-              >
-                <option value="">-- Select Frequency --</option>
-                {frequencies.map((f) => (
-                  <option key={f.f_id} value={f.f_id}>
-                    {f.f_category}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => {
-                  setNewCategoryName('');
-                  setCategoryMessage('');
-                  setModalOpen(true);
-                }}
-                className="btn btn-add-category"
-                title="Add New Frequency Category"
-              >
-                + Add
-              </button>
-            </div>
-          </div>
-
-          {selectedFrequencyObj?.f_category.toLowerCase() === 'daily' && (
-            <div className="form-group">
-              <label className="form-label">Daily Time:</label>
-              <DatePicker
-                selected={selectedTime}
-                onChange={setSelectedTime}
-                showTimeSelect
-                showTimeSelectOnly
-                timeIntervals={30}
-                timeCaption="Time"
-                dateFormat="HH:mm"
-                className="form-input"
-              />
-            </div>
-          )}
-
-          {selectedFrequencyObj?.f_category.toLowerCase() === 'weekly' && (
-            <>
-              <div className="form-group">
-                <label className="form-label">Days of the Week (multi-select):</label>
-                <Select
-                  isMulti
-                  value={selectedDays.map(day => ({ value: day, label: day }))}
-                  onChange={options => setSelectedDays(options.map(opt => opt.value))}
-                  options={[
-                    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-                  ].map(day => ({ value: day, label: day }))}
-                  className="multi-select"
-                  classNamePrefix="select"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Time:</label>
-                <DatePicker
-                  selected={selectedTime}
-                  onChange={setSelectedTime}
-                  showTimeSelect
-                  showTimeSelectOnly
-                  timeIntervals={30}
-                  timeCaption="Time"
-                  dateFormat="HH:mm"
-                  className="form-input"
-                />
-              </div>
-            </>
-          )}
-
-          {selectedFrequencyObj?.f_category.toLowerCase() === 'monthly' && (
-            <>
-              <div className="form-group">
-                <label className="form-label">Select Days of the Month:</label>
-                <div className="days-checkboxes" style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid #ccc', padding: '0.5rem', borderRadius: '4px' }}>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <label key={day} style={{ marginRight: 12, cursor: 'pointer', userSelect: 'none' }}>
-                      <input
-                        type="checkbox"
-                        value={day}
-                        checked={selectedDays.includes(day)}
-                        onChange={(e) => {
-                          const dayNum = parseInt(e.target.value);
-                          if (e.target.checked) {
-                            setSelectedDays(prev => [...prev, dayNum].sort((a, b) => a - b));
-                          } else {
-                            setSelectedDays(prev => prev.filter(d => d !== dayNum));
+              <tr>
+                <td>
+                  <label className="form-label">Frequency Category:</label>
+                </td>
+                <td>
+                  <Select
+                    options={frequencies.map((f) => ({
+                      value: f.f_id,
+                      label: f.f_category,
+                      original: f,
+                    }))}
+                    value={
+                      selectedFrequencyObj
+                        ? {
+                            value: selectedFrequencyObj.f_id,
+                            label: selectedFrequencyObj.f_category,
+                            original: selectedFrequencyObj,
                           }
-                        }}
-                        style={{ marginRight: 4 }}
-                      />
-                      {day}
-                    </label>
-                  ))}
-                </div>
-              </div>
+                        : null
+                    }
+                    onChange={(opt) => setSelectedFrequencyObj(opt.original)}
+                    placeholder="Select frequency category"
+                    isDisabled={loading}
+                    noOptionsMessage={() => (
+                      <div>
+                        No categories found.{' '}
+                        <button
+                          type="button"
+                          onClick={() => setModalOpen(true)}
+                          className="btn-link"
+                          disabled={loading}
+                        >
+                          Add Category
+                        </button>
+                      </div>
+                    )}
+                    styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                    menuPortalTarget={document.body}
+                    menuPosition="fixed"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(true)}
+                    className="btn btn-small"
+                    disabled={loading}
+                    style={{ marginTop: '8px' }}
+                  >
+                    + Add New Category
+                  </button>
+                </td>
+              </tr>
 
-              <div className="form-group">
-                <label className="form-label">Time for all selected days:</label>
-                <DatePicker
-                  selected={selectedTime}
-                  onChange={setSelectedTime}
-                  showTimeSelect
-                  showTimeSelectOnly
-                  timeIntervals={30}
-                  timeCaption="Time"
-                  dateFormat="HH:mm"
-                  className="form-input"
-                />
-              </div>
-            </>
+              {selectedFrequencyObj &&
+                selectedFrequencyObj.f_category.toLowerCase() === 'weekly' && (
+                  <tr>
+                    <td>
+                      <label className="form-label">Select Days of Week:</label>
+                    </td>
+                    <td>
+                      <select
+                        multiple
+                        value={selectedDays}
+                        onChange={(e) => {
+                          const selectedOptions = Array.from(e.target.selectedOptions).map(
+                            (o) => o.value
+                          );
+                          setSelectedDays(selectedOptions);
+                        }}
+                        disabled={loading}
+                        className="form-multiselect"
+                      >
+                        {[
+                          'Sunday',
+                          'Monday',
+                          'Tuesday',
+                          'Wednesday',
+                          'Thursday',
+                          'Friday',
+                          'Saturday',
+                        ].map((day) => (
+                          <option key={day} value={day}>
+                            {day}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                )}
+
+              {selectedFrequencyObj &&
+                selectedFrequencyObj.f_category.toLowerCase() === 'monthly' && (
+                  <tr>
+                    <td>
+                      <label className="form-label">Select Dates (1-31):</label>
+                    </td>
+                    <td>
+                      <select
+                        multiple
+                        value={selectedDays}
+                        onChange={(e) => {
+                          const selectedOptions = Array.from(e.target.selectedOptions).map(
+                            (o) => o.value
+                          );
+                          const nums = selectedOptions
+                            .map((v) => parseInt(v, 10))
+                            .filter((v) => v >= 1 && v <= 31);
+                          setSelectedDays(nums);
+                        }}
+                        disabled={loading}
+                        className="form-multiselect"
+                      >
+                        {[...Array(31).keys()].map((i) => {
+                          const dayNum = i + 1;
+                          return (
+                            <option key={dayNum} value={dayNum}>
+                              {dayNum}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </td>
+                  </tr>
+                )}
+
+              <tr>
+                <td>
+                  <label className="form-label">Select Time:</label>
+                </td>
+                <td>
+                  <DatePicker
+                    selected={selectedTime}
+                    onChange={(date) => setSelectedTime(date)}
+                    showTimeSelect
+                    showTimeSelectOnly
+                    timeIntervals={15}
+                    timeCaption="Time"
+                    dateFormat="HH:mm"
+                    disabled={loading}
+                    className="form-input"
+                    placeholderText="Select time"
+                  />
+                </td>
+              </tr>
+
+              <tr>
+                <td colSpan={2} style={{ textAlign: 'center', paddingTop: '10px' }}>
+                  <button type="submit" className="btn btn-primary" disabled={loading}>
+                    {loading ? 'Saving...' : 'Save Time'}
+                  </button>
+                </td>
+              </tr>
+
+              {message && (
+                <tr>
+                  <td colSpan={2} style={{ textAlign: 'center' }}>
+                    <p
+                      className={
+                        message.startsWith('✅') ? 'message-success' : 'message-error'
+                      }
+                    >
+                      {message}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </form>
+
+        <div className="schedules-display">
+          <h3>Daily Schedules</h3>
+          {dailySchedules.length ? (
+            <table className="schedule-table">
+              <thead>
+                <tr>
+                  <th>Ikimina Name</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dailySchedules.map((item) => (
+                  <tr key={item.dtime_id}>
+                    <td>{item.ikimina_name}</td>
+                    <td>{item.dtime_time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No daily schedules found.</p>
           )}
 
+          <h3>Weekly Schedules</h3>
+          {weeklySchedules.length ? (
+            <table className="schedule-table">
+              <thead>
+                <tr>
+                  <th>Ikimina Name</th>
+                  <th>Days</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weeklySchedules.map((item) => (
+                  <tr key={item.wtime_id}>
+                    <td>{item.ikimina_name}</td>
+                    <td>{item.wtime_days}</td>
+                    <td>{item.wtime_time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No weekly schedules found.</p>
+          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-submit"
-          >
-            {loading ? 'Saving...' : 'Save Time Setting'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/adminDashboard')}
-            className="btn btn-back"
-          >
-            ← Back to Dashboard
-          </button>
-        </form>
+          <h3>Monthly Schedules</h3>
+          {monthlySchedules.length ? (
+            <table className="schedule-table">
+              <thead>
+                <tr>
+                  <th>Ikimina Name</th>
+                  <th>Dates</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlySchedules.map((item) => (
+                  <tr key={item.mtime_id}>
+                    <td>{item.ikimina_name}</td>
+                    <td>{item.mtime_days}</td>
+                    <td>{item.mtime_time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No monthly schedules found.</p>
+          )}
+        </div>
       </div>
 
-      {/* Modal for adding new category */}
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">Add New Frequency Category</h3>
-            <input
-              type="text"
-              placeholder="Category name"
-              value={newCategoryName}
-              ref={inputRef}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              className="modal-input"
-            />
-            {categoryMessage && (
-              <p className={`modal-message ${categoryMessage.startsWith('✅') ? 'success' : 'error'}`}>
-                {categoryMessage}
-              </p>
-            )}
-            <div className="modal-actions">
-              <button
-                onClick={() => setModalOpen(false)}
-                className="btn btn-cancel"
-                disabled={addingCategory}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addNewCategory}
-                className="btn btn-confirm"
-                disabled={addingCategory}
-              >
-                {addingCategory ? 'Adding...' : 'Add Category'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddCategoryModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onAddCategory={handleAddCategory}
+        loading={loading}
+        message={message}
+        setNewCategoryName={setNewCategoryName}
+        newCategoryName={newCategoryName}
+      />
     </>
   );
 }

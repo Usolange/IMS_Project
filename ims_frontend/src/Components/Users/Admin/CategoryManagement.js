@@ -17,10 +17,7 @@ export default function CategoryManagement() {
   // Check login status on mount
   useEffect(() => {
     const rawUser = localStorage.getItem('user');
-    console.log('Raw user from localStorage:', rawUser);
-
     if (!rawUser) {
-      console.warn('No user in localStorage. Redirecting to login...');
       localStorage.clear();
       navigate('/login');
       return;
@@ -29,15 +26,12 @@ export default function CategoryManagement() {
     try {
       const user = JSON.parse(rawUser);
       if (!user?.id) {
-        console.warn('User ID missing. Redirecting to login...');
         localStorage.clear();
         navigate('/login');
         return;
       }
-
       setSadId(user.id);
-    } catch (err) {
-      console.error('Error parsing user from localStorage:', err);
+    } catch {
       localStorage.clear();
       navigate('/login');
     }
@@ -60,7 +54,7 @@ export default function CategoryManagement() {
   const fetchFrequencies = async (id) => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/frequencyCategory', {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
         headers: { 'x-sad-id': id }
       });
       setFrequencies(res.data);
@@ -148,6 +142,22 @@ export default function CategoryManagement() {
 
       {message && <p className="message">{message}</p>}
 
+      {/* Show categories created by logged-in user */}
+      <div style={{ marginBottom: '20px', fontWeight: '600', color: '#2c3e50' }}>
+        <h3>Your Categories (Created by You):</h3>
+        {frequencies.filter(cat => cat.createdBy === sadId).length === 0 ? (
+          <p>No categories created by you found.</p>
+        ) : (
+          <ul>
+            {frequencies
+              .filter(cat => cat.createdBy === sadId)
+              .map(cat => (
+                <li key={cat.f_id}>{cat.f_category}</li>
+              ))}
+          </ul>
+        )}
+      </div>
+
       <div className="button-group">
         <button className="button" onClick={openModalForAdd}>Add New Category</button>
         <button className="button back-button" onClick={() => navigate('/adminDashboard')}>Back to Dashboard</button>
@@ -172,7 +182,6 @@ export default function CategoryManagement() {
                 <tr key={f.f_id} className="table-row">
                   <td>{index + 1}</td>
                   <td>{f.f_category}</td>
-                  
                   <td style={{ textAlign: 'center' }}>
                     <button className="action-button" onClick={() => openModalForEdit(f.f_id, f.f_category)}>Edit</button>
                     <button className="action-button delete-button" onClick={() => handleDelete(f.f_id)}>Delete</button>
