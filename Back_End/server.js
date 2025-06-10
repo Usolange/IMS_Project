@@ -5,6 +5,7 @@ const db = require('./config/db'); // <- This tests DB connection
 
 
 // Import routes
+const userLoginRoutes = require('./routes/userLogin');
 const supperAdminRoutes = require('./routes/supperAdmin');
 const frequencyCategoryRoutes = require('./routes/frequencyCategory');
 const ikiminaInfoRoutes = require('./routes/ikiminaInfo');
@@ -27,6 +28,7 @@ app.use(cors());
 app.use(express.json()); // 🔥 Needed for POST/PUT body parsing
 
 // Route Middleware
+app.use('/api/userLogin', userLoginRoutes);
 app.use('/api/supperAdmin', authenticateToken, supperAdminRoutes);
 app.use('/api/frequencyCategory', authenticateToken, frequencyCategoryRoutes);
 app.use('/api/ikiminaInfo',authenticateToken, ikiminaInfoRoutes);

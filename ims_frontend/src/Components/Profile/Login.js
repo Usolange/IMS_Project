@@ -33,7 +33,7 @@ export default function Login({ switchToRegister, onCancel }) {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/supperAdmin/login', formData);
+      const res = await axios.post('http://localhost:5000/api/userLogin/login', formData);
 
       // Store token and user info
       localStorage.setItem('token', res.data.token);

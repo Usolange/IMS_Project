@@ -4,30 +4,44 @@ import '../CSS/Form.css';
 
 export default function Register() {
   const [form, setForm] = useState({
-    fullNames: '',
+    name: '',
     email: '',
     username: '',
     phone: '',
-    password: '',
-    role: 'user'
+    password: ''
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const [status, setStatus] = useState(null);
+
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setStatus(null); // Clear previous status
+
     try {
-      await axios.post('http://localhost:5000/api/register', form);
-      alert('Registered successfully!');
+      // Send the request to the backend
+      const res = await axios.post('http://localhost:5000/api/userLogin/register', form);
+      setStatus({ success: true, message: res.data.message });
     } catch (err) {
-      alert('Registration failed');
+      console.error('Registration Error:', err);
+      // Check if error response is available and set status accordingly
+      const errorMessage = err.response?.data?.message || 'Registration failed, please try again later.';
+      setStatus({
+        success: false,
+        message: errorMessage
+      });
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="form-container">
-      <label className="form-label">Full Names</label>
-      <input name="fullNames" className="form-input" onChange={handleChange} required />
+      <h2 className="form-title">Register Super Admin</h2>
+
+      <label className="form-label">Full Name</label>
+      <input name="name" className="form-input" onChange={handleChange} required />
 
       <label className="form-label">Email</label>
       <input name="email" type="email" className="form-input" onChange={handleChange} required />
@@ -41,13 +55,13 @@ export default function Register() {
       <label className="form-label">Password</label>
       <input name="password" type="password" className="form-input" onChange={handleChange} required />
 
-      <label className="form-label">Role</label>
-      <select name="role" className="form-select" onChange={handleChange}>
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
-
       <button type="submit" className="form-button">Register</button>
+
+      {status && (
+        <div className={status.success ? "form-success" : "form-error"}>
+          {status.message}
+        </div>
+      )}
     </form>
   );
 }
