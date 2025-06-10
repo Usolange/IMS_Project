@@ -10,7 +10,7 @@ const Logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     // Redirect to login
-    navigate('/login');
+    navigate('/');
   }, [navigate]);
 
   return null;

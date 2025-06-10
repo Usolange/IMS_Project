@@ -111,8 +111,7 @@ export default function CategoryManagement() {
         );
         setMessage('✅ Category updated');
       } else {
-        await axios.post(
-          'http://localhost:5000/api/frequencyCategory/newCategory',
+        await axios.post('http://localhost:5000/api/frequencyCategory/newCategory',
           { categoryName: trimmedCategory },
           { headers: { 'x-sad-id': sadId } }
         );

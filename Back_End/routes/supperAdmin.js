@@ -4,13 +4,12 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-const authenticateToken = require('../Middleware/auth');
 
 
 // ————————————————
 // ✅ UPDATE SUPER‑ADMIN PROFILE (protected with authenticateToken)
 // ————————————————
-router.put('/supperAdmin/:id', authenticateToken, async (req, res) => {
+router.put('/supperAdmin/:id', async (req, res) => {
   const { name, email, username, phone } = req.body;
   const id = req.params.id;
   if (!name || !email || !username) {

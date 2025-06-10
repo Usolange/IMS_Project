@@ -15,7 +15,6 @@ const memberTypeRoutes = require('./routes/memberType');
 const gudianMembersRoutes = require('./routes/gudianMembers');
 const membersInfoRoutes = require('./routes/membersInfo');
 const memberAccessRoutes = require('./routes/memberAccess');
-const authenticateToken = require('./Middleware/auth');
 
 dotenv.config();
 
@@ -28,16 +27,16 @@ app.use(express.json()); // Needed for POST/PUT body parsing
 
 // Route Middleware
 app.use('/api/userLogin', userLoginRoutes);
-app.use('/api/supperAdmin', authenticateToken, supperAdminRoutes);
-app.use('/api/frequencyCategory', authenticateToken, frequencyCategoryRoutes);
-app.use('/api/ikiminaInfo', authenticateToken, ikiminaInfoRoutes);
-app.use('/api/ikDailyTime', authenticateToken, ikDailyTimeRoutes);
-app.use('/api/ikWeeklyTime', authenticateToken, ikWeeklyTimeRoutes);
+app.use('/api/supperAdmin', supperAdminRoutes);
+app.use('/api/frequencyCategory', frequencyCategoryRoutes);
+app.use('/api/ikiminaInfo',  ikiminaInfoRoutes);
+app.use('/api/ikDailyTime', ikDailyTimeRoutes);
+app.use('/api/ikWeeklyTime',  ikWeeklyTimeRoutes);
 app.use('/api/ikMonthlyTime', ikMonthlyTimeRoutes);
-app.use('/api/memberType', authenticateToken, memberTypeRoutes);
+app.use('/api/memberType', memberTypeRoutes);
 app.use('/api/gudianMembers', gudianMembersRoutes);
-app.use('/api/membersInfo', authenticateToken, membersInfoRoutes);
-app.use('/api/memberAccess', authenticateToken, memberAccessRoutes);
+app.use('/api/membersInfo',  membersInfoRoutes);
+app.use('/api/memberAccess',  memberAccessRoutes);
 
 // Start server
 app.listen(PORT, () => {

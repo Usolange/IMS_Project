@@ -27,7 +27,7 @@ export default function Layout() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleSidebar = () => setSidebarVisible(prev => !prev);
+  const toggleSidebar = () => setSidebarVisible((prev) => !prev);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -35,7 +35,7 @@ export default function Layout() {
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
-      navigate('/login');
+      navigate('/');
     }, 2000);
   };
 
@@ -51,61 +51,85 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-     
-        <button className="sidebar-toggle-button" onClick={toggleSidebar}>
-          {isSidebarVisible ? <ChevronLeft size={35} /> : <Menu size={20} />}
-        </button>
+      {/* Sidebar toggle button fixed top-left */}
+      <button className="sidebar-toggle-button" onClick={toggleSidebar} aria-label="Toggle sidebar">
+        {isSidebarVisible ? <ChevronLeft size={28} /> : <Menu size={28} />}
+      </button>
+
+      {/* Sidebar */}
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
-        
-        <nav className="sidebar-menu">
-          <Link to="/" className="sidebar-item">Dashboard</Link>
-          <Link to="/report" className="sidebar-item">Reports</Link>
-          <Link to="/members" className="sidebar-item">Members</Link>
-          <Link to="/loans" className="sidebar-item">Loans</Link>
-          <Link to="/settings" className="sidebar-item">Settings</Link>
+        <nav className="sidebar-menu" aria-label="Sidebar navigation">
+          <ul className="menu-list">
+            <li><Link to="/" className="sidebar-item">Dashboard</Link></li>
+            <li><Link to="/report" className="sidebar-item">Reports</Link></li>
+            <li><Link to="/members" className="sidebar-item">Members</Link></li>
+            <li><Link to="/loans" className="sidebar-item">Loans</Link></li>
+            <li><Link to="/settings" className="sidebar-item">Settings</Link></li>
+          </ul>
         </nav>
       </aside>
 
+      {/* Main wrapper shifts right with sidebar */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
-        <header className="navbar">
-           <div className="navbar-title">Ikimina Admin</div>
+        <header className="navbar" role="banner">
+          {/* Centered title */}
+          <div className="navbar-title" aria-label="Application title">Ikimina Admin</div>
+
+          {/* Right-side navbar controls */}
           <div className="navbar-links">
-            <div className="search-wrapper">
+            <div className="search-wrapper" role="search">
               <input
                 type="text"
                 className="search-input"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
               />
-              <button className="search-icon" onClick={handleSearch}>🔍</button>
+              <button className="search-icon" onClick={handleSearch} aria-label="Execute search">🔍</button>
             </div>
-            <div className="notification-icon">🔔</div>
-            <div className="username">{userName || 'Guest'}</div>
+
+            <div className="notification-icon" role="button" aria-label="Notifications" tabIndex={0}>🔔</div>
+
+            <div className="username" aria-label="User name">{userName || 'Guest'}</div>
+
             <div className="profile-dropdown-wrapper" ref={dropdownRef}>
-              <button className="profile-button" onClick={() => setShowDropdown(prev => !prev)}>👤</button>
+              <button
+                className="profile-button"
+                onClick={() => setShowDropdown((prev) => !prev)}
+                aria-haspopup="true"
+                aria-expanded={showDropdown}
+                aria-label="User menu"
+              >
+                👤
+              </button>
               {showDropdown && (
-                <div className="dropdown-content">
-                  <Link to="/profile" className="dropdown-link">Profile</Link>
-                  <button className="dropdown-link" onClick={() => handleDropdownSelect('logout')}>Logout</button>
+                <div className="dropdown-content" role="menu">
+                  <Link to="/profile" className="dropdown-link" role="menuitem" onClick={() => setShowDropdown(false)}>Profile</Link>
+                  <button
+                    className="dropdown-link"
+                    role="menuitem"
+                    onClick={() => handleDropdownSelect('logout')}
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
           </div>
         </header>
-
-        <main className="main-content">
+ {showToast && <div className="toast-message" role="alert">👋 Logged out successfully</div>}
+        <main className="main-content" role="main">
           <Outlet />
         </main>
 
-        <footer className="footer">
-          © 2025 Ikimina Management System
-        </footer>
+       <footer className={`footer ${isSidebarVisible ? '' : 'full-width'}`}>
+  © 2025 Ikimina Management System
+</footer>
       </div>
 
-      {showToast && <div className="toast-message">👋 Logged out successfully</div>}
+     
     </div>
   );
 }
-
-

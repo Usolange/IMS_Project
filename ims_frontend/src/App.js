@@ -34,7 +34,7 @@ export default function App() {
 
         {/* Admin Routes with Role Protection */}
         <Route path="/adminDashboard" element={<RoleProtectedRoute requiredRole="admin"><AdminDashboard /></RoleProtectedRoute>} />
-        <Route path="/admin/category-management" element={<RoleProtectedRoute requiredRole="admin"><CategoryManagement /></RoleProtectedRoute>} />
+        <Route path="/CategoryManagement" element={<RoleProtectedRoute requiredRole="admin"><CategoryManagement /></RoleProtectedRoute>} />
         <Route path="/members" element={<RoleProtectedRoute requiredRole="admin"><Members /></RoleProtectedRoute>} />
       </Route>
       {/* Catch-all redirect route */}
