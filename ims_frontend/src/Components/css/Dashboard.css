@@ -1,49 +1,112 @@
-.dashboard-content {
-  padding: 1.5rem;
+.dashboard-layout {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  background-color: #fff;
+  overflow: hidden;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 16rem; /* 256px */
+  height: 100vh;
+  background-color: #2d3748; /* dark gray/blue */
+  color: white;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu li {
+  margin-bottom: 1rem;
+}
+
+.sidebar-link {
+  color: #cbd5e0; /* lighter gray */
+  text-decoration: none;
+  font-size: 1.125rem; /* 18px */
+  transition: color 0.2s ease;
+}
+
+.sidebar-link:hover {
+  color: #ecc94b; /* amber/yellow */
+  text-decoration: underline;
+}
+
+/* Main content styles */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background-color: #f7fafc; /* very light gray */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .content-title {
   font-size: 1.75rem;
-  font-weight: bold;
-}
-
-.content-description {
-  font-size: 1rem;
+  font-weight: 700;
   margin-bottom: 1rem;
 }
 
+.content-description {
+  font-size: 1.125rem;
+  margin-bottom: 2rem;
+}
+
+/* Section */
 .content-section {
-  margin-top: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .section-title {
   font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .content-list {
-  list-style-type: disc;
-  padding-left: 20px;
+  list-style: disc inside;
+  margin: 0;
+  padding-left: 1rem;
 }
 
+.content-list li {
+  margin-bottom: 0.5rem;
+}
+
+/* Table */
 .content-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  font-size: 1rem;
 }
 
-.content-table th, .content-table td {
-  border: 1px solid rgba(30, 64, 175, 0.5);
-  padding: 8px;
+.content-table th,
+.content-table td {
+  border: 1px solid #cbd5e0;
+  padding: 0.5rem 1rem;
   text-align: left;
 }
 
 .content-table th {
-  background: rgba(30, 64, 175, 0.85);
-  color: rgba(255, 255, 255, 0.9);
+  background-color: #e2e8f0;
+  font-weight: 600;
 }
 
-.content-table tr:nth-child(even) {
-  background: rgba(245, 247, 250, 0.9);
+.content-table tbody tr:hover {
+  background-color: #edf2f7;
 }

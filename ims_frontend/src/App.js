@@ -8,37 +8,44 @@ import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
 import HomePage from './Components/Profile/HomePage';
 import Profile from './Components/Profile/Profile';
-import Logout from './Components/Profile/Logout'; 
-import RoleProtectedRoute from './RoleProtectedRoute'; // Import RoleProtectedRoute for role-based access control
+import Logout from './Components/Profile/Logout';
+import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
+import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
+import Unauthorized from './Components/Auth/Unauthorized';
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import CategoryManagement from './Components/Users/Admin/CategoryManagement';
-
-
 
 export default function App() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Public Home */}
       <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      {/* Guest-only routes */}
+      <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>} />
+      <Route path="/register" element={<GuestOnlyRoute><Register /></GuestOnlyRoute>} />
+      <Route path="/forgot-password" element={<GuestOnlyRoute><ForgotPassword /></GuestOnlyRoute>} />
+
+      {/* Logout */}
       <Route path="/logout" element={<Logout />} />
 
-      {/* Protected Layout with nested routes */}
+      {/* Protected layout */}
       <Route element={<Layout />}>
-        {/* Protected routes */}
-        <Route path="/dashboard" element={<RoleProtectedRoute><Dashboard /></RoleProtectedRoute>} />
-        <Route path="/profile" element={<RoleProtectedRoute><Profile /></RoleProtectedRoute>} />
-        <Route path="/report" element={<RoleProtectedRoute><Report /></RoleProtectedRoute>} />
+        <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={['user','admin']}><Dashboard /></RoleProtectedRoute>} />
+        <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user','admin']}><Profile /></RoleProtectedRoute>} />
+        <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user','admin']}><Report /></RoleProtectedRoute>} />
 
-        {/* Admin Routes with Role Protection */}
-        <Route path="/adminDashboard" element={<RoleProtectedRoute requiredRole="admin"><AdminDashboard /></RoleProtectedRoute>} />
-        <Route path="/CategoryManagement" element={<RoleProtectedRoute requiredRole="admin"><CategoryManagement /></RoleProtectedRoute>} />
-        <Route path="/members" element={<RoleProtectedRoute requiredRole="admin"><Members /></RoleProtectedRoute>} />
+        {/* Admin-only */}
+        <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
+        <Route path="/CategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><CategoryManagement /></RoleProtectedRoute>} />
+        <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
+
+        {/* Unauthorized fallback */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
-      {/* Catch-all redirect route */}
-      <Route path="*" element={<Navigate to="/login" />} />
+
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    );
+  );
 }
