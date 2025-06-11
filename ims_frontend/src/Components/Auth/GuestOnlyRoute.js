@@ -8,7 +8,7 @@ const GuestOnlyRoute = ({ children }) => {
 
   if (user) {
     // If logged in, redirect to dashboard or home
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
