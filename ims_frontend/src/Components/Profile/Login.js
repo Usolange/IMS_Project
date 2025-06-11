@@ -1,9 +1,7 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-
-import '../CSS/Login.css';
+import '../CSS/Form.css';
 export default function Login({ switchToRegister, onCancel }) {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});

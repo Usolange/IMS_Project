@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../CSS/Form.css';
 
-export default function Register({ switchToLogin }) {
+export default function Register({ switchToLogin, onCancel }) {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -110,7 +110,7 @@ export default function Register({ switchToLogin }) {
       // Redirect to login page after successful registration
       setTimeout(() => {
         if (switchToLogin) switchToLogin();  // Switch to login form
-        else navigate('/login');  // Fallback if switchToLogin is not passed
+        else navigate('/');  // Fallback if switchToLogin is not passed
       }, 2000);
     } catch (err) {
       console.error('Registration Error:', err);
@@ -136,59 +136,62 @@ export default function Register({ switchToLogin }) {
       <h2 className="form-title">Register Super Admin</h2>
 
       <label className="form-label">Full Name</label>
-      <input 
-        name="name" 
-        value={form.name} 
-        className="form-input" 
-        onChange={handleChange} 
-        onFocus={handleFocus} 
+      <input
+        name="name"
+        value={form.name}
+        className={`form-input ${errors.name ? 'error' : ''}`}
+        onChange={handleChange}
+        onFocus={handleFocus}
       />
       {errors.name && <div className="form-error">{errors.name}</div>}
 
       <label className="form-label">Email</label>
-      <input 
-        name="email" 
-        type="email" 
-        value={form.email} 
-        className="form-input" 
-        onChange={handleChange} 
-        onFocus={handleFocus} 
+      <input
+        name="email"
+        type="email"
+        value={form.email}
+        className={`form-input ${errors.email ? 'error' : ''}`}
+        onChange={handleChange}
+        onFocus={handleFocus}
       />
       {errors.email && <div className="form-error">{errors.email}</div>}
 
       <label className="form-label">Username</label>
-      <input 
-        name="username" 
-        value={form.username} 
-        className="form-input" 
-        onChange={handleChange} 
-        onFocus={handleFocus} 
+      <input
+        name="username"
+        value={form.username}
+        className={`form-input ${errors.username ? 'error' : ''}`}
+        onChange={handleChange}
+        onFocus={handleFocus}
       />
       {errors.username && <div className="form-error">{errors.username}</div>}
 
       <label className="form-label">Phone</label>
-      <input 
-        name="phone" 
-        value={form.phone} 
-        className="form-input" 
-        onChange={handleChange} 
-        onFocus={handleFocus} 
-        type="tel" 
+      <input
+        name="phone"
+        value={form.phone}
+        className={`form-input ${errors.phone ? 'error' : ''}`}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        type="tel"
       />
       {errors.phone && <div className="form-error">{errors.phone}</div>}
 
       <label className="form-label">Password</label>
-      <input 
-        name="password" 
-        type="password" 
-        value={form.password} 
-        className="form-input" 
-        onChange={handleChange} 
-        onFocus={handleFocus} 
+      <input
+        name="password"
+        type="password"
+        value={form.password}
+        className={`form-input ${errors.password ? 'error' : ''}`}
+        onChange={handleChange}
+        onFocus={handleFocus}
       />
       {errors.password && <div className="form-error">{errors.password}</div>}
 
       <button type="submit" className="form-button-register">Register</button>
+
+      {/* Cancel button */}
+      <button type="button" className="form-button-cancel" onClick={onCancel}>Cancel</button>
 
       {status && (
         <div className={status.success ? "form-success" : "form-error"}>
@@ -197,9 +200,13 @@ export default function Register({ switchToLogin }) {
       )}
 
       {/* Switch to login text */}
-      <div className="form-switch-text-to-login">
+      <div className="form-switch-text-register">
         Already have an account?{' '}
-        <button type="button" className="form-link-to-login" onClick={switchToLogin}>
+        <button
+          type="button"
+          className="form-link-register"
+          onClick={switchToLogin}
+        >
           Click to login
         </button>
       </div>

@@ -174,11 +174,26 @@ export default function HomePage() {
 
 
       {/* ---------- MODALS ---------- */}
+
+
       <Modal isOpen={isModalOpen} closeModal={closeModal}>
-        {modalContent === "login" && <Login switchToRegister={() => setModalContent("register")} onCancel={closeModal} />}
-        {modalContent === "register" && <Register onCancel={closeModal} />}
-        {modalContent === "forgot-password" && <ForgotPassword onCancel={closeModal} />}
+        {modalContent === "login" && (
+          <Login
+            switchToRegister={() => setModalContent("register")}
+            onCancel={closeModal}
+          />
+        )}
+        {modalContent === "register" && (
+          <Register
+            switchToLogin={() => setModalContent("login")}
+            onCancel={closeModal}
+          />
+        )}
+        {modalContent === "forgot-password" && (
+          <ForgotPassword onCancel={closeModal} />
+        )}
       </Modal>
+
     </div>
   );
 }

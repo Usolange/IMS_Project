@@ -7,6 +7,7 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errors, setErrors] = useState({}); // For error messages
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -43,6 +44,11 @@ export default function Profile() {
     }
   };
 
+  const handleFieldChange = (e) => {
+    // Reset error message when the user starts typing
+    setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+  };
+
   if (!user) {
     return <p>Loading user information...</p>;
   }
@@ -59,19 +65,55 @@ export default function Profile() {
         <tbody>
           <tr>
             <th>Full Name:</th>
-            <td>{user.name}</td>
+            <td>
+              <input
+                name="name"
+                type="text"
+                value={user.name}
+                onChange={handleFieldChange}
+                className="form-input"
+              />
+              {errors.name && <div className="form-error">{errors.name}</div>}
+            </td>
           </tr>
           <tr>
             <th>Email:</th>
-            <td>{user.email}</td>
+            <td>
+              <input
+                name="email"
+                type="email"
+                value={user.email}
+                onChange={handleFieldChange}
+                className="form-input"
+              />
+              {errors.email && <div className="form-error">{errors.email}</div>}
+            </td>
           </tr>
           <tr>
             <th>Username:</th>
-            <td>{user.username}</td>
+            <td>
+              <input
+                name="username"
+                type="text"
+                value={user.username}
+                onChange={handleFieldChange}
+                className="form-input"
+              />
+              {errors.username && <div className="form-error">{errors.username}</div>}
+            </td>
           </tr>
           <tr>
             <th>Phone:</th>
-            <td>{user.phone || '-'}</td>
+            <td>
+              <input
+                name="phone"
+                type="text"
+                value={user.phone || ''}
+                onChange={handleFieldChange}
+                className="form-input"
+              />
+              {errors.phone && <div className="form-error">{errors.phone}</div>}
+            </td>
           </tr>
         </tbody>
       </table>
