@@ -116,9 +116,9 @@ export default function Login({ switchToRegister, onCancel }) {
           )}
         </div>
 
-        <div className="form-switch-text-register">
+        <div className="form-switch-text-to">
           Don't have an account?{' '}
-          <button type="button" className="form-link-register" onClick={switchToRegister}>
+          <button type="button" className="form-link-to-login" onClick={switchToRegister}>
             Register here
           </button>
         </div>

@@ -188,7 +188,7 @@ export default function Register({ switchToLogin }) {
       />
       {errors.password && <div className="form-error">{errors.password}</div>}
 
-      <button type="submit" className="form-button">Register</button>
+      <button type="submit" className="form-button-register">Register</button>
 
       {status && (
         <div className={status.success ? "form-success" : "form-error"}>
@@ -197,9 +197,9 @@ export default function Register({ switchToLogin }) {
       )}
 
       {/* Switch to login text */}
-      <div className="form-switch-text-register">
+      <div className="form-switch-text-to-login">
         Already have an account?{' '}
-        <button type="button" className="form-link-register" onClick={switchToLogin}>
+        <button type="button" className="form-link-to-login" onClick={switchToLogin}>
           Click to login
         </button>
       </div>

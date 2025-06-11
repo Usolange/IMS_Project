@@ -31,12 +31,12 @@ export default function HomePage() {
       .replace(/(^-|-$)/g, "");
 
   const featureCards = [
-    { title: "Member Management",   desc: "Onboard, edit and manage members effortlessly." },
-    { title: "Financial Management",desc: "Track contributions, loans and repayments in real‑time." },
-    { title: "Fraud Detection",     desc: "Detect anomalies and safeguard group funds." },
-    { title: "Reporting & Analytics",desc:"Generate insightful charts and downloadable reports." },
-    { title: "Loan Management",     desc: "Automate loan prediction, approval and repayment tracking." },
-    { title: "Event Time Scheduling",desc:"Define and manage schedules for Ikimina events by frequency." },
+    { title: "Member Management", desc: "Onboard, edit and manage members effortlessly." },
+    { title: "Financial Management", desc: "Track contributions, loans and repayments in real‑time." },
+    { title: "Fraud Detection", desc: "Detect anomalies and safeguard group funds." },
+    { title: "Reporting & Analytics", desc: "Generate insightful charts and downloadable reports." },
+    { title: "Loan Management", desc: "Automate loan prediction, approval and repayment tracking." },
+    { title: "Event Time Scheduling", desc: "Define and manage schedules for Ikimina events by frequency." },
   ];
 
   return (
@@ -50,7 +50,7 @@ export default function HomePage() {
 
           <nav className="nav-links">
             <a href="#welcome">Home</a>
-            <a href="#about">About&nbsp;the&nbsp;Project</a>
+            <a href="#about">About</a>
             <a href="#top-cards">Features</a>
             <a href="#modules">Additional</a>
           </nav>
@@ -124,16 +124,13 @@ export default function HomePage() {
 
         {/* ABOUT */}
         <section id="about" className="section about-section">
-         
-            <h3>About the Project</h3>
-            <p>
-              IMS streamlines community‑based savings and lending groups with powerful modules, 
-              fraud protection and mobile access all behind a clean. It removes human error, 
-              boosts transparency and automates everything from member, 
-              Registration to loan approval and real‑time reporting.
-            </p>
-         
+          <h3>About the Project</h3>
+          <p>
+            The Ikimina Management System (IMS) streamlines community-based savings and lending groups with powerful modules, fraud protection, and mobile access — all within a clean, intuitive interface.
+            It eliminates human error, enhances transparency, and automates everything from member registration to loan approvals and real-time financial reporting.
+          </p>
         </section>
+
 
         {/* ADDITIONAL MODULES */}
         <section id="modules" className="section features-section">
@@ -173,6 +170,8 @@ export default function HomePage() {
           </motion.h2>
         </div>
       )}
+
+
 
       {/* ---------- MODALS ---------- */}
       <Modal isOpen={isModalOpen} closeModal={closeModal}>

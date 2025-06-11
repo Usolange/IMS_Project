@@ -28,6 +28,7 @@
 .form-button {
   padding: 10px;
   font-size: 1rem;
+  
   background-color: #007bff;
   color: white;
   border: none;
@@ -107,13 +108,14 @@
   margin-top: 10px;
 }
 
+
 .form-link-register {
   background: none;
   border: none;
-  color: #007bff;
+  color: #327ab7;
   cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  padding: 0;
 }
 
-.form-link-register:hover {
-  text-decoration: underline;
-}
