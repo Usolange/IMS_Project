@@ -1,5 +1,5 @@
 .time-schedule-container {
-  max-width: 700px;
+  max-width: 80%;
   margin: 20px auto;
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -115,25 +115,31 @@
   border-bottom: 1px solid #ccc;
   padding-bottom: 5px;
 }
-
 .schedule-table {
-  width: 100%;
+  width: 100%; /* Full width */
   border-collapse: collapse;
   margin-top: 10px;
-  margin-bottom: 20px;
+  text-align: left; /* Align text to the left */
+  font-size: 15px;
 }
 
 .schedule-table th,
 .schedule-table td {
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left; /* Ensure alignment for both headers and cells */
 }
 
 .schedule-table th {
-  background-color: #f0f0f0;
+  background-color: #f0f0f0; /* Optional: light header background */
   font-weight: 600;
 }
+
+.schedules-display h3 {
+  margin-top: 20px;
+  font-size: 18px;
+}
+
 
 .modal-overlay {
   position: fixed;
@@ -208,4 +214,29 @@
 
 .modal-message.error {
   color: red;
+}
+.btnn {
+  width: 120px; /* Specify desired width */
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-left: 300px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btnn-primary {
+  background-color: #2b6cb0;
+  color: white;
+}
+
+.btnn-primary:hover {
+  background-color: #1a4e8a;
+}
+
+.btnn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

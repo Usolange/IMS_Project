@@ -143,21 +143,6 @@ export default function CategoryManagement() {
       {message && <p className="message">{message}</p>}
 
       {/* Show categories created by logged-in user */}
-      <div style={{ marginBottom: '20px', fontWeight: '600', color: '#2c3e50' }}>
-        <h3>Your Categories (Created by You):</h3>
-        {frequencies.filter(cat => cat.createdBy === sadId).length === 0 ? (
-          <p>No categories created by you found.</p>
-        ) : (
-          <ul>
-            {frequencies
-              .filter(cat => cat.createdBy === sadId)
-              .map(cat => (
-                <li key={cat.f_id}>{cat.f_category}</li>
-              ))}
-          </ul>
-        )}
-      </div>
-
       <div className="button-group">
         <button className="button" onClick={openModalForAdd}>Add New Category</button>
         <button className="button back-button" onClick={() => navigate('/adminDashboard')}>Back to Dashboard</button>

@@ -1,11 +1,16 @@
 const express = require('express');
 const db = require('../config/db');
+const authenticateToken = require('../Middleware/authenticateToken');
+
 const router = express.Router();
+
+// Protect all routes
+router.use(authenticateToken);
 
 // Get all categories for the logged-in user
 router.get('/selectCategories', async (req, res) => {
-  const sadId = req.headers['x-sad-id'];
-  if (!sadId) return res.status(401).json({ message: 'Missing user ID' });
+  const sadId = req.user?.id;
+  if (!sadId) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
     const [rows] = await db.execute(
@@ -13,7 +18,6 @@ router.get('/selectCategories', async (req, res) => {
       [sadId]
     );
 
-    // Map sad_id to createdBy for frontend clarity
     const mappedRows = rows.map(row => ({
       f_id: row.f_id,
       f_category: row.f_category,
@@ -29,10 +33,10 @@ router.get('/selectCategories', async (req, res) => {
 
 // Add a new category owned by this user
 router.post('/newCategory', async (req, res) => {
-  const sadId = req.headers['x-sad-id'];
+  const sadId = req.user?.id;
   const { categoryName } = req.body;
 
-  if (!sadId) return res.status(401).json({ message: 'Missing user ID' });
+  if (!sadId) return res.status(401).json({ message: 'Unauthorized' });
   if (!categoryName || categoryName.trim() === '') {
     return res.status(400).json({ message: 'Category name is required' });
   }
@@ -51,11 +55,11 @@ router.post('/newCategory', async (req, res) => {
 
 // Update category (with param id)
 router.put('/:id', async (req, res) => {
-  const sadId = req.headers['x-sad-id'];
+  const sadId = req.user?.id;
   const { id } = req.params;
   const { categoryName } = req.body;
 
-  if (!sadId) return res.status(401).json({ message: 'Missing user ID' });
+  if (!sadId) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
     const [rows] = await db.execute(
@@ -80,10 +84,10 @@ router.put('/:id', async (req, res) => {
 
 // Delete category (with param id)
 router.delete('/:id', async (req, res) => {
-  const sadId = req.headers['x-sad-id'];
+  const sadId = req.user?.id;
   const { id } = req.params;
 
-  if (!sadId) return res.status(401).json({ message: 'Missing user ID' });
+  if (!sadId) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
     const [rows] = await db.execute(

@@ -3,9 +3,16 @@ const db = require('../config/db');
 
 const router = express.Router();
 
+// Protect all routes with auth middleware
+router.use(authenticateToken);
+
 // GET all monthly times for logged-in user
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/monthly', async (req, res) => {
+  const userId = req.user?.id; // get user ID from token
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized: user not logged in' });
+  }
 
   try {
     const [rows] = await db.execute(

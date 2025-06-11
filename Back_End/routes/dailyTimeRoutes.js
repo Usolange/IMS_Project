@@ -3,9 +3,17 @@ const db = require('../config/db');
 
 const router = express.Router();
 
+// Protect all routes below with authenticateToken
+router.use(authenticateToken);
+
 // GET all daily times created by the logged-in user (based on sad_id in category)
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/daily', async (req, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized: user not logged in' });
+  }
+
   try {
     const [rows] = await db.execute(
       `SELECT d.*

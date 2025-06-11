@@ -11,16 +11,17 @@ export default function Navigation() {
             Manage Frequency Categories
           </Link>
         </li>
+         <li>
+          <Link to="/timeScheduleManagement" className="hover:underline">
+            Set Time for Frequency
+          </Link>
+        </li>
         <li>
           <Link to="/ikiminaManagement" className="hover:underline">
             Create Ikimina Group
           </Link>
         </li>
-        <li>
-          <Link to="/timeScheduleManagement" className="hover:underline">
-            Set Time for Frequency
-          </Link>
-        </li>
+       
       </ul>
     </div>
   );
