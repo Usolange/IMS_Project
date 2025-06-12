@@ -1,20 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './Components/Layout';
-import Dashboard from './Components/Dashboard';
-import Report from './Components/Report';
-import Members from './Components/Member/Members';
-import Login from './Components/Auth/Login';
-import Logout from './Components/Auth/Logout';
+
+import HomePage from './Components/Profile/HomePage';
 import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
-import HomePage from './Components/Profile/HomePage';
 import Profile from './Components/Profile/Profile';
-import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
-import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
-import Unauthorized from './Components/Auth/Unauthorized';
-import AdminDashboard from './Components/Users/Admin/AdminDashoard';
-import CategoryManagement from './Components/Users/Admin/CategoryManagement';
-import TimeScheduleManagement from './Components/Users/Admin/ScheduleManagement/TimeManager';
+
+
 import GuestLayout from './Components/Users/Guests/files/GuestLayout';
 import MemberManagement from './Components/Users/Guests/files/MemberManagement';
 import EventTimeScheduling from './Components/Users/Guests/files/EventTimeScheduling';
@@ -23,6 +14,22 @@ import LoanManagement from './Components/Users/Guests/files/LoanManagement';
 import RealTimeNotifications from './Components/Users/Guests/files/RealTimeNotifications';
 import ReportingAnalytics from './Components/Users/Guests/files/ReportingAnalytics';
 import FinancialManagement from './Components/Users/Guests/files/FinancialManagement';
+
+import Login from './Components/Auth/Login';
+import Logout from './Components/Auth/Logout';
+import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
+import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
+import Unauthorized from './Components/Auth/Unauthorized';
+
+import Layout from './Components/Layout';
+import Dashboard from './Components/Dashboard';
+import Report from './Components/Report';
+import Members from './Components/Member/Members';
+
+import AdminDashboard from './Components/Users/Admin/AdminDashoard';
+import CategoryManagement from './Components/Users/Admin/ScheduleManagement/CategoryManagement';
+import TimeScheduleManagement from './Components/Users/Admin/ScheduleManagement/TimeManager';
+import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
 
 export default function App() {
   return (
@@ -59,6 +66,8 @@ export default function App() {
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/CategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><CategoryManagement /></RoleProtectedRoute>} />
         <Route path="/timeScheduleManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeScheduleManagement /></RoleProtectedRoute>} />
+        <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
+
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
 
         {/* Unauthorized fallback */}

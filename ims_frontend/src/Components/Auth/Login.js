@@ -2,7 +2,7 @@ import React, { useState, useRef, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from './Auth';
-import '../CSS/Form.css';
+import '../CSS/Login.css'
 
 export default function Login({ switchToRegister, onCancel }) {
   const { login } = useContext(Auth);
@@ -38,19 +38,16 @@ export default function Login({ switchToRegister, onCancel }) {
     setLoading(true);
     setErrors({});
 
-    // Trim whitespace before sending
     const cleanedFormData = {
       identifier: formData.identifier.trim(),
       password: formData.password.trim(),
     };
 
-    // Optional: blur inputs to avoid re-submission
     refs.identifier.current?.blur();
     refs.password.current?.blur();
 
     try {
       const res = await axios.post('http://localhost:5000/api/userLogin/login', cleanedFormData);
-
       login(res.data.token, res.data.user);
 
       const user = res.data.user;
@@ -59,10 +56,8 @@ export default function Login({ switchToRegister, onCancel }) {
       else if (user.role === 'ikimina') navigate('/ikiminaDashboard');
       else navigate('/dashboard');
     } catch (err) {
-      // DEV: log full error to help you debug
       console.error('Login error:', err.response?.data || err.message);
 
-      // Smarter error messaging based on status code
       let errorMessage = '❌ Login failed. Please try again.';
       if (err.response?.status === 401) {
         errorMessage = '❌ Invalid credentials. Please check and try again.';
@@ -129,11 +124,7 @@ export default function Login({ switchToRegister, onCancel }) {
         )}
 
         <div className="login-buttons-container">
-          <button
-            type="submit"
-            className="login-button"
-            disabled={loading}
-          >
+          <button type="submit" className="login-button" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
           {onCancel && (
@@ -150,15 +141,19 @@ export default function Login({ switchToRegister, onCancel }) {
 
         <div className="form-switch-text-to">
           Don't have an account?{' '}
-          <button
-            type="button"
+          <span
             className="form-link-to-login"
             onClick={switchToRegister}
-            disabled={loading}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') switchToRegister(); }}
+            aria-disabled={loading}
+            style={{ pointerEvents: loading ? 'none' : 'auto' }}
           >
             Register here
-          </button>
+          </span>
         </div>
+
       </form>
     </div>
   );

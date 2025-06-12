@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../CSS/Form.css';
 
-export default function ForgotPassword() {
+export default function ForgotPassword({ onCancel, loading }) {
   const [email, setEmail] = useState('');
 
   const handleSubmit = async e => {
@@ -26,7 +25,21 @@ export default function ForgotPassword() {
         placeholder="Enter your email"
         required
       />
-      <button type="submit" className="form-button">Reset Password</button>
+      <div className="login-buttons-container">
+        <button type="submit" className="login-button" disabled={loading}>
+          {loading ? 'Sending...' : 'Reset Password'}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            className="cancel-button-login"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

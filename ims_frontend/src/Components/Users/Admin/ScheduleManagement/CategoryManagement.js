@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../../CSS/CategoryManagement.css';
+import '../../../CSS/CategoryManagement.css';
 
 export default function CategoryManagement() {
   const [frequencies, setFrequencies] = useState([]);

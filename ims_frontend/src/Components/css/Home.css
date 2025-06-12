@@ -1,229 +1,133 @@
-/* ---------------------------------
-   GLOBAL
-----------------------------------*/
-body {
-  font-family: "Inter", Arial, sans-serif;
-  background: #e0e1e4;
-  margin: 0;
-  color: #333;
-}
+/* Home.css */
 
+/* === Layout Wrappers === */
+.home-container {
+  @apply flex flex-col min-h-screen bg-gray-50 text-gray-800;
+}
 .container {
-  width: min(90%, 1100px);
-  margin-inline: auto;
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-/* ---------------------------------
-   HEADER
-----------------------------------*/
+/* === Header === */
 .header {
-  background: #2da4f9;
-  color: #fff;
-  padding-block: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  @apply bg-white shadow-sm sticky top-0 z-50;
 }
-
 .header-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply flex flex-col sm:flex-row justify-between items-center py-4 gap-2 sm:gap-0;
+}
+.logo a {
+  @apply text-2xl font-bold text-blue-700;
+}
+.nav-links {
+  @apply flex flex-wrap justify-center gap-4 sm:gap-6 text-sm;
+}
+.nav-links a {
+  @apply text-gray-700 hover:text-blue-600 transition-colors;
 }
 
-.logo a { 
-  color:#fff; 
-  text-decoration:dashed; 
-  font-size:1.3rem; }
-
-.nav-links { display:flex; gap:20px; align-items:center; }
-.nav-links a,
-.nav-links button {
-  color:#fff;
-  background:none;
-  border:beige;
-  font-size:1.0rem;
-  cursor:pointer;
+/* === Hero Section === */
+.hero-section {
+  @apply bg-gradient-to-br from-blue-50 to-white py-20 text-center;
 }
-.nav-links button {
-  padding:6px 18px;
-  border-radius:10px;
-  background:#a2aab4;
-}
-.nav-links button:hover { background:#878889;}
-
-/* ---------------------------------
-   HERO – WELCOME CARD
-----------------------------------*/
-.hero-section { 
-  padding-block: 60px; 
-  background:#fff; }
 .welcome-card {
-  text-align:center;
-  background:#fff;
-  padding:40px 30px;
-  border-radius:16px;
-  box-shadow:0 8px 20px rgba(230, 21, 21, 0.05);
+  @apply bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-lg mx-auto;
 }
-.welcome-card h1 { margin:0 0 12px; font-size:2.2rem; }
-.welcome-card p { margin-bottom:28px; font-size:1.05rem; }
-.highlight { color:#111212; font-weight: bold; }
-
+.welcome-card h1 {
+  @apply text-2xl sm:text-3xl font-bold mb-4 leading-tight;
+}
+.highlight {
+  @apply text-blue-700;
+}
+.welcome-card p {
+  @apply text-base text-gray-600 mb-4;
+}
 .action-buttons {
-  display:flex;
-  justify-content:center;
-  gap:16px;
-  margin-bottom:20px;
+  @apply flex flex-col sm:flex-row justify-center gap-4 mt-6;
 }
 .form-button {
-  padding:10px 26px;
-  border:none;
-  border-radius:8px;
-  font-weight:500;
-  cursor:pointer;
-  background:#4f9cf9;
-  color:#fff;
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition text-sm;
 }
-.form-button.green { background:#66ce8c; }
-.form-button:hover { opacity:.9; }
-
-.forgot-link { font-size:.94rem; }
+.form-button.green {
+  @apply bg-green-600 hover:bg-green-700;
+}
+.forgot-link {
+  @apply text-sm mt-4;
+}
 .form-link {
-  background:none;
-  border:none;
-  color:#4f9cf9;
-  cursor:pointer;
+  @apply text-blue-600 hover:underline;
 }
-.form-link:hover { text-decoration:underline; }
 
-/* ---------------------------------
-   FEATURE CARDS
-----------------------------------*/
-.animated-cards-section { padding-block:60px; background:#fff; }
+/* === Cards Section === */
+.animated-cards-section {
+  @apply py-16 bg-white;
+}
 .cards-grid {
-  display:grid;
-  gap:24px;
-  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8;
 }
 .card-item {
-  background:#fff;
-  padding:28px 22px;
-  border-radius:14px;
-  box-shadow:0 4px 14px rgba(0,0,0,.06);
-  text-align:center;
+  @apply bg-white border border-gray-200 rounded-xl shadow-sm p-6 text-left hover:shadow-md transition;
 }
-.card-item h2 { margin-top:0; font-size:1.2rem; }
+.card-item h2 {
+  @apply text-lg font-semibold mb-2 text-blue-700;
+}
+.card-item p {
+  @apply text-sm text-gray-600 mb-4;
+}
 .card-btn {
-  border:none;
-  background:#4f9cf9;
-  color:#fff;
-  padding:80px 18px;
-  border-radius:60px;
-  cursor:pointer;
+  @apply inline-block text-sm text-blue-600 hover:underline;
 }
-.card-btn:hover { background:#3288f6; }
 
-/* ---------------------------------
-   ABOUT
-----------------------------------*/
+/* === About Section === */
 .about-section {
-  padding: 40px 20px;
-  background-color: #f0f6fc;
-  border-radius: 12px;
-  margin: 40px auto;
-  max-width: 960px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  @apply py-16 px-4 text-center bg-gray-100;
 }
-
 .about-section h3 {
-  font-size: 1.6rem;
-  margin-bottom: 16px;
-  color: #2c3e50;
-  text-align: center;
+  @apply text-2xl sm:text-3xl font-semibold mb-4;
 }
-
 .about-section p {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #34495e;
-  text-align: center;
-  max-width: 800px;
-  margin: 0 auto;
+  @apply max-w-3xl mx-auto text-gray-700 text-sm sm:text-base;
 }
 
-
-/* ---------------------------------
-   EXTRA FEATURES GRID
-----------------------------------*/
-.features-section { padding-block:60px; background:#fff; }
+/* === Features Section === */
+.features-section {
+  @apply py-16 bg-white;
+}
 .features-grid {
-  display:grid;
-  gap:24px;
-  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6;
 }
 .feature-card {
-  background:#fff;
-  padding:22px 20px;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-  text-align:center;
+  @apply bg-gray-100 p-6 rounded-xl shadow-sm hover:shadow-md transition;
 }
-.feature-card h4 { margin:0 0 10px; font-size:1.1rem; }
+.feature-card h4 {
+  @apply text-lg font-medium mb-2 text-blue-700;
+}
+.feature-card p {
+  @apply text-sm text-gray-600;
+}
 
-/* ---------------------------------
-   FOOTER
-----------------------------------*/
+/* === Footer === */
 .footer {
-  background:#243746;
-  color:#fff;
-  text-align:center;
-  padding:10px 0;
-  font-size:.9rem;
+  @apply bg-gray-100 py-6 text-center text-sm text-gray-600;
 }
 
-/* ---------------------------------
-   WELCOME OVERLAY
-----------------------------------*/
-.welcome-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);   /* low‑opacity backdrop */
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:999;
-  cursor:pointer;
+/* === Welcome Overlay === */
+.welcome-overlay {
+  @apply fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50 cursor-pointer;
 }
-.welcome-overlay h2{
-  color:#fff;
-  font-size:2.5rem;
-  padding:1rem 2rem;
-  border-radius:12px;
-  background:rgba(255,255,255,.1);
-  border:2px solid rgba(255,255,255,.2);
+.welcome-overlay h2 {
+  @apply text-white text-2xl sm:text-3xl font-semibold text-center px-4;
 }
-.welcome-overlay .highlight{ color:#facc15; }
 
-/* ---------- LAYOUT ---------- */
-html,body { height:100%; }
-.home-container {
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
+/* === Modal Enhancements (Optional) === */
+.modal {
+  @apply bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-auto;
 }
-.main-content { flex:1; }            /* content grows, pushes footer down */
-.header { position:sticky; top:0; z-index:100; }
-
-/* nav link tweaks */
-.nav-links a { text-decoration:none; }
-.nav-links a:hover { text-decoration:underline; }
-
-/* card button as <Link> */
-.card-btn {
-  display:inline-block;
-  text-decoration:none;
-  background:#4f9cf9;
-  color:#fff;
-  padding:8px 18px;
-  border-radius:6px;
-  margin-top:14px;
+.modal h2 {
+  @apply text-lg font-semibold text-center mb-4;
 }
-.card-btn:hover { background:#3288f6; }
+.modal p.error-message {
+  @apply text-red-500 text-sm mt-1;
+}
+.modal p.success-message {
+  @apply text-green-600 text-sm mt-1;
+}

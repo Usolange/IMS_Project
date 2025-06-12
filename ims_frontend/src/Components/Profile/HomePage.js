@@ -5,7 +5,7 @@ import Register from "./Register";
 import ForgotPassword from "./ForgotPassword";
 import Login from "../Auth/Login";
 import { motion } from "framer-motion";
-import "../CSS/Home.css";
+import '../CSS/Home.css'
 
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,8 +60,7 @@ export default function HomePage() {
       <main className="main-content">
         {/* HERO – WELCOME CARD */}
         <section id="welcome" className="section hero-section">
-          <div className="container">
-            <div className="welcome-card">
+          <div className="welcome-card">
               <h1>
                 Welcome to&nbsp;
                 <span className="highlight">Ikimina Management System</span>
@@ -84,7 +83,6 @@ export default function HomePage() {
                 </button>
               </p>
             </div>
-          </div>
         </section>
 
         {/* FEATURE CARD GRID */}

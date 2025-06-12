@@ -17,7 +17,7 @@ export default function Navigation() {
           </Link>
         </li>
         <li>
-          <Link to="/ikiminaManagement" className="hover:underline">
+          <Link to="/IkiminaManagement" className="hover:underline">
             Create Ikimina Group
           </Link>
         </li>

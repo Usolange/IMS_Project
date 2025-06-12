@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ScheduleManager from './ScheduleManager'; // updated import
-import '../../../CSS/CategoryManagement.css';
-import '../../../CSS/TimeScheduleManagement.css';
+import '../../../CSS/TimeManager.css';
 
 
 export default function TimeManager() {

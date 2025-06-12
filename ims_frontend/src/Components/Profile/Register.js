@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../CSS/Form.css';
+import '../CSS/Register.css'
 
 export default function Register({ switchToLogin, onCancel }) {
   const [form, setForm] = useState({
@@ -188,11 +188,10 @@ export default function Register({ switchToLogin, onCancel }) {
       />
       {errors.password && <div className="form-error">{errors.password}</div>}
 
-      <button type="submit" className="form-button-register">Register</button>
-
-      {/* Cancel button */}
-      <button type="button" className="form-button-cancel" onClick={onCancel}>Cancel</button>
-
+      <div className="form-button-group">
+        <button type="submit" className="form-button-register">Register</button>
+        <button type="button" className="form-button-cancel" onClick={onCancel}>Cancel</button>
+      </div>
       {status && (
         <div className={status.success ? "form-success" : "form-error"}>
           {status.message}
@@ -202,13 +201,9 @@ export default function Register({ switchToLogin, onCancel }) {
       {/* Switch to login text */}
       <div className="form-switch-text-register">
         Already have an account?{' '}
-        <button
-          type="button"
-          className="form-link-register"
-          onClick={switchToLogin}
-        >
+        <span className="form-link-register" onClick={switchToLogin}>
           Click to login
-        </button>
+        </span>
       </div>
     </form>
   );
