@@ -1,0 +1,163 @@
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import IkiminaScheduleForm from './IkiminaScheduleForm'; // import your form component
+import '../../CSS/CategoryManagement.css';
+
+export default function TimeManager() {
+  const [frequencies, setFrequencies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sadId, setSadId] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null); // to hold selected freq
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const rawUser = localStorage.getItem('user');
+    if (!rawUser) {
+      localStorage.clear();
+      navigate('/');
+      return;
+    }
+    try {
+      const user = JSON.parse(rawUser);
+      if (!user?.id) {
+        localStorage.clear();
+        navigate('/');
+        return;
+      }
+      setSadId(user.id);
+    } catch {
+      localStorage.clear();
+      navigate('/');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (sadId) {
+      fetchFrequencies(sadId);
+    }
+  }, [sadId]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const fetchFrequencies = async (id) => {
+    setLoading(true);
+    setMessage('');
+    try {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
+        headers: { 'x-sad-id': id },
+      });
+      setFrequencies(res.data);
+    } catch (error) {
+      setMessage('Error fetching categories');
+      setFrequencies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openModalForEdit = (id, category) => {
+    alert(`Edit clicked for ID: ${id}, Category: ${category}`);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      alert(`Delete clicked for ID: ${id}`);
+    }
+  };
+
+  // Open schedule form for the selected category
+  const handleSelectCategory = (category) => {
+    setSelectedCategory(category);
+  };
+
+  // Close schedule form handler
+  const closeScheduleForm = () => {
+    setSelectedCategory(null);
+  };
+
+  return (
+    <div className="container">
+      <h2>Frequency Categories</h2>
+
+      {message && <p className="message">{message}</p>}
+
+      {loading ? (
+        <p>Loading categories...</p>
+      ) : (
+        <>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Created By</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
+                <th style={{ textAlign: 'center' }}>Schedule</th>
+              </tr>
+            </thead>
+            <tbody>
+              {frequencies.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center' }}>
+                    No categories found
+                  </td>
+                </tr>
+              ) : (
+                frequencies.map((f, index) => (
+                  <tr key={f.f_id} className="table-row">
+                    <td>{index + 1}</td>
+                    <td>{f.f_category}</td>
+                    <td>{f.createdBy}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        className="action-button"
+                        onClick={() => openModalForEdit(f.f_id, f.f_category)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="action-button delete-button"
+                        onClick={() => handleDelete(f.f_id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        className="action-button"
+                        onClick={() => handleSelectCategory(f)}
+                      >
+                        Set Schedule
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          {/* Show schedule form for selected category */}
+          {selectedCategory && (
+            <div className="schedule-form-container">
+              <h3>
+                Set Schedule for Category: <em>{selectedCategory.f_category}</em>
+              </h3>
+              <IkiminaScheduleForm
+                category={selectedCategory}
+                sadId={sadId}
+                onClose={closeScheduleForm}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

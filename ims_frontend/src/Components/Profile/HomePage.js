@@ -6,7 +6,6 @@ import ForgotPassword from "./ForgotPassword";
 import Login from "../Auth/Login";
 import { motion } from "framer-motion";
 import "../CSS/Home.css";
-import "../CSS/Form.css";
 
 export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

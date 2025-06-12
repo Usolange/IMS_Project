@@ -1,0 +1,46 @@
+.schedule-form-container {
+  @apply max-w-xl mx-auto p-6 bg-white shadow rounded-xl mt-8;
+}
+
+.schedule-form-container h2 {
+  @apply text-xl font-bold mb-4;
+}
+
+.schedule-form-message {
+  @apply mb-4 text-sm text-red-600;
+}
+
+.schedule-form {
+  @apply space-y-4;
+}
+
+.schedule-input,
+.schedule-select,
+.schedule-time {
+  @apply w-full px-4 py-2 border rounded focus:outline-none focus:ring;
+}
+
+.schedule-button {
+  @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded;
+}
+
+.weekly-grid,
+.monthly-grid {
+  @apply grid gap-2;
+}
+
+.weekly-grid {
+  @apply grid-cols-3;
+}
+
+.monthly-grid {
+  @apply grid-cols-6 max-h-40 overflow-y-auto border p-2 rounded;
+}
+
+.checkbox-label {
+  @apply flex items-center space-x-2;
+}
+
+.checkbox-label span {
+  @apply text-sm;
+}

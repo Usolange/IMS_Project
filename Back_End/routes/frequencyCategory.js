@@ -4,32 +4,35 @@ const db = require('../config/db');
 const router = express.Router();
 
 // Get all categories for the logged-in user based on x-sad-id header
+// Get all categories with admin name
 router.get('/selectCategories', async (req, res) => {
   const sadId = req.headers['x-sad-id'];
-  console.log('GET /selectCategories', { sadId });
-
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
   try {
     const [rows] = await db.execute(
-      'SELECT f_id, f_category, sad_id FROM frequency_category_info WHERE sad_id = ?',
+      `SELECT f.f_id, f.f_category, a.sad_names
+       FROM frequency_category_info f
+       JOIN supper_admin a ON f.sad_id = a.sad_id
+       WHERE f.sad_id = ?`,
       [sadId]
     );
 
-    console.log('Fetched rows:', rows);
-
-    const mappedRows = rows.map(row => ({
+    const mapped = rows.map(row => ({
       f_id: row.f_id,
       f_category: row.f_category,
-      createdBy: row.sad_id,
+      createdBy: row.sad_names, // now full name
     }));
 
-    res.json(mappedRows);
+    res.json(mapped);
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
+
 
 
 // Add a new category

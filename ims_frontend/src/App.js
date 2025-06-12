@@ -14,7 +14,7 @@ import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import CategoryManagement from './Components/Users/Admin/CategoryManagement';
-import TimeScheduleManagement from './Components/Users/Admin/TimeScheduleManagement';
+import TimeScheduleManagement from './Components/Users/Admin/ScheduleManagement/TimeManager';
 import GuestLayout from './Components/Users/Guests/files/GuestLayout';
 import MemberManagement from './Components/Users/Guests/files/MemberManagement';
 import EventTimeScheduling from './Components/Users/Guests/files/EventTimeScheduling';

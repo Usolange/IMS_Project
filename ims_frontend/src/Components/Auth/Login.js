@@ -8,6 +8,7 @@ export default function Login({ switchToRegister, onCancel }) {
   const { login } = useContext(Auth);
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const refs = {
@@ -34,21 +35,48 @@ export default function Login({ switchToRegister, onCancel }) {
       return;
     }
 
+    setLoading(true);
+    setErrors({});
+
+    // Trim whitespace before sending
+    const cleanedFormData = {
+      identifier: formData.identifier.trim(),
+      password: formData.password.trim(),
+    };
+
+    // Optional: blur inputs to avoid re-submission
+    refs.identifier.current?.blur();
+    refs.password.current?.blur();
+
     try {
-      const res = await axios.post('http://localhost:5000/api/userLogin/login', formData);
+      const res = await axios.post('http://localhost:5000/api/userLogin/login', cleanedFormData);
 
       login(res.data.token, res.data.user);
 
       const user = res.data.user;
-
       if (user.role === 'admin') navigate('/adminDashboard');
       else if (user.role === 'member') navigate('/dashboard');
       else if (user.role === 'ikimina') navigate('/ikiminaDashboard');
       else navigate('/dashboard');
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || '❌ Login failed. Please check your credentials.';
+      // DEV: log full error to help you debug
+      console.error('Login error:', err.response?.data || err.message);
+
+      // Smarter error messaging based on status code
+      let errorMessage = '❌ Login failed. Please try again.';
+      if (err.response?.status === 401) {
+        errorMessage = '❌ Invalid credentials. Please check and try again.';
+      } else if (err.response?.status === 400) {
+        errorMessage = err.response.data.message || '❌ Bad request.';
+      } else if (err.code === 'ECONNREFUSED') {
+        errorMessage = '❌ Cannot connect to server.';
+      } else if (err.response?.status >= 500) {
+        errorMessage = '❌ Server error. Try again later.';
+      }
+
       setErrors({ server: errorMessage });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +95,7 @@ export default function Login({ switchToRegister, onCancel }) {
           aria-describedby="error-identifier"
           aria-invalid={!!errors.identifier}
           autoComplete="username"
+          disabled={loading}
         />
         {errors.identifier && (
           <div id="error-identifier" className="error" aria-live="polite">
@@ -85,6 +114,7 @@ export default function Login({ switchToRegister, onCancel }) {
           aria-describedby="error-password"
           aria-invalid={!!errors.password}
           autoComplete="current-password"
+          disabled={loading}
         />
         {errors.password && (
           <div id="error-password" className="error" aria-live="polite">
@@ -99,15 +129,33 @@ export default function Login({ switchToRegister, onCancel }) {
         )}
 
         <div className="login-buttons-container">
-          <button type="submit" className="login-button">Login</button>
+          <button
+            type="submit"
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
           {onCancel && (
-            <button type="button" className="cancel-button-login" onClick={onCancel}>Cancel</button>
+            <button
+              type="button"
+              className="cancel-button-login"
+              onClick={onCancel}
+              disabled={loading}
+            >
+              Cancel
+            </button>
           )}
         </div>
 
         <div className="form-switch-text-to">
           Don't have an account?{' '}
-          <button type="button" className="form-link-to-login" onClick={switchToRegister}>
+          <button
+            type="button"
+            className="form-link-to-login"
+            onClick={switchToRegister}
+            disabled={loading}
+          >
             Register here
           </button>
         </div>

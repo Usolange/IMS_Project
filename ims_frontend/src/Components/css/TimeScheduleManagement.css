@@ -1,242 +1,253 @@
-.time-schedule-container {
-  max-width: 80%;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+/* timemanagement.css */
+
+/* --- Container & Layout --- */
+.container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1rem 1.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
 }
 
-.time-schedule-title {
-  text-align: center;
-  margin-bottom: 20px;
-  font-weight: 700;
-  font-size: 1.8rem;
-  color: #333;
+/* --- Headings --- */
+h2, h3 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
 }
 
-.form-table {
-  width: 100%;
-  max-width: 600px;
-  border-collapse: separate;
-  border-spacing: 0 12px;
-  margin-bottom: 30px;
-}
-
-.form-table td {
-  vertical-align: middle;
-  padding: 4px 10px;
-}
-
-.form-label {
+h3 {
   font-weight: 600;
-  padding-right: 10px;
-  white-space: nowrap;
 }
 
-.form-input,
-.form-multiselect {
+/* --- Table Styling --- */
+.table {
   width: 100%;
-  padding: 8px 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #34495e;
+  vertical-align: middle;
+}
+
+.table th {
+  background-color: #f4f6f8;
+  font-weight: 600;
+}
+
+.table-row:hover {
+  background-color: #f0f8ff;
+  cursor: default;
+}
+
+/* Center text in some columns */
+.table th:nth-child(4),
+.table th:nth-child(5),
+.table td:nth-child(4),
+.table td:nth-child(5) {
+  text-align: center;
+}
+
+/* --- Buttons --- */
+.action-button {
+  background-color: #3498db;
+  border: none;
+  color: white;
+  padding: 0.38rem 0.85rem;
+  margin: 0 0.25rem;
+  font-size: 0.9rem;
   border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.action-button:hover {
+  background-color: #2980b9;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+/* --- Schedule Form Container --- */
+.schedule-form-container {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fafafa;
+  box-shadow: inset 0 0 10px rgb(0 0 0 / 0.03);
+  margin-top: 1.5rem;
+}
+
+/* --- Forms & Inputs --- */
+form {
+  max-width: 100%;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #2c3e50;
+}
+
+input[type="time"],
+input[type="text"],
+select {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-size: 1rem;
+  border: 1.8px solid #ccc;
+  border-radius: 5px;
+  transition: border-color 0.25s ease;
   box-sizing: border-box;
 }
 
-.form-multiselect {
-  height: 100px;
+input[type="time"]:focus,
+input[type="text"]:focus,
+select:focus {
+  border-color: #3498db;
+  outline: none;
 }
 
-.btn {
-  padding: 10px 20px;
-  font-size: 15px;
+/* --- Checkbox Label Styling for Weekly/Monthly --- */
+label.cursor-pointer {
+  user-select: none;
+  border: 1.6px solid #bbb;
+  padding: 0.35rem 0.8rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  color: #34495e;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  display: inline-block;
+  margin: 0.15rem 0.2rem;
   cursor: pointer;
+}
+
+label.cursor-pointer input[type='checkbox'] {
+  display: none;
+}
+
+label.cursor-pointer.bg-blue-600,
+label.cursor-pointer:hover {
+  background-color: #3498db;
+  border-color: #2980b9;
+  color: white;
+}
+
+/* --- Buttons in Forms --- */
+button[type="submit"],
+button[type="button"] {
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
   border-radius: 5px;
   border: none;
-  background-color: #0053ba;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  user-select: none;
+  margin-top: 0.6rem;
+}
+
+button[type="submit"] {
+  background-color: #3498db;
   color: white;
-  transition: background-color 0.3s ease;
 }
 
-.btn:hover:not(:disabled) {
-  background-color: #003f8a;
+button[type="submit"]:hover:not(:disabled) {
+  background-color: #2980b9;
 }
 
-.btn:disabled {
-  background-color: #999;
+button[type="submit"]:disabled {
+  background-color: #85b6e0;
   cursor: not-allowed;
 }
 
-.btn-primary {
-  width: 100%;
-  font-weight: 700;
+button[type="button"] {
+  background-color: #bdc3c7;
+  color: #2c3e50;
+  margin-left: 0.8rem;
 }
 
-.btn-small {
+button[type="button"]:hover {
+  background-color: #95a5a6;
+}
+
+/* --- Messages --- */
+.message,
+p.text-red-600 {
+  font-weight: 600;
+  margin-top: 0.6rem;
+  margin-bottom: 0.8rem;
+  color: #e74c3c;
+}
+
+/* --- Responsive --- */
+@media (max-width: 720px) {
+  .container {
+    padding: 1rem;
+    margin: 0.8rem;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .action-button {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    margin: 0 0.15rem;
+  }
+
+  /* Stack schedule form buttons vertically on small screens */
+  .schedule-form-container button[type="submit"],
+  .schedule-form-container button[type="button"] {
+    display: block;
+    width: 100%;
+    margin: 0.4rem 0 0 0;
+  }
+
+  .schedule-form-container button[type="button"] {
+    margin-left: 0;
+  }
+
+  /* Checkbox labels stack on smaller devices */
+  label.cursor-pointer {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* --- Utility Classes --- */
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+.back-button {
+  background-color: #e2e8f0;
+  color: #1a202c;
   padding: 6px 12px;
-  font-size: 13px;
-  margin-left: 5px;
-  background-color: #007bff;
-}
-
-.btn-small:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.btn-link {
-  border: none;
-  background: none;
-  color: #007bff;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 0;
-}
-
-.btn-link:hover {
-  color: #0056b3;
-}
-
-.message-success {
-  color: green;
-  font-weight: 600;
-  margin-top: 10px;
-}
-
-.message-error {
-  color: red;
-  font-weight: 600;
-  margin-top: 10px;
-}
-
-.schedules-display h3 {
-  margin-top: 25px;
-  font-weight: 700;
-  color: #222;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 5px;
-}
-.schedule-table {
-  width: 100%; /* Full width */
-  border-collapse: collapse;
-  margin-top: 10px;
-  text-align: left; /* Align text to the left */
-  font-size: 15px;
-}
-
-.schedule-table th,
-.schedule-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: left; /* Ensure alignment for both headers and cells */
-}
-
-.schedule-table th {
-  background-color: #f0f0f0; /* Optional: light header background */
-  font-weight: 600;
-}
-
-.schedules-display h3 {
-  margin-top: 20px;
-  font-size: 18px;
-}
-
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
-}
-
-.modal-content {
-  background: white;
-  padding: 25px;
-  border-radius: 6px;
-  width: 400px;
-  max-width: 90%;
-  box-sizing: border-box;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.modal-title {
-  margin-bottom: 15px;
-  font-weight: 700;
-  font-size: 1.3rem;
-  color: #222;
-}
-
-.modal-input {
-  width: 100%;
-  padding: 10px;
-  font-size: 15px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-cancel {
-  background-color: #999;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background-color: #666;
-}
-
-.btn-confirm {
-  background-color: #28a745;
-}
-
-.btn-confirm:hover:not(:disabled) {
-  background-color: #19692c;
-}
-
-.modal-message {
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.modal-message.success {
-  color: green;
-}
-
-.modal-message.error {
-  color: red;
-}
-.btnn {
-  width: 120px; /* Specify desired width */
-  padding: 8px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-left: 300px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  border: none;
+  transition: background-color 0.2s ease-in-out;
 }
 
-.btnn-primary {
-  background-color: #2b6cb0;
-  color: white;
-}
-
-.btnn-primary:hover {
-  background-color: #1a4e8a;
-}
-
-.btnn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.back-button:hover {
+  background-color: #cbd5e0;
 }

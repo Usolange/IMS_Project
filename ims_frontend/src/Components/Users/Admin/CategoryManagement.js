@@ -141,8 +141,13 @@ export default function CategoryManagement() {
       {message && <p className="message">{message}</p>}
 
       <div className="button-group">
-        <button className="button" onClick={openModalForAdd}>Add New Category</button>
-        <button className="button back-button" onClick={() => navigate('/adminDashboard')}>Back to Dashboard</button>
+        <button className="action-button back-button" onClick={openModalForAdd}>Add New Category</button>
+        <button
+      className="action-button back-button"
+      onClick={() => navigate('/adminDashboard')}
+    >
+      ← Back
+    </button>
       </div>
 
       <div className="table-container">
