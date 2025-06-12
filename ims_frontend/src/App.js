@@ -3,12 +3,12 @@ import Layout from './Components/Layout';
 import Dashboard from './Components/Dashboard';
 import Report from './Components/Report';
 import Members from './Components/Member/Members';
-import Login from './Components/Profile/Login';
+import Login from './Components/Auth/Login';
+import Logout from './Components/Auth/Logout';
 import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
 import HomePage from './Components/Profile/HomePage';
 import Profile from './Components/Profile/Profile';
-import Logout from './Components/Profile/Logout';
 import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
 import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
@@ -41,11 +41,10 @@ export default function App() {
         <Route path="real-time-notifications" element={<RealTimeNotifications />} />
       </Route>
 
-      {/* Guest-only: Login, Register, Forgot Password */}
+      {/* Guest-only routes */}
       <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>} />
       <Route path="/register" element={<GuestOnlyRoute><Register /></GuestOnlyRoute>} />
       <Route path="/forgot-password" element={<GuestOnlyRoute><ForgotPassword /></GuestOnlyRoute>} />
-
 
       {/* Logout */}
       <Route path="/logout" element={<Logout />} />

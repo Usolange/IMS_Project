@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
-const authenticateToken = require('../Middleware/authenticateToken');
 
 router.put('/supperAdmin/:id',  async (req, res) => {
 

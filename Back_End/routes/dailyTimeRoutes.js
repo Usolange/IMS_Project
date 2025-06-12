@@ -3,9 +3,6 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Protect all routes below with authenticateToken
-router.use(authenticateToken);
-
 // GET all daily times created by the logged-in user (based on sad_id in category)
 router.get('/daily', async (req, res) => {
   const userId = req.user?.id;

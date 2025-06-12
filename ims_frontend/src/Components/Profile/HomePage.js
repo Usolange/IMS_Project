@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Modal from "./Modal";
 import Register from "./Register";
 import ForgotPassword from "./ForgotPassword";
-import Login from "./Login";
+import Login from "../Auth/Login";
 import { motion } from "framer-motion";
 import "../CSS/Home.css";
 import "../CSS/Form.css";

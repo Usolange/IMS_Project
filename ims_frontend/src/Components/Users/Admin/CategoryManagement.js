@@ -14,7 +14,6 @@ export default function CategoryManagement() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // Check login status on mount
   useEffect(() => {
     const rawUser = localStorage.getItem('user');
     if (!rawUser) {
@@ -37,14 +36,12 @@ export default function CategoryManagement() {
     }
   }, [navigate]);
 
-  // Fetch frequency categories when sadId is set
   useEffect(() => {
     if (sadId) {
       fetchFrequencies(sadId);
     }
   }, [sadId]);
 
-  // Autofocus input when modal is opened
   useEffect(() => {
     if (modalOpen && inputRef.current) {
       inputRef.current.focus();
@@ -105,7 +102,8 @@ export default function CategoryManagement() {
         );
         setMessage('✅ Category updated');
       } else {
-        await axios.post('http://localhost:5000/api/frequencyCategory/newCategory',
+        await axios.post(
+          'http://localhost:5000/api/frequencyCategory/newCategory',
           { categoryName: trimmedCategory },
           { headers: { 'x-sad-id': sadId } }
         );
@@ -142,7 +140,6 @@ export default function CategoryManagement() {
 
       {message && <p className="message">{message}</p>}
 
-      {/* Show categories created by logged-in user */}
       <div className="button-group">
         <button className="button" onClick={openModalForAdd}>Add New Category</button>
         <button className="button back-button" onClick={() => navigate('/adminDashboard')}>Back to Dashboard</button>
@@ -178,25 +175,24 @@ export default function CategoryManagement() {
         </table>
       </div>
 
-      {/* Modal */}
       {modalOpen && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>{editId ? 'Edit Category' : 'Add New Category'}</h3>
             <form onSubmit={handleSubmit}>
               <input
-                type="text"
-                placeholder="Enter category"
-                value={category}
                 ref={inputRef}
+                type="text"
+                value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                required
+                placeholder="Category Name"
+                autoFocus
               />
               <div className="modal-buttons">
-                <button type="button" className="button back-button" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="button" disabled={loading}>
-                  {loading ? 'Saving...' : editId ? 'Update' : 'Add'}
+                <button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : 'Save'}
                 </button>
+                <button type="button" onClick={closeModal}>Cancel</button>
               </div>
             </form>
           </div>

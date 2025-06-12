@@ -3,8 +3,6 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Protect all routes with auth middleware
-router.use(authenticateToken);
 
 // GET all weekly times for logged-in user
 router.get('/weekly', async (req, res) => {

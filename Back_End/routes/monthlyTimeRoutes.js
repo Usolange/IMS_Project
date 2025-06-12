@@ -3,8 +3,6 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Protect all routes with auth middleware
-router.use(authenticateToken);
 
 // GET all monthly times for logged-in user
 router.get('/monthly', async (req, res) => {

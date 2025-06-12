@@ -1,8 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Auth } from './Auth';
 import '../CSS/Form.css';
+
 export default function Login({ switchToRegister, onCancel }) {
+  const { login } = useContext(Auth);
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
@@ -21,8 +24,8 @@ export default function Login({ switchToRegister, onCancel }) {
     e.preventDefault();
 
     const newErrors = {};
-    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Please! Please enter your Email or Username';
-    if (!formData.password.trim()) newErrors.password = '⚠️ Please! Please enter your Password';
+    if (!formData.identifier.trim()) newErrors.identifier = '⚠️ Please enter your Email or Username';
+    if (!formData.password.trim()) newErrors.password = '⚠️ Please enter your Password';
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
@@ -34,30 +37,20 @@ export default function Login({ switchToRegister, onCancel }) {
     try {
       const res = await axios.post('http://localhost:5000/api/userLogin/login', formData);
 
-      // Store token and user info
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      login(res.data.token, res.data.user);
 
       const user = res.data.user;
 
-      // Redirect based on role
-      if (user.role === 'admin') {
-        navigate('/adminDashboard');
-      } else if (user.role === 'member') {
-        navigate('/dashboard');
-      } else if (user.role === 'ikimina') {
-        navigate('/ikiminaashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      if (user.role === 'admin') navigate('/adminDashboard');
+      else if (user.role === 'member') navigate('/dashboard');
+      else if (user.role === 'ikimina') navigate('/ikiminaDashboard');
+      else navigate('/dashboard');
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || '❌ Login failed. Please check your credentials.';
       setErrors({ server: errorMessage });
     }
   };
-
-
 
   return (
     <div>
@@ -108,9 +101,7 @@ export default function Login({ switchToRegister, onCancel }) {
         <div className="login-buttons-container">
           <button type="submit" className="login-button">Login</button>
           {onCancel && (
-            <button type="button" className="cancel-button-login" onClick={onCancel}>
-              Cancel
-            </button>
+            <button type="button" className="cancel-button-login" onClick={onCancel}>Cancel</button>
           )}
         </div>
 
