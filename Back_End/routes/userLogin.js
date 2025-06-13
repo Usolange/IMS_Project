@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
   try {
     // 1) Super‑Admin
     const [adminRows] = await db.execute(
-      `SELECT sad_id, sad_names, sad_email, sad_username, sad_phone, sad_pass
+      `SELECT sad_id, sad_names, sad_email, sad_username, sad_phone, sad_pass,sad_loc
        FROM supper_admin
        WHERE sad_email = ? OR sad_username = ? OR sad_phone = ?`,
       [identifier, identifier, identifier]
@@ -37,6 +37,7 @@ router.post('/login', async (req, res) => {
             email: admin.sad_email,
             phone: admin.sad_phone,
             username: admin.sad_username,
+            userLocation: admin.sad_loc,
             role: 'admin'
           }
         });

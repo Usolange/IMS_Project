@@ -6,6 +6,7 @@ import './CSS/Layout.css';
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [userName, setUserName] = useState('');
+  const [userLocation, setUserLocation] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -15,6 +16,11 @@ export default function Layout() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user?.name) setUserName(user.name);
+  }, []);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.userLocation) setUserLocation(user.userLocation);
   }, []);
 
   useEffect(() => {
@@ -52,7 +58,11 @@ export default function Layout() {
   return (
     <div className="app-layout">
       {/* Sidebar toggle button */}
-      <button className="sidebar-toggle-button" onClick={toggleSidebar} aria-label="Toggle sidebar">
+      <button
+        className="sidebar-toggle-button"
+        onClick={toggleSidebar}
+        aria-label="Toggle sidebar"
+      >
         {isSidebarVisible ? <ChevronLeft size={28} /> : <Menu size={28} />}
       </button>
 
@@ -60,11 +70,31 @@ export default function Layout() {
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
         <nav className="sidebar-menu" aria-label="Sidebar navigation">
           <ul className="menu-list">
-            <li><Link to="/" className="sidebar-item">Dashboard</Link></li>
-            <li><Link to="/report" className="sidebar-item">Reports</Link></li>
-            <li><Link to="/members" className="sidebar-item">Members</Link></li>
-            <li><Link to="/loans" className="sidebar-item">Loans</Link></li>
-            <li><Link to="/settings" className="sidebar-item">Settings</Link></li>
+            <li>
+              <Link to="/" className="sidebar-item">
+                Dashboard
+              </Link>
+            </li>
+            <li>
+              <Link to="/report" className="sidebar-item">
+                Reports
+              </Link>
+            </li>
+            <li>
+              <Link to="/members" className="sidebar-item">
+                Members
+              </Link>
+            </li>
+            <li>
+              <Link to="/loans" className="sidebar-item">
+                Loans
+              </Link>
+            </li>
+            <li>
+              <Link to="/settings" className="sidebar-item">
+                Settings
+              </Link>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -72,31 +102,46 @@ export default function Layout() {
       {/* Main content */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
         <header className="navbar" role="banner">
-          <div className="navbar-title" aria-label="Application title">Name of Sector</div>
+          <div className="navbar-title" aria-label="Application title">
+            Sector: {userLocation}
+          </div>
 
           <div className="navbar-links">
-            <div className="search-wrapper" role="search" aria-label="Site search">
-  <input
-    type="text"
-    className="search-input"
-    placeholder="Search..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    aria-label="Search"
-    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-  />
-  <button
-    className="search-icon"
-    onClick={handleSearch}
-    aria-label="Execute search"
-  >
-    🔍
-  </button>
-</div>
+            <div
+              className="search-wrapper"
+              role="search"
+              aria-label="Site search"
+            >
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <button
+                className="search-icon"
+                onClick={handleSearch}
+                aria-label="Execute search"
+              >
+                🔍
+              </button>
+            </div>
 
-         <div className="notification-icon" role="button" aria-label="Notifications" tabIndex={0}>🔔</div>
+            <div
+              className="notification-icon"
+              role="button"
+              aria-label="Notifications"
+              tabIndex={0}
+            >
+              🔔
+            </div>
 
-            <div className="username" aria-label="User name">{userName || 'Guest'}</div>
+            <div className="username" aria-label="User name">
+              {userName || 'Guest'}
+            </div>
 
             <div className="profile-dropdown-wrapper" ref={dropdownRef}>
               <button
@@ -110,7 +155,14 @@ export default function Layout() {
               </button>
               {showDropdown && (
                 <div className="dropdown-content" role="menu">
-                  <Link to="/profile" className="dropdown-link" role="menuitem" onClick={() => setShowDropdown(false)}>Profile</Link>
+                  <Link
+                    to="/profile"
+                    className="dropdown-link"
+                    role="menuitem"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Profile
+                  </Link>
                   <button
                     className="dropdown-link"
                     role="menuitem"
@@ -124,7 +176,11 @@ export default function Layout() {
           </div>
         </header>
 
-        {showToast && <div className="toast-message" role="alert">👋 Logged out successfully</div>}
+        {showToast && (
+          <div className="toast-message" role="alert">
+            👋 Logged out successfully
+          </div>
+        )}
 
         <main className="main-content" role="main">
           <Outlet />

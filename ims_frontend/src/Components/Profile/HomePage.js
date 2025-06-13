@@ -123,7 +123,7 @@ export default function HomePage() {
           <h3 className="text-2xl sm:text-3xl font-semibold mb-8">System Features</h3>
 
           <motion.div
-            className="cards-grid max-w-7xl mx-auto grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+            className="cards-grid max-w-7xl mx-auto grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 text-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
@@ -185,7 +185,7 @@ export default function HomePage() {
 
 <footer className="footer">
   <div className="sub-container">
-    © {new Date().getFullYear()} Ikimina IMS. All rights reserved.
+    © {new Date().getFullYear()} IMS. All rights reserved Developed by ElSol.
   </div>
 </footer>
 

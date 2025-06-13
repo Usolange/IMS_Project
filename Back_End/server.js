@@ -10,6 +10,9 @@ const ikiminaInfoRoutes = require('./routes/ikiminaInfo');
 const DailyTimeRoutes = require('./routes/dailyTimeRoutes');
 const WeeklyTimeRoutes = require('./routes/weeklyTimeRoutes');
 const MonthlyTimeRoutes = require('./routes/monthlyTimeRoutes');
+
+const LocationManagerRoutes = require('./routes/LocationManagerRoutes');
+
 const memberTypeRoutes = require('./routes/memberType');
 const gudianMembersRoutes = require('./routes/gudianMembers');
 const membersInfoRoutes = require('./routes/membersInfo');
@@ -35,6 +38,7 @@ app.use('/api/supperAdmin', supperAdminRoutes);
 app.use('/api/frequencyCategory', frequencyCategoryRoutes);
 app.use('/api/ikiminaInfo', ikiminaInfoRoutes);
 app.use('/api/DailyTimeRoutes', DailyTimeRoutes);
+app.use('/api/LocationManagerRoutes', LocationManagerRoutes);
 app.use('/api/WeeklyTimeRoutes', WeeklyTimeRoutes);
 app.use('/api/MonthlyTimeRoutes', MonthlyTimeRoutes);
 app.use('/api/memberType', memberTypeRoutes);

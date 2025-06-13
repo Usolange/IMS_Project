@@ -1,36 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../../CSS/Navigation.css'
 
 export default function Navigation() {
   return (
-    <nav className="w-64 h-screen bg-gray-800 text-white p-6 flex flex-col">
-      <h2 className="text-2xl font-bold mb-8 select-none">Admin Dashboard</h2>
-      <ul className="flex flex-col gap-4">
-        <li>
-          <Link
-            to="/CategoryManagement"
-            className="block px-4 py-2 rounded hover:bg-gray-700 focus:bg-gray-700 focus:outline-none transition-colors"
-          >
-            Manage Frequency Categories
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/timeScheduleManagement"
-            className="block px-4 py-2 rounded hover:bg-gray-700 focus:bg-gray-700 focus:outline-none transition-colors"
-          >
-            Set Time for Frequency
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/IkiminaManagement"
-            className="block px-4 py-2 rounded hover:bg-gray-700 focus:bg-gray-700 focus:outline-none transition-colors"
-          >
-            Create Ikimina Group
-          </Link>
-        </li>
-      </ul>
-    </nav>
+    <nav className="nav-sidebar">
+  <h2 className="nav-title">Admin Dashboard</h2>
+  <ul className="nav-list">
+     <li>
+      <Link to="/LocationManager" className="nav-link">
+        Manage Location
+      </Link>
+    </li>
+    <li>
+      <Link to="/CategoryManagement" className="nav-link">
+        Manage Frequency Categories
+      </Link>
+    </li>
+    <li>
+      <Link to="/timeScheduleManagement" className="nav-link">
+        Set Time for Frequency
+      </Link>
+    </li>
+    <li>
+      <Link to="/IkiminaManagement" className="nav-link">
+        Create Ikimina Group
+      </Link>
+    </li>
+  </ul>
+</nav>
+
   );
 }
+

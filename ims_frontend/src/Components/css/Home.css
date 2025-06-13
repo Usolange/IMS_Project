@@ -137,8 +137,9 @@
 }
 
 .sub-container {
-  @apply max-w-7xl mx-auto px-6 text-center text-sm text-gray-600;
+  @apply max-w-7xl mx-auto px-6 text-center text-xl text-white font-bold;
 }
+
 
 
 /* === Welcome Overlay === */
