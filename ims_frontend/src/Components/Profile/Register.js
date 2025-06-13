@@ -35,7 +35,6 @@ export default function Register({ switchToLogin, onCancel }) {
     let tempErrors = { ...errors };
     let isValid = true;
 
-    // Validate name
     if (!form.name) {
       tempErrors.name = "Full Name is required.";
       isValid = false;
@@ -43,7 +42,6 @@ export default function Register({ switchToLogin, onCancel }) {
       tempErrors.name = '';
     }
 
-    // Validate email
     if (!form.email) {
       tempErrors.email = "Email is required.";
       isValid = false;
@@ -54,7 +52,6 @@ export default function Register({ switchToLogin, onCancel }) {
       tempErrors.email = '';
     }
 
-    // Validate username
     if (!form.username) {
       tempErrors.username = "Username is required.";
       isValid = false;
@@ -62,7 +59,6 @@ export default function Register({ switchToLogin, onCancel }) {
       tempErrors.username = '';
     }
 
-    // Validate phone number (basic validation for format)
     if (!form.phone) {
       tempErrors.phone = "Phone number is required.";
       isValid = false;
@@ -73,7 +69,6 @@ export default function Register({ switchToLogin, onCancel }) {
       tempErrors.phone = '';
     }
 
-    // Validate password
     if (!form.password) {
       tempErrors.password = "Password is required.";
       isValid = false;
@@ -87,18 +82,16 @@ export default function Register({ switchToLogin, onCancel }) {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setStatus(null);  // Clear previous status
+    setStatus(null);
 
     if (!validateForm()) {
       return;
     }
 
     try {
-      // Send the request to the backend
       const res = await axios.post('http://localhost:5000/api/userLogin/register', form);
       setStatus({ success: true, message: res.data.message });
 
-      // Reset the form after successful submission
       setForm({
         name: '',
         email: '',
@@ -107,20 +100,14 @@ export default function Register({ switchToLogin, onCancel }) {
         password: ''
       });
 
-      // Redirect to login page after successful registration
       setTimeout(() => {
-        if (switchToLogin) switchToLogin();  // Switch to login form
-        else navigate('/');  // Fallback if switchToLogin is not passed
+        if (switchToLogin) switchToLogin();
+        else navigate('/');
       }, 2000);
     } catch (err) {
       console.error('Registration Error:', err);
       const errorMessage = err.response?.data?.message || 'Registration failed, please try again later.';
-      setStatus({
-        success: false,
-        message: errorMessage
-      });
-
-      // Clear the form upon error to allow a fresh attempt
+      setStatus({ success: false, message: errorMessage });
       setForm({
         name: '',
         email: '',
@@ -135,53 +122,53 @@ export default function Register({ switchToLogin, onCancel }) {
     <form onSubmit={handleSubmit} className="form-container">
       <h2 className="form-title">Register Super Admin</h2>
 
-      <label className="form-label">Full Name</label>
       <input
         name="name"
         value={form.name}
+        placeholder="Full Name"
         className={`form-input ${errors.name ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
       />
       {errors.name && <div className="form-error">{errors.name}</div>}
 
-      <label className="form-label">Email</label>
       <input
         name="email"
         type="email"
         value={form.email}
+        placeholder="Email"
         className={`form-input ${errors.email ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
       />
       {errors.email && <div className="form-error">{errors.email}</div>}
 
-      <label className="form-label">Username</label>
       <input
         name="username"
         value={form.username}
+        placeholder="Username"
         className={`form-input ${errors.username ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
       />
       {errors.username && <div className="form-error">{errors.username}</div>}
 
-      <label className="form-label">Phone</label>
       <input
         name="phone"
+        type="tel"
         value={form.phone}
+        placeholder="Phone"
         className={`form-input ${errors.phone ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
-        type="tel"
       />
       {errors.phone && <div className="form-error">{errors.phone}</div>}
 
-      <label className="form-label">Password</label>
       <input
         name="password"
         type="password"
         value={form.password}
+        placeholder="Password"
         className={`form-input ${errors.password ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
@@ -192,13 +179,13 @@ export default function Register({ switchToLogin, onCancel }) {
         <button type="submit" className="form-button-register">Register</button>
         <button type="button" className="form-button-cancel" onClick={onCancel}>Cancel</button>
       </div>
+
       {status && (
         <div className={status.success ? "form-success" : "form-error"}>
           {status.message}
         </div>
       )}
 
-      {/* Switch to login text */}
       <div className="form-switch-text-register">
         Already have an account?{' '}
         <span className="form-link-register" onClick={switchToLogin}>

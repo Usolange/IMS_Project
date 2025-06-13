@@ -1,75 +1,36 @@
-/* Guest Layout Wrapper */
+/* === Layout Wrapper === */
 .guest-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 90vh;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f2f7fc;  /* Soft light blue background */
-  color: #1e2a38; /* Darker navy text */
+  @apply min-h-screen flex flex-col bg-gray-50 text-gray-800 w-full;
 }
 
+/* === Header === */
 .guest-header {
-  background-color: #327ab7;
-  text-align: center;
-  color: white;
-  padding: 10px 0; /* Reduced vertical space */
-  border-bottom: 1px solid #255a8c;
+  @apply bg-white shadow py-6 w-full;
 }
 
-
-.guest-header .container {
-  max-width: 960px;
-  margin: 0 auto;
+.title {
+  @apply text-center text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-700 mb-1;
 }
 
-.guest-header .title {
-    font-size: 1.1rem;
-  font-weight: bold;
-  letter-spacing: 0.4px;
-}
-.guest-header p:not(.title) {
-    font-size: 0.8rem;
-  font-weight:500;
-  letter-spacing: 0.4px;
+/* === Subtitle Section === */
+.subtitle-wrapper {
+  @apply bg-white w-full text-center pb-4;
 }
 
-
-@media (max-width: 600px) {
-  .guest-header .title {
-    font-size: 1rem;
-  }
-
-  .guest-header p:not(.title) {
-    font-size: 0.8rem;
-  }
+.subtitle {
+  @apply text-sm sm:text-base md:text-lg text-gray-600;
 }
 
-
-
-/* Main Content */
+/* === Main Content === */
 .guest-main-content {
-  flex-grow: 1;
-  background-color: #ffffff;
-  border-radius: 10px;
-  padding: 30px 20px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  @apply w-full flex-1 px-4 sm:px-6 lg:px-8 py-8;
 }
 
-/* Footer */
+/* === Footer === */
 .guest-footer {
-  background-color: #2e6a98;
-  color: white;
-  text-align: center;
-  padding: 10px 0;
-  font-size: 0.9rem;
-  font-weight: 500;
+  @apply bg-gray-100 border-t py-4 text-center text-sm text-gray-600 w-full;
 }
 
-/* Container Utility */
-.container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 15px;
+.guest-footer .container {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
 }

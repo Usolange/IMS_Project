@@ -1,119 +1,151 @@
-/* Home.css */
-
 /* === Layout Wrappers === */
 .home-container {
   @apply flex flex-col min-h-screen bg-gray-50 text-gray-800;
 }
-.container {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-}
+
+/* Remove container global styling to avoid conflicts */
+/* We use max-w and padding selectively on inner elements */
 
 /* === Header === */
 .header {
-  @apply bg-white shadow-sm sticky top-0 z-50;
+  @apply w-full fixed top-0 left-0 right-0 bg-white shadow z-50;
+  margin-left: 0;
+  margin-right: 0;
+  /* no horizontal padding */
 }
+
 .header-wrapper {
-  @apply flex flex-col sm:flex-row justify-between items-center py-4 gap-2 sm:gap-0;
+  @apply w-full flex justify-between items-center py-4 px-6;
 }
+
 .logo a {
   @apply text-2xl font-bold text-blue-700;
 }
+
 .nav-links {
   @apply flex flex-wrap justify-center gap-4 sm:gap-6 text-sm;
 }
+
 .nav-links a {
   @apply text-gray-700 hover:text-blue-600 transition-colors;
 }
 
 /* === Hero Section === */
 .hero-section {
-  @apply bg-gradient-to-br from-blue-50 to-white py-20 text-center;
+  @apply bg-gradient-to-br from-blue-50 to-white py-16 flex flex-col items-center w-full;
 }
-.welcome-card {
-  @apply bg-white rounded-2xl shadow-lg p-6 sm:p-8 max-w-lg mx-auto;
+
+.welcome-title {
+  @apply text-3xl sm:text-4xl font-bold mb-8 text-center;
 }
-.welcome-card h1 {
-  @apply text-2xl sm:text-3xl font-bold mb-4 leading-tight;
-}
+
 .highlight {
   @apply text-blue-700;
 }
+
+.welcome-card {
+  @apply bg-white rounded-2xl shadow-lg p-8 max-w-lg w-full text-center mx-auto;
+}
+
 .welcome-card p {
-  @apply text-base text-gray-600 mb-4;
+  @apply text-base text-gray-600 mb-6;
 }
+
 .action-buttons {
-  @apply flex flex-col sm:flex-row justify-center gap-4 mt-6;
+  @apply flex flex-col sm:flex-row justify-center gap-4 mb-6;
 }
+
 .form-button {
   @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition text-sm;
 }
+
 .form-button.green {
   @apply bg-green-600 hover:bg-green-700;
 }
+
 .forgot-link {
-  @apply text-sm mt-4;
+  @apply text-sm;
 }
+
 .form-link {
-  @apply text-blue-600 hover:underline;
+  @apply text-blue-600 hover:underline cursor-pointer;
 }
 
 /* === Cards Section === */
 .animated-cards-section {
   @apply py-16 bg-white;
 }
+
 .cards-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8;
+  max-width: 100%; /* override if needed */
 }
+
 .card-item {
   @apply bg-white border border-gray-200 rounded-xl shadow-sm p-6 text-left hover:shadow-md transition;
 }
+
 .card-item h2 {
   @apply text-lg font-semibold mb-2 text-blue-700;
 }
+
 .card-item p {
   @apply text-sm text-gray-600 mb-4;
 }
+
 .card-btn {
   @apply inline-block text-sm text-blue-600 hover:underline;
 }
 
 /* === About Section === */
 .about-section {
-  @apply py-16 px-4 text-center bg-gray-100;
+  @apply py-16 px-6 bg-gray-100 text-left;
 }
+
 .about-section h3 {
   @apply text-2xl sm:text-3xl font-semibold mb-4;
 }
+
 .about-section p {
-  @apply max-w-3xl mx-auto text-gray-700 text-sm sm:text-base;
+  @apply text-gray-700 text-base leading-relaxed;
 }
 
 /* === Features Section === */
 .features-section {
-  @apply py-16 bg-white;
+  @apply py-16 bg-white px-6;
 }
+
 .features-grid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6 max-w-7xl mx-auto;
 }
+
 .feature-card {
-  @apply bg-gray-100 p-6 rounded-xl shadow-sm hover:shadow-md transition;
+  @apply bg-gray-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-500 ease-in-out;
 }
+
 .feature-card h4 {
   @apply text-lg font-medium mb-2 text-blue-700;
 }
+
 .feature-card p {
   @apply text-sm text-gray-600;
 }
 
 /* === Footer === */
 .footer {
-  @apply bg-gray-100 py-6 text-center text-sm text-gray-600;
+  @apply w-full bg-gray-100 border-t border-gray-200 py-6;
 }
+
+.sub-container {
+  @apply max-w-7xl mx-auto px-6 text-center text-sm text-gray-600;
+}
+
 
 /* === Welcome Overlay === */
 .welcome-overlay {
   @apply fixed inset-0 bg-black/60 backdrop-blur flex items-center justify-center z-50 cursor-pointer;
 }
+
 .welcome-overlay h2 {
   @apply text-white text-2xl sm:text-3xl font-semibold text-center px-4;
 }
@@ -122,12 +154,15 @@
 .modal {
   @apply bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-auto;
 }
+
 .modal h2 {
   @apply text-lg font-semibold text-center mb-4;
 }
+
 .modal p.error-message {
   @apply text-red-500 text-sm mt-1;
 }
+
 .modal p.success-message {
   @apply text-green-600 text-sm mt-1;
 }

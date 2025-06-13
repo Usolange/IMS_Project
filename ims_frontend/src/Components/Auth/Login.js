@@ -2,13 +2,15 @@ import React, { useState, useRef, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from './Auth';
-import '../CSS/Login.css'
+import { Eye, EyeOff } from 'lucide-react';
+import '../CSS/Login.css';  // keep your css file
 
 export default function Login({ switchToRegister, onCancel }) {
   const { login } = useContext(Auth);
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const refs = {
@@ -76,9 +78,10 @@ export default function Login({ switchToRegister, onCancel }) {
   };
 
   return (
-    <div>
-      <h2 className="form-title">Login</h2>
-      <form onSubmit={handleLogin} className="form-container" noValidate>
+    <div className="form-container dark:bg-gray-900 dark:text-white max-w-md mx-auto p-6 rounded-md shadow-md">
+      <h2 className="form-title text-center text-2xl font-semibold mb-4">Login</h2>
+
+      <form onSubmit={handleLogin} noValidate>
         <input
           name="identifier"
           ref={refs.identifier}
@@ -86,11 +89,11 @@ export default function Login({ switchToRegister, onCancel }) {
           placeholder="Email / Username / Phone"
           value={formData.identifier}
           onChange={handleChange}
-          className="form-input"
           aria-describedby="error-identifier"
           aria-invalid={!!errors.identifier}
           autoComplete="username"
           disabled={loading}
+          className={`form-input ${errors.identifier ? 'input-error' : ''}`}
         />
         {errors.identifier && (
           <div id="error-identifier" className="error" aria-live="polite">
@@ -98,19 +101,33 @@ export default function Login({ switchToRegister, onCancel }) {
           </div>
         )}
 
-        <input
-          name="password"
-          ref={refs.password}
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          className="form-input"
-          aria-describedby="error-password"
-          aria-invalid={!!errors.password}
-          autoComplete="current-password"
-          disabled={loading}
-        />
+        <div className="relative">
+          <input
+            name="password"
+            ref={refs.password}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            aria-describedby="error-password"
+            aria-invalid={!!errors.password}
+            autoComplete="current-password"
+            disabled={loading}
+            className={`form-input pr-10 ${errors.password ? 'input-error' : ''}`}
+          />
+          <span
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
+            aria-label="Toggle password visibility"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') setShowPassword((prev) => !prev);
+            }}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </span>
+        </div>
         {errors.password && (
           <div id="error-password" className="error" aria-live="polite">
             {errors.password}
@@ -118,19 +135,23 @@ export default function Login({ switchToRegister, onCancel }) {
         )}
 
         {errors.server && (
-          <div className="error" aria-live="polite">
+          <div className="error server-error" aria-live="polite">
             {errors.server}
           </div>
         )}
 
-        <div className="login-buttons-container">
-          <button type="submit" className="login-button" disabled={loading}>
+        <div className="login-buttons-container flex justify-center space-x-4 mt-4">
+          <button
+            type="submit"
+            className="login-button bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded px-4 py-2 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 h-10 min-w-[90px]"
+            disabled={loading}
+          >
             {loading ? 'Logging in...' : 'Login'}
           </button>
           {onCancel && (
             <button
               type="button"
-              className="cancel-button-login"
+              className="cancel-button-login bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white rounded px-4 py-2 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400 h-10 min-w-[90px]"
               onClick={onCancel}
               disabled={loading}
             >
@@ -139,21 +160,23 @@ export default function Login({ switchToRegister, onCancel }) {
           )}
         </div>
 
-        <div className="form-switch-text-to">
-          Don't have an account?{' '}
+
+        <div className="form-switch-text-to text-center mt-5 text-sm">
+          Don&apos;t have an account?{' '}
           <span
-            className="form-link-to-login"
+            className="form-link-to-login text-blue-600 hover:underline cursor-pointer"
             onClick={switchToRegister}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') switchToRegister(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') switchToRegister();
+            }}
             aria-disabled={loading}
             style={{ pointerEvents: loading ? 'none' : 'auto' }}
           >
             Register here
           </span>
         </div>
-
       </form>
     </div>
   );

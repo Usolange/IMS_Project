@@ -29,7 +29,9 @@ export default function RealTimeNotifications() {
           <li>📱 Works across mobile, tablet, and desktop</li>
         </ul>
         <div className="back-home">
-          <Link to="/" className="btn-back">⬅ Back to Home</Link>
+          <Link to="/#top-cards" className="btn-back">
+            ⬅ Back to Home
+          </Link>
         </div>
       </motion.main>
     </div>

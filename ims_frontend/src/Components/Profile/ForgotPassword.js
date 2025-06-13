@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../CSS/ForgotPassword.css'
 
 export default function ForgotPassword({ onCancel, loading }) {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ export default function ForgotPassword({ onCancel, loading }) {
     }
   };
 
-  return (
+   return (
     <form onSubmit={handleSubmit} className="form-container">
       <label className="form-label">Email</label>
       <input
@@ -24,15 +25,24 @@ export default function ForgotPassword({ onCancel, loading }) {
         className="form-input"
         placeholder="Enter your email"
         required
+        onInvalid={e => {
+          if (!e.target.value) {
+            e.target.setCustomValidity('Email is required. Please enter your email.');
+          } else {
+            e.target.setCustomValidity('Please enter a valid email address.');
+          }
+        }}
+        onInput={e => e.target.setCustomValidity('')}
       />
-      <div className="login-buttons-container">
-        <button type="submit" className="login-button" disabled={loading}>
-          {loading ? 'Sending...' : 'Reset Password'}
+
+      <div className="buttons-container">
+        <button type="submit" className="reset-button" disabled={loading}>
+          {loading ? 'Sending...' : 'Reset'}
         </button>
         {onCancel && (
           <button
             type="button"
-            className="cancel-button-login"
+            className="cancel-button"
             onClick={onCancel}
             disabled={loading}
           >

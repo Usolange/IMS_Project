@@ -13,7 +13,7 @@ export default function ReportingAnalytics() {
         transition={{ duration: 0.6 }}
       >
         <p className="guest-feature-title">📊 Reporting & Analytics</p>
-        <p  className="guest-feature-sub-title">Generate reports and analyze group performance and trends.</p>
+        <p className="guest-feature-sub-title">Generate reports and analyze group performance and trends.</p>
       </motion.header>
 
       <motion.main
@@ -29,7 +29,9 @@ export default function ReportingAnalytics() {
           <li>📅 Filter data by date range, frequency, or group</li>
         </ul>
         <div className="back-home">
-          <Link to="/" className="btn-back">⬅ Back to Home</Link>
+          <Link to="/#top-cards" className="btn-back">
+            ⬅ Back to Home
+          </Link>
         </div>
       </motion.main>
     </div>

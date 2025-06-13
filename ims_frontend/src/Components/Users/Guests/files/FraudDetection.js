@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import "../css/GuestFeaturePage.css";
 
 export default function FraudDetection() {
   return (
@@ -11,7 +12,7 @@ export default function FraudDetection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <h1>🛡️ Fraud Detection</h1>
+        <h3>🛡️ Fraud Detection</h3>
         <p>Detect anomalies, irregular transactions, and protect group funds.</p>
       </motion.header>
 
@@ -28,7 +29,9 @@ export default function FraudDetection() {
           <li>📜 Maintain a history of flagged activities</li>
         </ul>
         <div className="back-home">
-          <Link to="/" className="btn-back">⬅ Back to Home</Link>
+          <Link to="/#top-cards" className="btn-back">
+            ⬅ Back to Home
+          </Link>
         </div>
       </motion.main>
     </div>

@@ -120,9 +120,8 @@ body, html, #root {
   font-size: 22px;
   font-weight: 700;
   position: absolute;
-  left: 50%;
+  left: 20%;
   transform: translateX(-50%);
-  user-select: none;
 }
 
 /* Navbar links right side */
@@ -134,23 +133,35 @@ body, html, #root {
   gap: 15px;
 }
 
-/* Search */
+
 .search-wrapper {
   display: flex;
   align-items: center;
   border-radius: 20px;
-  background: white;
+  background: #ffffff;
   padding: 2px 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.search-wrapper:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .search-input {
   border: none;
   outline: none;
-  color: black;
-  padding: 5px 8px;
+  color: #333;
+  padding: 8px 12px;
   width: 140px;
   border-radius: 20px 0 0 20px;
   font-size: 14px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.search-input:focus {
+  background-color: #f9f9f9;
+  width: 180px;
 }
 
 .search-icon {
@@ -158,9 +169,21 @@ body, html, #root {
   border: none;
   cursor: pointer;
   font-size: 16px;
-  padding: 5px;
+  padding: 8px;
   border-radius: 0 20px 20px 0;
+  transition: background-color 0.3s ease;
 }
+
+.search-icon:hover {
+  background-color: #f0f0f0;
+}
+
+@media (min-width: 768px) {
+  .search-input {
+    width: 180px;
+  }
+}
+
 
 /* Notification */
 .notification-icon {
@@ -188,7 +211,7 @@ body, html, #root {
 
 .dropdown-content {
   position: absolute;
-  top: 30px;
+  top: 60px;
   right: 0;
   background: white;
   color: black;
@@ -225,10 +248,10 @@ body, html, #root {
 /* Main content should be scrollable */
 .main-content {
   flex-grow: 1;
-  overflow-y: auto; /* scroll if content too tall */
-  margin-top: 60px;  /* space for fixed navbar */
+  overflow-y: auto;   /* space for fixed navbar */
   padding: 20px;
   background: #fff;
+  height: 2vh;
 }
 
 /* Footer just sits below main-content */
@@ -252,7 +275,7 @@ body, html, #root {
 /* Toast message */
 .toast-message {
   position: fixed;
-  bottom: 30px;
+  top: 65px;
   right: 30px;
   background-color: #28a745;
   color: white;
@@ -281,5 +304,3 @@ body, html, #root {
 
  
 }
-
-

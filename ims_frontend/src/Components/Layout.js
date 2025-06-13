@@ -51,7 +51,7 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      {/* Sidebar toggle button fixed top-left */}
+      {/* Sidebar toggle button */}
       <button className="sidebar-toggle-button" onClick={toggleSidebar} aria-label="Toggle sidebar">
         {isSidebarVisible ? <ChevronLeft size={28} /> : <Menu size={28} />}
       </button>
@@ -69,28 +69,32 @@ export default function Layout() {
         </nav>
       </aside>
 
-      {/* Main wrapper shifts right with sidebar */}
+      {/* Main content */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
         <header className="navbar" role="banner">
-          {/* Centered title */}
-          <div className="navbar-title" aria-label="Application title">Ikimina Admin</div>
+          <div className="navbar-title" aria-label="Application title">Name of Sector</div>
 
-          {/* Right-side navbar controls */}
           <div className="navbar-links">
-            <div className="search-wrapper" role="search">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                aria-label="Search"
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              />
-              <button className="search-icon" onClick={handleSearch} aria-label="Execute search">🔍</button>
-            </div>
+            <div className="search-wrapper" role="search" aria-label="Site search">
+  <input
+    type="text"
+    className="search-input"
+    placeholder="Search..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    aria-label="Search"
+    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+  />
+  <button
+    className="search-icon"
+    onClick={handleSearch}
+    aria-label="Execute search"
+  >
+    🔍
+  </button>
+</div>
 
-            <div className="notification-icon" role="button" aria-label="Notifications" tabIndex={0}>🔔</div>
+         <div className="notification-icon" role="button" aria-label="Notifications" tabIndex={0}>🔔</div>
 
             <div className="username" aria-label="User name">{userName || 'Guest'}</div>
 
@@ -119,17 +123,17 @@ export default function Layout() {
             </div>
           </div>
         </header>
- {showToast && <div className="toast-message" role="alert">👋 Logged out successfully</div>}
+
+        {showToast && <div className="toast-message" role="alert">👋 Logged out successfully</div>}
+
         <main className="main-content" role="main">
           <Outlet />
         </main>
 
-       <footer className={`footer ${isSidebarVisible ? '' : 'full-width'}`}>
-  © 2025 Ikimina Management System
-</footer>
+        <footer className={`footer ${isSidebarVisible ? '' : 'full-width'}`}>
+          © 2025 Ikimina Management System
+        </footer>
       </div>
-
-     
     </div>
   );
 }

@@ -1,54 +1,129 @@
+/* GuestFeaturePage.css */
+
+/* Container page wrapper */
 .guest-feature-page {
-  padding: 40px 20px;
-  color: #2c3e50;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Inter', sans-serif;
+  color: #374151; /* text-gray-700 */
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgb(0 0 0 / 0.1);
 }
 
+/* Header wrapper */
 .guest-feature-header {
   text-align: center;
-  margin-bottom: 30px;
+  padding: 2rem 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+  color: #111827; /* text-gray-900 */
 }
 
-.guest-feature-header h1 {
-  font-size: 2rem;
-  color: #1e88e5;
+/* For the ReportingAnalytics special title and subtitle */
+.guest-feature-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
 }
 
-.guest-feature-header p {
-  font-size: 1.1rem;
-  color: #555;
+.guest-feature-sub-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
 }
 
+/* Main content area */
 .guest-feature-content {
-  max-width: 700px;
-  margin: 0 auto;
-  background-color: #fdfdfd;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem 1rem 2rem;
 }
 
-.feature-list {
-  list-style-type: none;
-  padding-left: 0;
-  line-height: 2rem;
-  margin-top: 20px;
+/* Section inside main content */
+.guest-section {
+  margin-bottom: 2rem;
 }
 
+/* Lists */
+
+.feature-list,
+.benefits-list,
+.step-list {
+  margin-top: 0.75rem;
+  margin-left: 1.25rem;
+  padding-left: 1rem;
+  list-style-position: inside;
+  color: #374151;
+}
+
+.feature-list li,
+.benefits-list li,
+.step-list li {
+  margin-bottom: 0.6rem;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+/* Step list with numbers */
+.step-list {
+  list-style-type: decimal;
+}
+
+/* Back home button container */
 .back-home {
-  margin-top: 30px;
   text-align: center;
+  margin-top: 2rem;
 }
 
+/* Back button */
 .btn-back {
-  background-color: #1e88e5;
-  color: white;
-  padding: 10px 18px;
-  border-radius: 6px;
+  display: inline-block;
+  background-color: #2563eb; /* blue-600 */
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
   text-decoration: none;
-  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
 }
 
-.btn-back:hover {
-  background-color: #1565c0;
+.btn-back:hover,
+.btn-back:focus {
+  background-color: #1d4ed8; /* blue-700 */
+  outline: none;
+}
+
+/* Responsive tweaks */
+
+@media (max-width: 640px) {
+  .guest-feature-page {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .guest-feature-header {
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .guest-feature-title {
+    font-size: 1.5rem;
+  }
+
+  .guest-feature-sub-title {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature-list li,
+  .benefits-list li,
+  .step-list li {
+    font-size: 0.9rem;
+  }
+
+  .btn-back {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
 }

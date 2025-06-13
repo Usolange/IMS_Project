@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import "../css/MemberManagement.css";
+import "../css/GuestFeaturePage.css";
 
 export default function MemberManagement() {
   return (
@@ -76,7 +76,7 @@ export default function MemberManagement() {
         </motion.section>
 
         <div className="back-home">
-          <Link to="/" className="btn-back">
+          <Link to="/#top-cards" className="btn-back">
             ⬅ Back to Home
           </Link>
         </div>

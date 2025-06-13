@@ -1,15 +1,20 @@
 import React, { useContext } from 'react';
 import { Auth } from './Auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function LogoutButton() {
   const { logout } = useContext(Auth);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = (e) => {
+    e.preventDefault(); // prevent default link behavior
+    logout();           // clear auth
+    navigate('/');      // redirect after logout
   };
 
-  return <button onClick={handleLogout}>Logout</button>;
+  return (
+    <Link to="/" onClick={handleLogout} className="dropdown-link" role="menuitem">
+      Logout
+    </Link>
+  );
 }
