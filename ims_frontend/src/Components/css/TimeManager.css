@@ -2,23 +2,29 @@
 
 /* --- Container & Layout --- */
 .container {
-  max-width: 900px;
-  margin: 1.5rem auto;
-  padding: 1rem 1.5rem;
+  max-width: 1000px;
+  margin-top: 5%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
 }
 
 /* --- Headings --- */
-h2, h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
+.header-actions {
+  width: 400px;
+  display: flex;
+  justify-content: center;
+  margin-left: 20%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4rem;
 }
 
-h3 {
-  font-weight: 600;
+.page-title {
+  font-size: 1.8rem;
+  margin-top: 1rem;
+  color: #222;
+  text-align: center;
 }
 
 /* --- Table Styling --- */
@@ -41,7 +47,7 @@ h3 {
 
 .table th {
   background-color: #f4f6f8;
-  font-weight: 600;
+  font-weight: 900;
 }
 
 .table-row:hover {
@@ -54,7 +60,7 @@ h3 {
 .table th:nth-child(5),
 .table td:nth-child(4),
 .table td:nth-child(5) {
-  text-align: center;
+  text-align: left;
 }
 
 /* --- Buttons --- */
@@ -68,7 +74,6 @@ h3 {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  user-select: none;
 }
 
 .action-button:hover {
@@ -126,7 +131,6 @@ select:focus {
 
 /* --- Checkbox Label Styling for Weekly/Monthly --- */
 label.cursor-pointer {
-  user-select: none;
   border: 1.6px solid #bbb;
   padding: 0.35rem 0.8rem;
   border-radius: 5px;
@@ -158,7 +162,6 @@ button[type="button"] {
   border: none;
   cursor: pointer;
   transition: background-color 0.25s ease;
-  user-select: none;
   margin-top: 0.6rem;
 }
 
@@ -234,9 +237,10 @@ p.text-red-600 {
 }
 
 /* --- Utility Classes --- */
-.space-y-4 > * + * {
+.space-y-4>*+* {
   margin-top: 1rem;
 }
+
 .back-button {
   background-color: #e2e8f0;
   color: #1a202c;

@@ -12,14 +12,14 @@ export default function Navigation() {
         Manage Location
       </Link>
     </li>
-    <li>
+    {/* <li>
       <Link to="/CategoryManagement" className="nav-link">
         Manage Frequency Categories
       </Link>
-    </li>
+    </li> */}
     <li>
-      <Link to="/timeScheduleManagement" className="nav-link">
-        Set Time for Frequency
+      <Link to="/TimeManager" className="nav-link">
+        Manage Time
       </Link>
     </li>
     <li>

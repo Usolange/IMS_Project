@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 14, 2025 at 10:48 AM
+-- Generation Time: Jun 14, 2025 at 06:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,13 +38,12 @@ CREATE TABLE `frequency_category_info` (
 --
 
 INSERT INTO `frequency_category_info` (`f_id`, `f_category`, `sad_id`) VALUES
-(4, 'Daily', 1),
-(6, 'Weekly', 1),
-(7, 'Monthly', 1),
-(14, 'Daily', 2),
-(15, 'Weekly', 2),
-(20, 'Monthly', 2),
-(21, 'annualy', 1);
+(1, 'Daily', 2),
+(2, 'Daily', 1),
+(3, 'Weekly', 1),
+(4, 'Weekly', 2),
+(5, 'Monthly', 2),
+(6, 'Monthly', 1);
 
 -- --------------------------------------------------------
 
@@ -86,6 +85,7 @@ CREATE TABLE `ikimina_info` (
 
 CREATE TABLE `ikimina_locations` (
   `id` int(11) NOT NULL,
+  `ikimina_id` int(11) NOT NULL,
   `ikimina_name` varchar(30) DEFAULT NULL,
   `province` varchar(20) DEFAULT NULL,
   `district` varchar(20) DEFAULT NULL,
@@ -99,9 +99,12 @@ CREATE TABLE `ikimina_locations` (
 -- Dumping data for table `ikimina_locations`
 --
 
-INSERT INTO `ikimina_locations` (`id`, `ikimina_name`, `province`, `district`, `sector`, `cell`, `village`, `sad_id`) VALUES
-(2, NULL, 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Ntovi', 'Kigese', 1),
-(3, NULL, 'Amajyepfjo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 2);
+INSERT INTO `ikimina_locations` (`id`, `ikimina_id`, `ikimina_name`, `province`, `district`, `sector`, `cell`, `village`, `sad_id`) VALUES
+(1, 1, 'Tuzamurane', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 2),
+(2, 2, 'NEW Vission', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Kivumu', 'Gahondo', 2),
+(4, 4, 'NEW Vission', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Ntovi', 'Rwamibabi', 1),
+(5, 5, 'Tuzamurane', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Ntovi', 'Rukumberi', 1),
+(6, 6, 'Twihaze', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Gituza', 'Gitesanyi', 1);
 
 -- --------------------------------------------------------
 
@@ -113,18 +116,17 @@ CREATE TABLE `ik_daily_time_info` (
   `dtime_id` int(11) NOT NULL,
   `ikimina_name` varchar(20) DEFAULT NULL,
   `dtime_time` time NOT NULL,
-  `f_id` int(11) NOT NULL
+  `f_id` int(11) NOT NULL,
+  `ikimina_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ik_daily_time_info`
 --
 
-INSERT INTO `ik_daily_time_info` (`dtime_id`, `ikimina_name`, `dtime_time`, `f_id`) VALUES
-(1, 'Tuza', '14:30:00', 4),
-(2, 'Tga', '16:44:00', 4),
-(3, 'Tuzamurane', '18:01:00', 14),
-(4, 'IKIM', '22:06:00', 4);
+INSERT INTO `ik_daily_time_info` (`dtime_id`, `ikimina_name`, `dtime_time`, `f_id`, `ikimina_id`) VALUES
+(1, 'NEW Vission', '21:57:00', 2, 4),
+(2, 'NEW Vission', '20:55:00', 1, 2);
 
 -- --------------------------------------------------------
 
@@ -137,37 +139,20 @@ CREATE TABLE `ik_monthly_time_info` (
   `ikimina_name` varchar(20) DEFAULT NULL,
   `monthlytime_date` varchar(100) NOT NULL,
   `monthlytime_time` time NOT NULL,
-  `f_id` int(11) NOT NULL
+  `f_id` int(11) NOT NULL,
+  `ikimina_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ik_monthly_time_info`
 --
 
-INSERT INTO `ik_monthly_time_info` (`monthlytime_id`, `ikimina_name`, `monthlytime_date`, `monthlytime_time`, `f_id`) VALUES
-(1, 'KU', '2025-06-09', '18:00:00', 7),
-(2, 'jfg', '2025-06-17,2025-06-05', '18:02:00', 7),
-(3, 'Terimbere', '1,7,13,20,26,30,31,25', '12:13:00', 7),
-(4, 'Tera', '1,15,26,31,30', '19:08:00', 7),
-(5, 'hfdk', '1,6,14,19,31', '23:29:00', 7),
-(6, 'hjk', '4,9,16,22,29', '22:33:00', 7),
-(7, 'Tuzan', '4', '12:34:00', 7),
-(8, 'Tuzan', '10', '12:34:00', 7),
-(9, 'Tuzan', '17', '12:34:00', 7),
-(10, 'Tuzan', '23', '12:34:00', 7),
-(11, 'Tuzan', '30', '12:34:00', 7),
-(12, 'Tuzan', '4', '12:34:00', 7),
-(13, 'Tuzan', '10', '12:34:00', 7),
-(14, 'Tuzan', '17', '12:34:00', 7),
-(15, 'Tuzan', '23', '12:34:00', 7),
-(16, 'Tuzan', '30', '12:34:00', 7),
-(17, 'Tuzan', '26', '12:34:00', 7),
-(18, 'sps', '2', '13:41:00', 20),
-(19, 'sps', '9', '13:41:00', 20),
-(20, 'sps', '14', '13:41:00', 20),
-(21, 'sps', '17', '13:41:00', 20),
-(22, 'sps', '22', '13:41:00', 20),
-(23, 'sps', '28', '13:41:00', 20);
+INSERT INTO `ik_monthly_time_info` (`monthlytime_id`, `ikimina_name`, `monthlytime_date`, `monthlytime_time`, `f_id`, `ikimina_id`) VALUES
+(1, 'Twihaze', '4', '22:22:00', 6, 6),
+(2, 'Twihaze', '8', '22:22:00', 6, 6),
+(3, 'Twihaze', '15', '22:22:00', 6, 6),
+(4, 'Twihaze', '22', '22:22:00', 6, 6),
+(5, 'Twihaze', '31', '22:22:00', 6, 6);
 
 -- --------------------------------------------------------
 
@@ -180,25 +165,17 @@ CREATE TABLE `ik_weekly_time_info` (
   `ikimina_name` varchar(20) DEFAULT NULL,
   `weeklytime_day` varchar(60) NOT NULL,
   `weeklytime_time` time NOT NULL,
-  `f_id` int(11) NOT NULL
+  `f_id` int(11) NOT NULL,
+  `ikimina_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ik_weekly_time_info`
 --
 
-INSERT INTO `ik_weekly_time_info` (`weeklytime_id`, `ikimina_name`, `weeklytime_day`, `weeklytime_time`, `f_id`) VALUES
-(1, 'Tuzamurane', 'Monday', '21:01:00', 15),
-(2, 'Tuzamurane', 'Saturday', '21:01:00', 15),
-(3, 'Terimbere', 'Monday', '13:05:00', 15),
-(4, 'Terimbere', 'Tuesday', '13:05:00', 15),
-(5, 'Terimbere', 'Wednesday', '13:05:00', 15),
-(6, 'Terimbere', 'Friday', '13:05:00', 15),
-(7, 'Terimbere', 'Thursday', '13:05:00', 15),
-(8, 'Terimbere', 'Sunday', '13:05:00', 15),
-(9, 'soso', 'Wednesday', '13:44:00', 15),
-(10, 'soso', 'Saturday', '13:44:00', 15),
-(11, 'soso', 'Tuesday', '13:44:00', 15);
+INSERT INTO `ik_weekly_time_info` (`weeklytime_id`, `ikimina_name`, `weeklytime_day`, `weeklytime_time`, `f_id`, `ikimina_id`) VALUES
+(4, 'Tuzamurane', 'Tuesday', '23:17:00', 3, 5),
+(5, 'Tuzamurane', 'Friday', '23:17:00', 3, 5);
 
 -- --------------------------------------------------------
 
@@ -297,6 +274,7 @@ ALTER TABLE `ikimina_info`
 --
 ALTER TABLE `ikimina_locations`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ikimina_id` (`ikimina_id`),
   ADD KEY `fk_user` (`sad_id`);
 
 --
@@ -304,21 +282,24 @@ ALTER TABLE `ikimina_locations`
 --
 ALTER TABLE `ik_daily_time_info`
   ADD PRIMARY KEY (`dtime_id`),
-  ADD KEY `f_id` (`f_id`);
+  ADD KEY `f_id` (`f_id`),
+  ADD KEY `fk_daily_ikimina` (`ikimina_id`);
 
 --
 -- Indexes for table `ik_monthly_time_info`
 --
 ALTER TABLE `ik_monthly_time_info`
   ADD PRIMARY KEY (`monthlytime_id`),
-  ADD KEY `f_id` (`f_id`);
+  ADD KEY `f_id` (`f_id`),
+  ADD KEY `fk_monthly_ikimina` (`ikimina_id`);
 
 --
 -- Indexes for table `ik_weekly_time_info`
 --
 ALTER TABLE `ik_weekly_time_info`
   ADD PRIMARY KEY (`weeklytime_id`),
-  ADD KEY `f_id` (`f_id`);
+  ADD KEY `f_id` (`f_id`),
+  ADD KEY `fk_weekly_ikimina` (`ikimina_id`);
 
 --
 -- Indexes for table `members_info`
@@ -361,7 +342,7 @@ ALTER TABLE `supper_admin`
 -- AUTO_INCREMENT for table `frequency_category_info`
 --
 ALTER TABLE `frequency_category_info`
-  MODIFY `f_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `f_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `gudian_members`
@@ -379,25 +360,25 @@ ALTER TABLE `ikimina_info`
 -- AUTO_INCREMENT for table `ikimina_locations`
 --
 ALTER TABLE `ikimina_locations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `ik_daily_time_info`
 --
 ALTER TABLE `ik_daily_time_info`
-  MODIFY `dtime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `dtime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `ik_monthly_time_info`
 --
 ALTER TABLE `ik_monthly_time_info`
-  MODIFY `monthlytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `monthlytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ik_weekly_time_info`
 --
 ALTER TABLE `ik_weekly_time_info`
-  MODIFY `weeklytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `weeklytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `members_info`
@@ -449,18 +430,21 @@ ALTER TABLE `ikimina_locations`
 -- Constraints for table `ik_daily_time_info`
 --
 ALTER TABLE `ik_daily_time_info`
+  ADD CONSTRAINT `fk_daily_ikimina` FOREIGN KEY (`ikimina_id`) REFERENCES `ikimina_locations` (`ikimina_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `ik_daily_time_info_ibfk_1` FOREIGN KEY (`f_id`) REFERENCES `frequency_category_info` (`f_id`);
 
 --
 -- Constraints for table `ik_monthly_time_info`
 --
 ALTER TABLE `ik_monthly_time_info`
+  ADD CONSTRAINT `fk_monthly_ikimina` FOREIGN KEY (`ikimina_id`) REFERENCES `ikimina_locations` (`ikimina_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `ik_monthly_time_info_ibfk_1` FOREIGN KEY (`f_id`) REFERENCES `frequency_category_info` (`f_id`);
 
 --
 -- Constraints for table `ik_weekly_time_info`
 --
 ALTER TABLE `ik_weekly_time_info`
+  ADD CONSTRAINT `fk_weekly_ikimina` FOREIGN KEY (`ikimina_id`) REFERENCES `ikimina_locations` (`ikimina_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `ik_weekly_time_info_ibfk_1` FOREIGN KEY (`f_id`) REFERENCES `frequency_category_info` (`f_id`);
 
 --

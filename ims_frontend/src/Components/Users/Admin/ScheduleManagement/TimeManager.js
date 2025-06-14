@@ -13,6 +13,25 @@ export default function TimeManager() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const [ikiminaList, setIkiminaList] = useState([]);
+
+  useEffect(() => {
+    const sadId = localStorage.getItem('user');
+    if (sadId) {
+      fetchFrequencies(sadId);
+      fetchIkinimaNames(sadId); // New function
+    }
+  }, [sadId]);
+
+  const fetchIkinimaNames = async (id) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/ikimina/select?sad_id=${id}`);
+      setIkiminaList(res.data);
+    } catch (err) {
+      console.error('Failed to fetch Ikimina names', err);
+    }
+  };
+
 
   useEffect(() => {
     const rawUser = localStorage.getItem('user');
@@ -83,31 +102,45 @@ export default function TimeManager() {
 
   return (
     <div className="container">
-      
-      <h2>Frequency Categories   
-        <p>
-           <button
-      className="action-button back-button"
-      onClick={() => navigate('/adminDashboard')}
-    >
-      ← Back
-    </button>
-        </p>
-      </h2>
 
-      {message && <p className="message">{message}</p>}
+      <div className="header-actions">
+        <button
+          className="action-button"
+          onClick={() => navigate('/adminDashboard')}
+        >
+          ← Back to Dashboard
+        </button>
+        <button
+          className="action-button primary"
+          onClick={() => navigate('/FrequencyCategoryManagement')}
+        >
+          + Add Category
+        </button>
 
+
+        <button
+          className="action-button primary"
+          onClick={() => navigate('/AvailableDailySchedules')}
+        >
+          AvailableSchedules
+        </button>
+      </div>
+
+      {message && <p className="info-message">{message}</p>}
       {loading ? (
-        <p>Loading categories...</p>
+        <p className="loading-text">Loading categories...</p>
       ) : (
         <>
+          <h1 className="page-title">Registered Frequency Categories</h1>
+
+
           <table className="table">
+
             <thead>
               <tr>
                 <th>#</th>
                 <th>Category</th>
-                <th>Created By</th>
-                <th style={{ textAlign: 'center' }}>Actions</th>
+
                 <th style={{ textAlign: 'center' }}>Schedule</th>
               </tr>
             </thead>
@@ -123,21 +156,8 @@ export default function TimeManager() {
                   <tr key={f.f_id} className="table-row">
                     <td>{index + 1}</td>
                     <td>{f.f_category}</td>
-                    <td>{f.createdBy}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button
-                        className="action-button"
-                        onClick={() => openModalForEdit(f.f_id, f.f_category)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="action-button delete-button"
-                        onClick={() => handleDelete(f.f_id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
+
+
                     <td style={{ textAlign: 'center' }}>
                       <button
                         className="action-button"
@@ -153,26 +173,28 @@ export default function TimeManager() {
           </table>
 
           {selectedCategory && (
-  <div className="schedule-form-container">
-    <div className="flex items-center justify-between mb-2">
-      <h3>
-        Set Schedule for Category: <em>{selectedCategory.f_category}</em>
-      </h3>
-      <button
-        className="action-button back-button"
-        onClick={closeScheduleForm}
-      >
-        ← Back
-      </button>
-    </div>
+            <div className="schedule-form-container">
+              <div className="flex items-center justify-between mb-2">
+                <h3>
+                  Set Schedule for Category: <em>{selectedCategory.f_category}</em>
+                </h3>
+                <button
+                  className="action-button back-button"
+                  onClick={closeScheduleForm}
+                >
+                  ← Back
+                </button>
+              </div>
 
-    <ScheduleManager
-      category={selectedCategory}
-      sadId={sadId}
-      onClose={closeScheduleForm}
-    />
-  </div>
-)}
+
+              <ScheduleManager
+                category={selectedCategory}
+                sadId={sadId}
+                ikiminaList={ikiminaList} // Pass list as a prop
+                onClose={closeScheduleForm}
+              />
+            </div>
+          )}
 
         </>
       )}

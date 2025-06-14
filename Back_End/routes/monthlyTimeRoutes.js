@@ -3,117 +3,77 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Helper: get userId from header or req.user (depending on your auth setup)
-function getUserId(req) {
-  return req.user?.id || req.headers['x-sad-id'];
-}
+/**
+ * GET all monthly times created by the logged-in user
+ */
+router.post('/newSchedule', async (req, res) => {
+  const userId = req.headers['x-sad-id'];
+  const { ikimina_id, ikimina_name, selected_dates, mtime_time, f_id } = req.body;
 
-// GET all monthly times for the logged-in user
-router.get('/monthly', async (req, res) => {
-  const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ message: 'Unauthorized: user not logged in' });
-
-  try {
-    const [rows] = await db.execute(
-      `SELECT m.*
-       FROM Ik_monthly_time_info m
-       JOIN frequency_category_info c ON m.f_id = c.f_id
-       WHERE c.sad_id = ?`,
-      [userId]
-    );
-
-    // Group rows by ikimina_name, monthlytime_time, f_id and aggregate dates into arrays
-    const grouped = {};
-    for (const row of rows) {
-      const key = `${row.ikimina_name}|${row.monthlytime_time}|${row.f_id}`;
-      if (!grouped[key]) {
-        grouped[key] = {
-          monthlytime_id: row.monthlytime_id, // maybe just first id
-          ikimina_name: row.ikimina_name,
-          monthlytime_time: row.monthlytime_time,
-          f_id: row.f_id,
-          monthlytime_dates: []
-        };
-      }
-      grouped[key].monthlytime_dates.push(row.monthlytime_date);
-    }
-
-    res.json(Object.values(grouped));
-  } catch (error) {
-    console.error('Error fetching monthly times:', error.message);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-// POST: Add new monthly times (multiple rows, one date each)
-router.post('/', async (req, res) => {
-  const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ message: 'Unauthorized: user not logged in' });
-
-  const { ikimina_name, monthlytime_dates, monthlytime_time, f_id } = req.body;
-
-  if (!ikimina_name || !monthlytime_dates || !monthlytime_time || !f_id) {
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!ikimina_id || !ikimina_name || !Array.isArray(selected_dates) || selected_dates.length === 0 || !mtime_time || !f_id) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
-  if (!Array.isArray(monthlytime_dates) || monthlytime_dates.some(d => Number(d) < 1 || Number(d) > 31)) {
-    return res.status(400).json({ message: 'Days must be between 1 and 31' });
-  }
 
   try {
-    // Check ownership of f_id
-    const [categoryRows] = await db.execute(
+    // Verify user owns the frequency category
+    const [freqCatRows] = await db.execute(
       'SELECT * FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
       [f_id, userId]
     );
-    if (categoryRows.length === 0) {
+    if (freqCatRows.length === 0) {
       return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
     }
 
-    // Check uniqueness of ikimina_name for this f_id
-    const [existing] = await db.execute(
-      'SELECT * FROM Ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ?',
+    // Check if this ikimina already has any schedule in daily, weekly or monthly tables
+    const [dailyRows] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    const [weeklyRows] = await db.execute('SELECT 1 FROM ik_weekly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    const [monthlyRows] = await db.execute('SELECT 1 FROM ik_monthly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+
+    if (dailyRows.length > 0 || weeklyRows.length > 0 || monthlyRows.length > 0) {
+      return res.status(409).json({ message: 'This Ikimina already has a schedule.' });
+    }
+
+    // Check if ikimina_name already exists for this category in monthly schedules
+    const [existingName] = await db.execute(
+      'SELECT 1 FROM ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ?',
       [ikimina_name.trim(), f_id]
     );
-    if (existing.length > 0) {
+    if (existingName.length > 0) {
       return res.status(409).json({ message: 'Ikimina name already exists for this frequency category.' });
     }
 
-    // Insert each date as a separate row
-    const insertPromises = monthlytime_dates.map(date =>
+    // Insert one row per selected date
+    const insertPromises = selected_dates.map(date =>
       db.execute(
-        `INSERT INTO Ik_monthly_time_info
-         (ikimina_name, monthlytime_date, monthlytime_time, f_id)
-         VALUES (?, ?, ?, ?)`,
-        [ikimina_name.trim(), date.toString(), monthlytime_time, f_id]
+        `INSERT INTO ik_monthly_time_info (ikimina_name, monthlytime_date, monthlytime_time, f_id, ikimina_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [ikimina_name.trim(), date.trim(), mtime_time, f_id, ikimina_id]
       )
     );
-
     await Promise.all(insertPromises);
 
-    res.status(201).json({ message: 'Monthly times added successfully.', addedDates: monthlytime_dates });
+    res.status(201).json({ message: 'Monthly schedule saved successfully.' });
   } catch (error) {
-    console.error('Error saving monthly times:', error.message);
-    res.status(500).json({ message: 'Internal server error while adding monthly times.' });
+    console.error('Error saving monthly schedule:', error.message);
+    res.status(500).json({ message: 'Internal server error while saving monthly schedule.' });
   }
 });
 
-// PUT: Update a monthly time entry (replace all dates for this ikimina_name & f_id)
-router.put('/:id', async (req, res) => {
-  const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ message: 'Unauthorized: user not logged in' });
 
-  const { id } = req.params;
-  const { ikimina_name, monthlytime_dates, monthlytime_time, f_id } = req.body;
+/**
+ * POST: Create new monthly schedule
+ * - Checks ownership by sad_id
+ * - Prevents duplicate ikimina_name for the same frequency category
+ * - Validates ikimina_id uniqueness across all schedule tables (daily, weekly, monthly)
+ */
+router.post('/monthly/newSchedule', async (req, res) => {
+  const userId = req.headers['x-sad-id'];
+  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id } = req.body;
 
-  if (
-    !ikimina_name ||
-    !monthlytime_dates ||
-    !monthlytime_time ||
-    !f_id ||
-    !Array.isArray(monthlytime_dates) ||
-    monthlytime_dates.some(d => Number(d) < 1 || Number(d) > 31)
-  ) {
-    return res.status(400).json({ message: 'Missing or invalid required fields' });
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !ikimina_id) {
+    return res.status(400).json({ message: 'Missing required fields: ikimina_name, monthlytime_day, monthlytime_time, f_id, or ikimina_id' });
   }
 
   try {
@@ -126,57 +86,129 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
     }
 
-    // Verify that the monthlytime_id exists and belongs to this f_id
-    const [existingEntry] = await db.execute(
-      'SELECT * FROM Ik_monthly_time_info WHERE monthlytime_id = ? AND f_id = ?',
-      [id, f_id]
-    );
-    if (existingEntry.length === 0) {
-      return res.status(404).json({ message: 'Monthly time entry not found or unauthorized' });
+    // Check if this ikimina_id already exists in daily, weekly, or monthly
+    const [daily] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    const [weekly] = await db.execute('SELECT 1 FROM Ik_weekly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    const [monthly] = await db.execute('SELECT 1 FROM Ik_monthly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+
+    if (daily.length > 0 || weekly.length > 0 || monthly.length > 0) {
+      return res.status(409).json({
+        message: 'This Ikimina already has a schedule in daily, weekly, or monthly.',
+      });
     }
 
-    // Check uniqueness of ikimina_name for this f_id excluding this record(s)
-    const [duplicates] = await db.execute(
-      'SELECT * FROM Ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ? AND monthlytime_id != ?',
-      [ikimina_name.trim(), f_id, id]
+    // Check if ikimina_name already exists in monthly for this category
+    const [existing] = await db.execute(
+      'SELECT * FROM Ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ?',
+      [ikimina_name.trim(), f_id]
     );
-    if (duplicates.length > 0) {
+    if (existing.length > 0) {
       return res.status(409).json({ message: 'Ikimina name already exists for this frequency category.' });
     }
 
-    // Delete existing entries for this ikimina_name and f_id to replace dates
+    // Insert monthly schedule
     await db.execute(
-      'DELETE FROM Ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ?',
-      [existingEntry[0].ikimina_name, f_id]
+      `INSERT INTO Ik_monthly_time_info (ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id)
+       VALUES (?, ?, ?, ?, ?)`,
+      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, ikimina_id]
     );
 
-    // Insert new dates
-    const insertPromises = monthlytime_dates.map(date =>
-      db.execute(
-        `INSERT INTO Ik_monthly_time_info
-         (ikimina_name, monthlytime_date, monthlytime_time, f_id)
-         VALUES (?, ?, ?, ?)`,
-        [ikimina_name.trim(), date.toString(), monthlytime_time, f_id]
-      )
-    );
-    await Promise.all(insertPromises);
-
-    res.status(200).json({ message: 'Monthly times updated successfully.' });
+    res.status(201).json({ message: 'Monthly time added successfully.' });
   } catch (error) {
-    console.error('Error updating monthly times:', error.message);
+    console.error('Error adding monthly time:', error.message);
+    res.status(500).json({ message: 'Internal server error while adding monthly time.' });
+  }
+});
+
+/**
+ * PUT: Update existing monthly schedule
+ * - Validates ownership
+ * - Prevents duplicate ikimina_name in same category
+ * - Validates ikimina_id uniqueness across all schedules (except current record)
+ */
+router.put('/monthly/:id', async (req, res) => {
+  const userId = req.headers['x-sad-id'];
+  const { id } = req.params;
+  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id } = req.body;
+
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !ikimina_id) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    // Confirm ownership of frequency category
+    const [categoryRows] = await db.execute(
+      'SELECT * FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
+      [f_id, userId]
+    );
+    if (categoryRows.length === 0) {
+      return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
+    }
+
+    // Confirm record exists and belongs to category
+    const [monthlyTimeRows] = await db.execute(
+      'SELECT * FROM Ik_monthly_time_info WHERE monthlytime_id = ? AND f_id = ?',
+      [id, f_id]
+    );
+    if (monthlyTimeRows.length === 0) {
+      return res.status(404).json({ message: 'Monthly time not found or unauthorized' });
+    }
+
+    // Prevent duplicate ikimina_name in this category (excluding current record)
+    const [duplicateName] = await db.execute(
+      'SELECT * FROM Ik_monthly_time_info WHERE ikimina_name = ? AND f_id = ? AND monthlytime_id != ?',
+      [ikimina_name.trim(), f_id, id]
+    );
+    if (duplicateName.length > 0) {
+      return res.status(409).json({ message: 'Ikimina name already used in this frequency category' });
+    }
+
+    // Validate ikimina_id uniqueness across all schedules except current record
+    const [daily] = await db.execute(
+      'SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?',
+      [ikimina_id]
+    );
+    const [weekly] = await db.execute(
+      'SELECT 1 FROM Ik_weekly_time_info WHERE ikimina_id = ?',
+      [ikimina_id]
+    );
+    const [monthly] = await db.execute(
+      'SELECT 1 FROM Ik_monthly_time_info WHERE ikimina_id = ? AND monthlytime_id != ?',
+      [ikimina_id, id]
+    );
+
+    if (daily.length > 0 || weekly.length > 0 || monthly.length > 0) {
+      return res.status(409).json({
+        message: 'This Ikimina already has a schedule in daily, weekly, or monthly.',
+      });
+    }
+
+    // Update record
+    await db.execute(
+      `UPDATE Ik_monthly_time_info
+       SET ikimina_name = ?, monthlytime_day = ?, monthlytime_time = ?, f_id = ?, ikimina_id = ?
+       WHERE monthlytime_id = ?`,
+      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, ikimina_id, id]
+    );
+
+    res.status(200).json({ message: 'Monthly time updated successfully.' });
+  } catch (error) {
+    console.error('Error updating monthly time:', error.message);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
-// DELETE: Remove monthly time entry by ID with ownership check
-router.delete('/:id', async (req, res) => {
-  const userId = getUserId(req);
-  if (!userId) return res.status(401).json({ message: 'Unauthorized: user not logged in' });
-
+/**
+ * DELETE a monthly time record with ownership check
+ */
+router.delete('/monthly/:id', async (req, res) => {
+  const userId = req.headers['x-sad-id'];
   const { id } = req.params;
 
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
   try {
-    // Verify ownership
     const [rows] = await db.execute(
       `SELECT m.monthlytime_id
        FROM Ik_monthly_time_info m

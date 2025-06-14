@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import locations from './locations.json'; 
-import '../../../CSS/EditLocationModal.css'
+import locations from './locations.json';
+import '../../../CSS/EditLocationModal.css';
 
 export default function EditLocationModal({ location, onClose, onUpdated }) {
   const [formData, setFormData] = useState({
@@ -18,42 +18,52 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
   const [sectors, setSectors] = useState([]);
   const [cells, setCells] = useState([]);
   const [villages, setVillages] = useState([]);
-
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (location) {
+      const { ikimina_name, province, district, sector, cell, village, sad_id } = location;
+
       setFormData({
-        ikimina_name: location.ikimina_name || '',
-        province: location.province || '',
-        district: location.district || '',
-        sector: location.sector || '',
-        cell: location.cell || '',
-        village: location.village || '',
-        sad_id: location.sad_id || '',
+        ikimina_name: ikimina_name || '',
+        province: province || '',
+        district: district || '',
+        sector: sector || '',
+        cell: cell || '',
+        village: village || '',
+        sad_id: sad_id || '',
       });
 
-      const provinceObj = locations.provinces.find(p => p.name === location.province);
+      const provinceObj = locations.provinces.find(p => p.name === province);
       const initialDistricts = provinceObj ? provinceObj.districts : [];
       setDistricts(initialDistricts);
 
-      const districtObj = initialDistricts.find(d => d.name === location.district);
+      const districtObj = initialDistricts.find(d => d.name === district);
       const initialSectors = districtObj ? districtObj.sectors : [];
       setSectors(initialSectors);
 
-      const sectorObj = initialSectors.find(s => s.name === location.sector);
+      const sectorObj = initialSectors.find(s => s.name === sector);
       const initialCells = sectorObj ? sectorObj.cells : [];
       setCells(initialCells);
 
-      const cellObj = initialCells.find(c => c.name === location.cell);
+      const cellObj = initialCells.find(c => c.name === cell);
       const initialVillages = cellObj ? cellObj.villages : [];
       setVillages(initialVillages);
     }
   }, [location]);
 
-  // Cascading handlers (same as yours)
+  const handleInputChange = e => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
   const handleProvinceChange = e => {
     const province = e.target.value;
+    const provinceObj = locations.provinces.find(p => p.name === province);
+    const newDistricts = provinceObj ? provinceObj.districts : [];
+
     setFormData(prev => ({
       ...prev,
       province,
@@ -62,9 +72,6 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
       cell: '',
       village: '',
     }));
-
-    const provinceObj = locations.provinces.find(p => p.name === province);
-    const newDistricts = provinceObj ? provinceObj.districts : [];
     setDistricts(newDistricts);
     setSectors([]);
     setCells([]);
@@ -73,6 +80,9 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
 
   const handleDistrictChange = e => {
     const district = e.target.value;
+    const districtObj = districts.find(d => d.name === district);
+    const newSectors = districtObj ? districtObj.sectors : [];
+
     setFormData(prev => ({
       ...prev,
       district,
@@ -80,9 +90,6 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
       cell: '',
       village: '',
     }));
-
-    const districtObj = districts.find(d => d.name === district);
-    const newSectors = districtObj ? districtObj.sectors : [];
     setSectors(newSectors);
     setCells([]);
     setVillages([]);
@@ -90,29 +97,29 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
 
   const handleSectorChange = e => {
     const sector = e.target.value;
+    const sectorObj = sectors.find(s => s.name === sector);
+    const newCells = sectorObj ? sectorObj.cells : [];
+
     setFormData(prev => ({
       ...prev,
       sector,
       cell: '',
       village: '',
     }));
-
-    const sectorObj = sectors.find(s => s.name === sector);
-    const newCells = sectorObj ? sectorObj.cells : [];
     setCells(newCells);
     setVillages([]);
   };
 
   const handleCellChange = e => {
     const cell = e.target.value;
+    const cellObj = cells.find(c => c.name === cell);
+    const newVillages = cellObj ? cellObj.villages : [];
+
     setFormData(prev => ({
       ...prev,
       cell,
       village: '',
     }));
-
-    const cellObj = cells.find(c => c.name === cell);
-    const newVillages = cellObj ? cellObj.villages : [];
     setVillages(newVillages);
   };
 
@@ -124,41 +131,37 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
     }));
   };
 
-  const handleInputChange = e => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-  // Update submit
-  const handleUpdate = async () => {
-    setError('');
-    // Simple validation (you can expand)
-    if (
-      !formData.ikimina_name.trim() ||
-      !formData.province ||
-      !formData.district ||
-      !formData.sector ||
-      !formData.cell ||
-      !formData.village
-    ) {
-      setError('Please fill in all fields.');
-      return;
-    }
+ const handleUpdate = async () => {
+  setError('');
+  const { ikimina_name, province, district, sector, cell, village, sad_id } = formData;
 
-    try {
-      const res = await axios.put(
-        `http://localhost:5000/api/LocationManagerRoutes/update/${location.id}`,
-        formData
-      );
-      onUpdated(res.data.message);
-      onClose();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update.');
-    }
-  };
+  if (!ikimina_name.trim() || !province || !district || !sector || !cell || !village || !sad_id) {
+    setError('Please fill in all fields.');
+    return;
+  }
 
- return (
+  try {
+    const response = await axios.put(
+      `http://localhost:5000/api/LocationManagerRoutes/update/${location.id}`,
+      {
+        ikiminaName: ikimina_name,
+        province,
+        district,
+        sector,
+        cell,
+        village,
+        sad_id
+      }
+    );
+    
+    onUpdated(response.data.message); // will close modal + refresh data
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to update.');
+  }
+};
+
+
+  return (
     <div className="modal-overlay">
       <div className="modal-content">
         <h3>Edit Ikimina Location</h3>
@@ -228,7 +231,7 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
         </select>
 
         <div className="modal-buttons">
-          <button onClick={handleUpdate}>Update</button>
+          <button onClick={handleUpdate} className="btn-save">Update</button>
           <button onClick={onClose} className="btn-cancel">Cancel</button>
         </div>
       </div>

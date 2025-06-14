@@ -1,0 +1,80 @@
+/* Container styling */
+.schedules-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navigation link styling */
+.nav-link {
+  display: inline-block;
+  margin-bottom: 15px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Heading */
+h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 700;
+}
+
+/* Table styling */
+.schedules-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  background: white;
+}
+
+.schedules-table th,
+.schedules-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+  font-size: 14px;
+  color: #444;
+}
+
+.schedules-table th {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  user-select: none;
+}
+
+.schedules-table tbody tr:nth-child(even) {
+  background-color: #f2f6fc;
+}
+
+.schedules-table tbody tr:hover {
+  background-color: #e6f0ff;
+  cursor: default;
+}
+
+/* Loading and error messages */
+p {
+  font-size: 16px;
+  color: #555;
+}
+
+.error {
+  color: #d9534f; /* bootstrap's red */
+  font-weight: 600;
+  background-color: #f8d7da;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-top: 15px;
+}

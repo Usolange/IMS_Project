@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../../../CSS/CategoryManagement.css';
+import '../../../CSS/FrequencyCategoryManagement.css';
 
 export default function CategoryManagement() {
   const [frequencies, setFrequencies] = useState([]);
@@ -143,11 +143,9 @@ export default function CategoryManagement() {
       <div className="button-group">
         <button className="action-button back-button" onClick={openModalForAdd}>Add New Category</button>
         <button
-      className="action-button back-button"
-      onClick={() => navigate('/adminDashboard')}
-    >
-      ← Back
-    </button>
+          className="action-button back-button"
+          onClick={() => navigate('/TimeManager')}
+        > ← Back     </button>
       </div>
 
       <div className="table-container">

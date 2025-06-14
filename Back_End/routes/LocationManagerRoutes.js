@@ -35,14 +35,19 @@ router.post('/create', async (req, res) => {
       return res.status(409).json({ message: 'Ikimina name already exists in this cell for this user.' });
     }
 
+    // 3. Get max ikimina_id
+    const [maxIdResult] = await db.query('SELECT MAX(ikimina_id) AS maxId FROM ikimina_locations');
+    const maxId = maxIdResult[0].maxId || 0;  // If no rows, maxId = 0
+    const newIkiminaId = maxId + 1;
+
     // 4. Insert new Ikimina location
     const sql = `
       INSERT INTO ikimina_locations
-      (ikimina_name, province, district, sector, cell, village, sad_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      (ikimina_id, ikimina_name, province, district, sector, cell, village, sad_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await db.query(sql, [ikiminaName, province, district, sector, cell, village, sad_id]);
+    await db.query(sql, [newIkiminaId, ikiminaName, province, district, sector, cell, village, sad_id]);
 
     res.status(201).json({ message: 'Ikimina location saved successfully.' });
   } catch (err) {
@@ -81,52 +86,105 @@ router.get('/select', async (req, res) => {
 });
 
 router.put('/update/:id', async (req, res) => {
-  const sad_id = req.body.sad_id; // Or from auth
-  const id = req.params.id; // Location id to update
-  const { ikiminaName, province, district, sector, cell, village } = req.body;
+  const id = req.params.id;
+  const {
+    ikiminaName,
+    province,
+    district,
+    sector,
+    cell,
+    village,
+    sad_id
+  } = req.body;
 
-  if (!sad_id) {
-    return res.status(400).json({ message: 'User ID required' });
+  // Validate required fields
+  if (
+    !ikiminaName?.trim() ||
+    !province?.trim() ||
+    !district?.trim() ||
+    !sector?.trim() ||
+    !cell?.trim() ||
+    !village?.trim() ||
+    !sad_id
+  ) {
+    return res.status(400).json({
+      message: 'All fields are required. Please provide complete and valid data.'
+    });
   }
 
   try {
-    // Get user's sector
-    const [userRows] = await db.query('SELECT sad_loc FROM supper_admin WHERE sad_id = ?', [sad_id]);
+    // 1. Get user's sector
+    const [userRows] = await db.query(
+      'SELECT sad_loc FROM supper_admin WHERE sad_id = ?',
+      [sad_id]
+    );
+
     if (userRows.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found.' });
     }
+
     const userSector = userRows[0].sad_loc;
 
-    // Get current location to update
-    const [locationRows] = await db.query('SELECT sector FROM ikimina_locations WHERE id = ? AND sad_id = ?', [id, sad_id]);
+    // 2. Get existing location being updated
+    const [locationRows] = await db.query(
+      'SELECT sector FROM ikimina_locations WHERE id = ? AND sad_id = ?',
+      [id, sad_id]
+    );
+
     if (locationRows.length === 0) {
-      return res.status(404).json({ message: 'Ikimina location not found for this user' });
+      return res.status(404).json({ message: 'Ikimina location not found for this user.' });
     }
 
-    if (locationRows[0].sector.toLowerCase() !== userSector.toLowerCase()) {
-      return res.status(403).json({ message: 'You can only update Ikimina locations within your sector' });
+    const currentSector = locationRows[0].sector;
+
+    // 3. Ensure sector rules are respected
+    if (
+      currentSector.toLowerCase() !== userSector.toLowerCase() ||
+      sector.toLowerCase() !== userSector.toLowerCase()
+    ) {
+      return res.status(403).json({
+        message: 'You can only update Ikimina within your own sector.'
+      });
     }
 
-    // Also check that new sector value does not violate rule:
-    if (sector.toLowerCase() !== userSector.toLowerCase()) {
-      return res.status(403).json({ message: 'You cannot change Ikimina sector outside your own sector' });
+    // 4. Check for duplicate name in same cell (excluding this ID)
+    const [duplicates] = await db.query(
+      `SELECT id FROM ikimina_locations 
+       WHERE ikimina_name = ? AND cell = ? AND sad_id = ? AND id != ?`,
+      [ikiminaName.trim(), cell, sad_id, id]
+    );
+
+    if (duplicates.length > 0) {
+      return res.status(409).json({
+        message: 'Another Ikimina with this name already exists in the same cell.'
+      });
     }
 
-    // Proceed with update
+    // 5. Proceed with update
     const sql = `
       UPDATE ikimina_locations
       SET ikimina_name = ?, province = ?, district = ?, sector = ?, cell = ?, village = ?
       WHERE id = ? AND sad_id = ?
     `;
 
-    await db.query(sql, [ikiminaName, province, district, sector, cell, village, id, sad_id]);
+    await db.query(sql, [
+      ikiminaName.trim(),
+      province,
+      district,
+      sector,
+      cell,
+      village,
+      id,
+      sad_id
+    ]);
 
     res.json({ message: 'Ikimina location updated successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Update error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 });
+
 
 
 router.delete('/delete/:id', async (req, res) => {

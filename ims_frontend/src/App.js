@@ -27,8 +27,10 @@ import Report from './Components/Report';
 import Members from './Components/Member/Members';
 
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
-import CategoryManagement from './Components/Users/Admin/ScheduleManagement/CategoryManagement';
-import TimeScheduleManagement from './Components/Users/Admin/ScheduleManagement/TimeManager';
+import FrequencyCategoryManagement from './Components/Users/Admin/ScheduleManagement/FrequencyCategoryManagement';
+import AvailableDailySchedules from './Components/Users/Admin/ScheduleManagement/AvailableDailySchedules';
+
+import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager';
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager'
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation'
 
@@ -67,11 +69,12 @@ export default function App() {
 
         {/* Admin-only */}
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
-        <Route path="/CategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><CategoryManagement /></RoleProtectedRoute>} />
-        <Route path="/timeScheduleManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeScheduleManagement /></RoleProtectedRoute>} />
+        <Route path="/FrequencyCategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><FrequencyCategoryManagement /></RoleProtectedRoute>} />
+        <Route path="/TimeManager" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeManager /></RoleProtectedRoute>} />
         <Route path="/LocationManager" element={<RoleProtectedRoute allowedRoles={['admin']}><LocationManager/></RoleProtectedRoute>} />
         <Route path="/AddLocation" element={<RoleProtectedRoute allowedRoles={['admin']}><AddLocation/></RoleProtectedRoute>} />
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
+        <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
 
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
 

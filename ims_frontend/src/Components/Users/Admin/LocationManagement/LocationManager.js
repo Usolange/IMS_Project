@@ -1,112 +1,151 @@
-// components/Ikimina/LocationManager.js
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import EditLocationModal from './EditLocationModal';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
-import { useNavigate } from 'react-router-dom';
-import { Link } from "react-router-dom"; 
 import '../../../CSS/LocationManager.css';
 
 export default function LocationManager() {
   const [locations, setLocations] = useState([]);
-  const [editingLocation, setEditingLocation] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [deleteLocation, setDeleteLocation] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState('');
+  const [locationToDelete, setLocationToDelete] = useState(null);
+  const [toast, setToast] = useState({ type: '', message: '' });
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const sad_id = user?.id || user?.sad_id;
-  const navigate = useNavigate();
-
-  const fetchLocations = async () => {
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    let sad_id = null;
     try {
-      setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/LocationManagerRoutes/select', {
-        params: { sad_id },
-      });
+      const user = JSON.parse(storedUser);
+      sad_id = user?.id;
+    } catch (err) {
+      console.error("Invalid user object in localStorage");
+    }
+
+    if (sad_id) {
+      fetchLocations(sad_id);
+    } else {
+      showToast('error', 'User ID missing. Please login again.');
+    }
+  }, []);
+
+  const fetchLocations = async (sad_id) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/LocationManagerRoutes/select?sad_id=${sad_id}`);
       setLocations(res.data);
     } catch (err) {
-      console.error('Failed to fetch locations:', err);
-    } finally {
-      setLoading(false);
+      console.error(err);
+      showToast('error', 'Failed to load locations.');
     }
   };
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
   const handleEdit = (location) => {
-    setEditingLocation(location);
+    setSelectedLocation(location);
     setShowEditModal(true);
   };
 
-  const handleDelete = (location) => {
-    setDeleteLocation(location);
+  const handleDeletePrompt = (location) => {
+    setLocationToDelete(location);
     setShowDeleteModal(true);
   };
 
-  const handleDeleteConfirmed = async () => {
+  const handleDeleteConfirm = async () => {
+    const storedUser = localStorage.getItem('user');
+    let sad_id = null;
     try {
-      await axios.delete(`http://localhost:5000/api/LocationManagerRoutes/delete/${deleteLocation.id}`, {
-        data: { sad_id },
-      });
-      setToastMessage('Location deleted successfully.');
-      fetchLocations();
+      const user = JSON.parse(storedUser);
+      sad_id = user?.id;
     } catch (err) {
-      console.error('Delete error:', err);
-      setToastMessage('Error deleting location.');
+      console.error("Invalid user object in localStorage");
+    }
+
+    if (!sad_id) {
+      showToast('error', 'User ID missing. Please login again.');
+      return;
+    }
+
+    try {
+      await axios.delete(`http://localhost:5000/api/LocationManagerRoutes/delete/${locationToDelete.id}`, {
+        data: { sad_id }
+      });
+      showToast('success', `${locationToDelete.ikimina_name} deleted successfully.`);
+      fetchLocations(sad_id);
+    } catch (err) {
+      console.error(err);
+      showToast('error', 'Failed to delete the location.');
     } finally {
       setShowDeleteModal(false);
-      setTimeout(() => setToastMessage(''), 3000);
+      setLocationToDelete(null);
     }
   };
 
-  const handleUpdateSuccess = () => {
-    setToastMessage('Location updated successfully.');
-    fetchLocations();
-    setShowEditModal(false);
-    setTimeout(() => setToastMessage(''), 3000);
+
+
+const handleUpdated = (msg) => {
+  const storedUser = localStorage.getItem('user');
+  const user = JSON.parse(storedUser);
+  const sad_id = user?.id;
+
+  if (!sad_id) {
+    showToast('error', 'User ID missing. Please login again.');
+    return;
+  }
+
+  showToast('success', msg || 'Location updated successfully.');
+  setShowEditModal(false); // ✅ CLOSE THE MODAL
+  setSelectedLocation(null); // ✅ RESET SELECTION
+  fetchLocations(sad_id);    // ✅ REFRESH THE DATA
+};
+
+
+
+
+
+
+
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast({ type: '', message: '' }), 3000);
   };
+
+
+
 
   return (
     <div className="location-manager">
       <div className="header-row">
-        <h2>Ikimina Location Management</h2>
-         <div className="location-manager-header-buttons">
-        <Link to="/AddLocation" className="btn-add-location">
-          ➕ Add New Location
-        </Link>
-        <Link to="/adminDashboard" className="btn-back-home">
-          ⬅ Back to Home Page
-        </Link>
-      </div>
+        <h2>Ikimina Locations</h2>
+        <div className="header-buttons">
+          <a href="/AddLocation" className="btn-add-location">Add Location</a>
+          <a href="/adminDashboard" className="btn-back-home">Back to Home</a>
+        </div>
       </div>
 
-      {toastMessage && <div className="toast-message">{toastMessage}</div>}
+      {toast.message && (
+        <div className={`toast-message ${toast.type}`}>{toast.message}</div>
+      )}
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : locations.length === 0 ? (
-        <p>No Ikimina locations found.</p>
-      ) : (
-        <table className="locations-table">
-          <thead>
-            <tr>
-              <th>Ikimina Name</th>
-              <th>Province</th>
-              <th>District</th>
-              <th>Sector</th>
-              <th>Cell</th>
-              <th>Village</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {locations.map(loc => (
-              <tr key={loc.id}>
+      <table className="locations-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ikimina Name</th>
+            <th>Province</th>
+            <th>District</th>
+            <th>Sector</th>
+            <th>Cell</th>
+            <th>Village</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {locations.length === 0 ? (
+            <tr><td colSpan="8">No locations found.</td></tr>
+          ) : (
+            locations.map((loc, index) => (
+              <tr key={loc.id || index}>
+                <td>{index + 1}</td>
                 <td>{loc.ikimina_name}</td>
                 <td>{loc.province}</td>
                 <td>{loc.district}</td>
@@ -115,27 +154,30 @@ export default function LocationManager() {
                 <td>{loc.village}</td>
                 <td>
                   <button onClick={() => handleEdit(loc)} className="btn-edit">Edit</button>
-                  <button onClick={() => handleDelete(loc)} className="btn-delete">Delete</button>
+                  <button onClick={() => handleDeletePrompt(loc)} className="btn-delete">Delete</button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            ))
+          )}
+        </tbody>
+      </table>
+
+      {showEditModal && selectedLocation && (
+        <EditLocationModal
+          location={selectedLocation}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={handleUpdated}
+        />
       )}
 
-      <EditLocationModal
-        show={showEditModal}
-        location={editingLocation}
-        onClose={() => setShowEditModal(false)}
-        onUpdateSuccess={handleUpdateSuccess}
-      />
-
-      <ConfirmDeleteModal
-        show={showDeleteModal}
-        locationName={deleteLocation?.ikimina_name}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteConfirmed}
-      />
+      {showDeleteModal && locationToDelete && (
+        <ConfirmDeleteModal
+          show={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteConfirm}
+          locationName={locationToDelete.ikimina_name}
+        />
+      )}
     </div>
   );
 }
