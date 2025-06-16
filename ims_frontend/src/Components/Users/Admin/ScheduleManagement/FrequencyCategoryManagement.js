@@ -144,9 +144,9 @@ export default function CategoryManagement() {
         <button className="action-button back-button" onClick={openModalForAdd}>Add New Category</button>
         <button
           className="action-button back-button"
-          onClick={() => navigate('/TimeManager')}
+          onClick={() => navigate('/AddLocation')}
         > ← Back     </button>
-      </div>
+      </div>        
 
       <div className="table-container">
         <table className="table">

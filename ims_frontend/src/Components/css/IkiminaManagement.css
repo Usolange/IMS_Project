@@ -1,157 +1,101 @@
-/* IkiminaManagement.css */
+/* IkiminaInfoForm.css */
 
-.ik-form-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
+.ikimina-info-form {
+  margin-top: 20%;
+  max-width: 480px;
+  margin: 1rem auto;
+  padding: 1.5rem 2rem;
+  background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.ik-form-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: #333; /* Added a contrasting color */
+.ikimina-info-form .form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
-.ik-form-input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  color: #333; /* Ensure text is readable */
-  background-color: #fff; /* White background for clarity */
-}
-
-.ik-form-input:focus {
-  border-color: #2563eb; /* Blue border on focus */
-  outline: none;
-}
-
-.ik-form-label {
-  display: block;
-  margin-bottom: 0.5rem;
+.ikimina-info-form label {
   font-weight: 600;
-  color: #333; /* Ensuring labels are visible */
-}
-
-.ik-form-button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-.ik-form-button:hover {
-  background-color: #1d4ed8; /* Darker blue on hover */
-}
-
-/* Select and Time Inputs */
-select.ik-form-input, input[type="time"] {
+  margin-bottom: 0.5rem;
   color: #333;
-  background-color: #fff;
-}
-
-select.ik-form-input:focus, input[type="time"]:focus {
-  border-color: #2563eb;
-  outline: none;
-}
-
-/* Style for the container */
-.ikimina-management {
-  padding: 20px;
-  background-color: #f4f4f9;
-  border-radius: 8px;
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.ikimina-management h1 {
-  color: #333;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-/* Style for the dropdown */
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  font-size: 16px;
-  color: #333;
-  display: block;
-  margin-bottom: 8px;
-}
-
-/* Custom styling for select dropdown */
-select.ik-form-input {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  color: #333;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
-  appearance: none; /* Removes default dropdown arrow */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-select.ik-form-input option {
-  padding: 10px;
-  font-size: 16px;
-  color: #333; /* Ensure text is visible */
-}
-
-/* Hover and Focus Effect for Dropdown */
-select.ik-form-input:hover {
-  border-color: #007bff;
-}
-
-select.ik-form-input:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
-
-/* Custom Dropdown Arrow */
-select.ik-form-input::after {
-  content: '▼';
-  font-size: 12px;
-  color: #333;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* Optional: Style for Time Picker */
-input[type="time"] {
   font-size: 1rem;
-  color: #333;
-  background-color: #fff;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
 }
 
-input[type="time"]:focus {
-  border-color: #2563eb;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+.ikimina-info-form input[type="text"],
+.ikimina-info-form input[type="email"],
+.ikimina-info-form input[type="password"],
+.ikimina-info-form select {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1.8px solid #ccc;
+  border-radius: 5px;
+  outline-offset: 2px;
+  transition: border-color 0.3s ease;
 }
 
+.ikimina-info-form input[type="text"]:focus,
+.ikimina-info-form input[type="email"]:focus,
+.ikimina-info-form input[type="password"]:focus,
+.ikimina-info-form select:focus {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+}
+
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.form-buttons button {
+  cursor: pointer;
+  padding: 0.55rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.form-buttons button[type="submit"] {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.form-buttons button[type="submit"]:hover:not(:disabled) {
+  background-color: #2563eb; /* darker blue */
+}
+
+.form-buttons button[type="submit"]:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.form-buttons button[type="button"] {
+  background-color: #e5e7eb; /* gray-200 */
+  color: #374151; /* gray-700 */
+}
+
+.form-buttons button[type="button"]:hover:not(:disabled) {
+  background-color: #d1d5db; /* gray-300 */
+}
+
+@media (max-width: 520px) {
+  .ikimina-info-form {
+    padding: 1rem 1rem;
+    max-width: 100%;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+
+  .form-buttons button {
+    width: 100%;
+  }
+}

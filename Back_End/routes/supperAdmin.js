@@ -3,52 +3,45 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
-router.put('/supperAdmin/:id',  async (req, res) => {
 
-  `http://localhost:5000/api/supperAdmin/${user.id}`
-  const { name, email, username, phone } = req.body;
-  const id = req.params.id;
+router.post('/register', async (req, res) => {
+  const { name, email, username, phone, location, password } = req.body;
 
-  if (!name || !email || !username) {
-    return res.status(400).json({ message: 'Name, email & username required.' });
+  if (!name || !email || !username || !phone || !location || !password) {
+    return res.status(400).json({ message: 'All fields are required.' });
   }
 
   try {
-    const sad_names = name;
-    const sad_email = email;
-    const sad_username = username;
-    const sad_phone = phone;
+    console.log('Registering:', req.body); // Log input
 
-    const [upd] = await db.execute(
-      `UPDATE supper_admin
-       SET sad_names = ?, sad_email = ?, sad_username = ?, sad_phone = ?
-       WHERE sad_id = ?`,
-      [sad_names, sad_email, sad_username, sad_phone, id]
+    const [existingUser] = await db.execute(
+      'SELECT * FROM supper_admin WHERE sad_email = ? OR sad_username = ?',
+      [email, username]
     );
 
-    if (upd.affectedRows === 0) {
-      return res.status(404).json({ message: 'User not found.' });
+    if (existingUser.length > 0) {
+      console.log('User already exists:', existingUser);
+      return res.status(409).json({ message: 'Email or username already exists.' });
     }
 
-    const [rows] = await db.execute(
-      `SELECT sad_id, sad_names, sad_email, sad_username, sad_phone
-       FROM supper_admin WHERE sad_id = ?`,
-      [id]
+    await db.execute(
+      `INSERT INTO supper_admin 
+       (sad_names, sad_email, sad_username, sad_phone, sad_loc, sad_pass) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [name, email, username, phone, location, password]
     );
 
-    const user = {
-      id: rows[0].sad_id,
-      name: rows[0].sad_names,
-      email: rows[0].sad_email,
-      username: rows[0].sad_username,
-      phone: rows[0].sad_phone,
-    };
+    console.log('Registration successful');
+    res.status(200).json({ message: 'Registration successful.' });
 
-    res.json({ message: 'Profile updated', user });
   } catch (err) {
-    console.error('Update error:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('Registration error:', err);
+    res.status(500).json({ message: 'Server error during registration.' });
   }
 });
+
+
+
+
 
 module.exports = router;

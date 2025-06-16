@@ -32,10 +32,13 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
     fetchIkiminaList();
   }, []);
 
+  // Filter ikiminaList based on f_id
+  const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
+
   const handleIkiminaChange = (e) => {
     const selectedId = e.target.value;
     setSelectedIkiminaId(selectedId);
-    const selected = ikiminaList.find(item => item.ikimina_id.toString() === selectedId);
+    const selected = filteredIkiminaList.find(item => item.ikimina_id.toString() === selectedId);
     setSelectedIkiminaName(selected?.ikimina_name || '');
   };
 
@@ -66,9 +69,6 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
           selected_days: selectedDays,
           wtime_time: time,
           f_id
-
-
-          
         },
         {
           headers: { 'x-sad-id': user.id }
@@ -94,9 +94,9 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
           required
         >
           <option value="">-- Select Ikimina --</option>
-          {ikiminaList.map(item => (
+          {filteredIkiminaList.map(item => (
             <option key={item.ikimina_id} value={item.ikimina_id}>
-              {item.ikimina_id} == {item.ikimina_name} - Cell: {item.cell}
+              {item.ikimina_name} - Cell: {item.cell}
             </option>
           ))}
         </select>

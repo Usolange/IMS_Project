@@ -31,12 +31,14 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
     fetchIkiminaList();
   }, []);
 
+  // Filter ikiminaList to only those that belong to the selected f_id
+  const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
+
   const handleIkiminaChange = (e) => {
     const selectedId = e.target.value;
     setSelectedIkiminaId(selectedId);
 
-    // Fix: compare as string to avoid mismatch due to type differences
-    const selected = ikiminaList.find(item => item.ikimina_id.toString() === selectedId);
+    const selected = filteredIkiminaList.find(item => item.ikimina_id.toString() === selectedId);
     setSelectedIkiminaName(selected?.ikimina_name || '');
   };
 
@@ -55,10 +57,10 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
           ikimina_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
           dtime_time: time,
-          f_id
+          f_id,
         },
         {
-          headers: { 'x-sad-id': user.id }
+          headers: { 'x-sad-id': user.id },
         }
       );
       alert('Schedule saved successfully');
@@ -81,9 +83,9 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
           required
         >
           <option value="">-- Select Ikimina --</option>
-          {ikiminaList.map((item) => (
+          {filteredIkiminaList.map((item) => (
             <option key={item.ikimina_id} value={item.ikimina_id}>
-              {item.ikimina_id} == {item.ikimina_name} - Cell: {item.cell}
+              {item.ikimina_name} - Cell: {item.cell}
             </option>
           ))}
         </select>

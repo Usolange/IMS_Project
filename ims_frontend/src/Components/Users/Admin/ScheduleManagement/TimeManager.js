@@ -108,15 +108,9 @@ export default function TimeManager() {
           className="action-button"
           onClick={() => navigate('/adminDashboard')}
         >
-          ← Back to Dashboard
+          Back to Dashboard
         </button>
-        <button
-          className="action-button primary"
-          onClick={() => navigate('/FrequencyCategoryManagement')}
-        >
-          + Add Category
-        </button>
-
+      
 
         <button
           className="action-button primary"
@@ -138,7 +132,7 @@ export default function TimeManager() {
 
             <thead>
               <tr>
-                <th>#</th>
+                <th>Category ID</th>
                 <th>Category</th>
 
                 <th style={{ textAlign: 'center' }}>Schedule</th>

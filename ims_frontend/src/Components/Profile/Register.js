@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../CSS/Register.css'
+import '../CSS/Register.css';
 
 export default function Register({ switchToLogin, onCancel }) {
   const [form, setForm] = useState({
@@ -9,87 +9,69 @@ export default function Register({ switchToLogin, onCancel }) {
     email: '',
     username: '',
     phone: '',
+    location: '',
     password: ''
   });
 
   const [status, setStatus] = useState(null);
-  const [errors, setErrors] = useState({
-    name: '',
-    email: '',
-    username: '',
-    phone: '',
-    password: ''
-  });
-
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleFocus = () => {
-    setStatus(null);  // Clear message when input field is focused
-  };
+  const handleFocus = () => setStatus(null);
 
   const validateForm = () => {
-    let tempErrors = { ...errors };
+    const newErrors = {};
     let isValid = true;
 
     if (!form.name) {
-      tempErrors.name = "Full Name is required.";
+      newErrors.name = 'Full name is required.';
       isValid = false;
-    } else {
-      tempErrors.name = '';
     }
-
-    if (!form.email) {
-      tempErrors.email = "Email is required.";
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) {
+      newErrors.email = 'Valid email is required.';
       isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      tempErrors.email = "Email is invalid.";
-      isValid = false;
-    } else {
-      tempErrors.email = '';
     }
-
     if (!form.username) {
-      tempErrors.username = "Username is required.";
+      newErrors.username = 'Username is required.';
       isValid = false;
-    } else {
-      tempErrors.username = '';
+    }
+    if (!form.phone || !/^\d{10}$/.test(form.phone)) {
+      newErrors.phone = 'Phone number must be 10 digits.';
+      isValid = false;
+    }
+    if (!form.location) {
+      newErrors.location = 'Location is required.';
+      isValid = false;
+    }
+    if (!form.password || form.password.length < 4) {
+      newErrors.password = 'Password must be at least 4 characters.';
+      isValid = false;
     }
 
-    if (!form.phone) {
-      tempErrors.phone = "Phone number is required.";
-      isValid = false;
-    } else if (!/^\d{10}$/.test(form.phone)) {
-      tempErrors.phone = "Phone number should be 10 digits.";
-      isValid = false;
-    } else {
-      tempErrors.phone = '';
-    }
-
-    if (!form.password) {
-      tempErrors.password = "Password is required.";
-      isValid = false;
-    } else {
-      tempErrors.password = '';
-    }
-
-    setErrors(tempErrors);
+    setErrors(newErrors);
     return isValid;
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus(null);
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const res = await axios.post('http://localhost:5000/api/userLogin/register', form);
+      const res = await axios.post('http://localhost:5000/api/supperAdmin/register', {
+        name: form.name,
+        email: form.email,
+        username: form.username,
+        phone: form.phone,
+        location: form.location,
+        password: form.password
+      });
+
       setStatus({ success: true, message: res.data.message });
 
       setForm({
@@ -97,24 +79,17 @@ export default function Register({ switchToLogin, onCancel }) {
         email: '',
         username: '',
         phone: '',
+        location: '',
         password: ''
       });
 
       setTimeout(() => {
-        if (switchToLogin) switchToLogin();
-        else navigate('/');
+        switchToLogin ? switchToLogin() : navigate('/');
       }, 2000);
+
     } catch (err) {
-      console.error('Registration Error:', err);
-      const errorMessage = err.response?.data?.message || 'Registration failed, please try again later.';
-      setStatus({ success: false, message: errorMessage });
-      setForm({
-        name: '',
-        email: '',
-        username: '',
-        phone: '',
-        password: ''
-      });
+      const errorMsg = err.response?.data?.message || 'Registration failed. Try again.';
+      setStatus({ success: false, message: errorMsg });
     }
   };
 
@@ -123,55 +98,68 @@ export default function Register({ switchToLogin, onCancel }) {
       <h2 className="form-title">Register Super Admin</h2>
 
       <input
+        type="text"
         name="name"
-        value={form.name}
         placeholder="Full Name"
-        className={`form-input ${errors.name ? 'error' : ''}`}
+        value={form.name}
         onChange={handleChange}
         onFocus={handleFocus}
+        className={`form-input ${errors.name ? 'error' : ''}`}
       />
       {errors.name && <div className="form-error">{errors.name}</div>}
 
       <input
-        name="email"
         type="email"
-        value={form.email}
+        name="email"
         placeholder="Email"
-        className={`form-input ${errors.email ? 'error' : ''}`}
+        value={form.email}
         onChange={handleChange}
         onFocus={handleFocus}
+        className={`form-input ${errors.email ? 'error' : ''}`}
       />
       {errors.email && <div className="form-error">{errors.email}</div>}
 
       <input
+        type="text"
         name="username"
-        value={form.username}
         placeholder="Username"
-        className={`form-input ${errors.username ? 'error' : ''}`}
+        value={form.username}
         onChange={handleChange}
         onFocus={handleFocus}
+        className={`form-input ${errors.username ? 'error' : ''}`}
       />
       {errors.username && <div className="form-error">{errors.username}</div>}
 
       <input
-        name="phone"
         type="tel"
+        name="phone"
+        placeholder="Phone (10 digits)"
         value={form.phone}
-        placeholder="Phone"
-        className={`form-input ${errors.phone ? 'error' : ''}`}
         onChange={handleChange}
         onFocus={handleFocus}
+        className={`form-input ${errors.phone ? 'error' : ''}`}
       />
       {errors.phone && <div className="form-error">{errors.phone}</div>}
 
       <input
-        name="password"
-        type="password"
-        value={form.password}
-        placeholder="Password"
-        className={`form-input ${errors.password ? 'error' : ''}`}
+        type="text"
+        name="location"
+        placeholder="Location"
+        value={form.location}
         onChange={handleChange}
         onFocus={handleFocus}
+        className={`form-input ${errors.location ? 'error' : ''}`}
+      />
+      {errors.location && <div className="form-error">{errors.location}</div>}
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        value={form.password}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        className={`form-input ${errors.password ? 'error' : ''}`}
       />
       {errors.password && <div className="form-error">{errors.password}</div>}
 
@@ -181,7 +169,7 @@ export default function Register({ switchToLogin, onCancel }) {
       </div>
 
       {status && (
-        <div className={status.success ? "form-success" : "form-error"}>
+        <div className={status.success ? 'form-success' : 'form-error'}>
           {status.message}
         </div>
       )}

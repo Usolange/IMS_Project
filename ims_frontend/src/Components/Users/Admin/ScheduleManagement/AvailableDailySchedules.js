@@ -36,7 +36,7 @@ const AvailableSchedules = () => {
 
     const fetchSchedules = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/dailyTimeRoutes/allSchedules?sad_id=${sad_id}`);
+        const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/allSchedules?sad_id=${sad_id}`);
         setSchedules(res.data);
         setError('');
       } catch (err) {
@@ -83,6 +83,12 @@ const AvailableSchedules = () => {
       if (nameA < nameB) return -1;
       if (nameA > nameB) return 1;
 
+      // Sort by schedule as last criteria
+      const scheduleA = a.schedule || '';
+      const scheduleB = b.schedule || '';
+      if (scheduleA < scheduleB) return -1;
+      if (scheduleA > scheduleB) return 1;
+
       return 0;
     });
   }, [schedules, filterType, searchTerm]);
@@ -114,7 +120,7 @@ const AvailableSchedules = () => {
 
   return (
     <div className="schedules-container">
-      <Link to="/TimeManager" className="nav-link">⬅ Back to Location Manager</Link>
+      <Link to="/TimeManager" className="nav-link">⬅ Back to Time Manager</Link>
       <h2>Available Ikimina Schedules</h2>
 
       <div className="controls">

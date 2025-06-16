@@ -1,90 +1,92 @@
-// routes/ikimina.js
-
 const express = require('express');
-const db = require('../config/db');
 const router = express.Router();
+const db = require('../config/db');
 
-// Add Ikimina info
-router.post('/', async (req, res) => {
-  const { name, email, password } = req.body;
+// Create Ikimina_info
+router.post('/create', async (req, res) => {
+  const {
+    iki_name, iki_email, iki_username, iki_password,
+    f_id, iki_location, dayOfEvent, sad_id
+  } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Name, email & password are required.' });
+  if (
+    !iki_name || !iki_email || !iki_username || !iki_password ||
+    !f_id || !iki_location || !dayOfEvent || !sad_id
+  ) {
+    return res.status(400).json({ message: 'All fields are required.' });
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await db.execute(
-      `INSERT INTO ikimina_info (iki_name, iki_email, iki_password) VALUES (?, ?, ?)`,
-      [name, email, hashedPassword]
+    // Check if Ikimina name exists and belongs to the logged-in admin
+    const [locationRows] = await db.query(
+      `SELECT ikimina_name FROM ikimina_locations WHERE ikimina_name = ? AND ikimina_id = ? AND sad_id = ?`,
+      [iki_name, iki_location, sad_id]
     );
 
-    res.status(201).json({
-      message: 'Ikimina added successfully.',
-      ikimina: { id: result.insertId, name, email }
-    });
-  } catch (err) {
-    console.error('Error adding ikimina info:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
+    if (locationRows.length === 0) {
+      return res.status(403).json({ message: 'Invalid Ikimina selection for this user.' });
+    }
 
-// Get all Ikimina info
-router.get('/', async (req, res) => {
-  try {
-    const [rows] = await db.execute('SELECT * FROM ikimina_info');
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching ikimina info:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-// Update Ikimina info
-router.put('/:id', async (req, res) => {
-  const { id } = req.params;
-  const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'Name, email & password are required.' });
-  }
-
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await db.execute(
-      `UPDATE ikimina_info SET iki_name = ?, iki_email = ?, iki_password = ? WHERE iki_id = ?`,
-      [name, email, hashedPassword, id]
+    // Check for unique email or username
+    const [existing] = await db.query(
+      `SELECT * FROM Ikimina_info WHERE iki_email = ? OR iki_username = ?`,
+      [iki_email, iki_username]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Ikimina not found.' });
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'Email or Username already exists.' });
     }
 
-    res.json({ message: 'Ikimina updated successfully.' });
+    const sql = `
+      INSERT INTO Ikimina_info (
+        iki_name, iki_email, iki_username, iki_password,
+        f_id, iki_location, dayOfEven
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await db.query(sql, [
+      iki_name,
+      iki_email,
+      iki_username,
+      iki_password, // Password not hashed (as requested)
+      f_id,
+      iki_location,
+      dayOfEvent
+    ]);
+
+    res.status(201).json({ message: 'Ikimina account created successfully.' });
   } catch (err) {
-    console.error('Error updating ikimina info:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('Insert error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 });
 
-// Delete Ikimina info
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
+// List all Ikimina_info created by a specific admin
+router.get('/list', async (req, res) => {
+  const sad_id = req.query.sad_id;
+
+  if (!sad_id) {
+    return res.status(400).json({ message: 'Admin ID required' });
+  }
 
   try {
-    const [result] = await db.execute('DELETE FROM ikimina_info WHERE iki_id = ?', [id]);
+    const [data] = await db.query(
+      `SELECT i.*, l.cell, l.sector, l.village, f.f_category 
+       FROM Ikimina_info i
+       JOIN ikimina_locations l ON i.iki_location = l.ikimina_id
+       JOIN frequency_category_info f ON i.f_id = f.f_id
+       WHERE l.sad_id = ?`,
+      [sad_id]
+    );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Ikimina not found.' });
-    }
-
-    res.json({ message: 'Ikimina deleted successfully.' });
+    res.json(data);
   } catch (err) {
-    console.error('Error deleting ikimina info:', err);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('List error:', err);
+    res.status(500).json({ message: 'Internal server error.' });
   }
 });
+
+// Update and Delete routes can be added later if needed
 
 module.exports = router;

@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const db = require('./config/db');
 
 const userLoginRoutes = require('./routes/userLogin');
+const ScheduleManagerRoutes = require('./routes/ScheduleManagerRoutes');
 const supperAdminRoutes = require('./routes/supperAdmin');
 const frequencyCategoryRoutes = require('./routes/frequencyCategory');
 const ikiminaInfoRoutes = require('./routes/ikiminaInfo');
@@ -35,6 +36,8 @@ app.use(express.json());
 // Route Middleware
 app.use('/api/userLogin', userLoginRoutes);
 app.use('/api/supperAdmin', supperAdminRoutes);
+app.use('/api/ScheduleManagerRoutes', ScheduleManagerRoutes);
+
 app.use('/api/frequencyCategory', frequencyCategoryRoutes);
 app.use('/api/ikiminaInfo', ikiminaInfoRoutes);
 app.use('/api/DailyTimeRoutes', DailyTimeRoutes);

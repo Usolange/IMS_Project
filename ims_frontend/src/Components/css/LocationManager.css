@@ -3,6 +3,7 @@
 .location-manager {
   padding: 20px;
   background-color: #f9fafb;
+  width: 200vh;
   margin-top: 10%;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -73,6 +74,7 @@
 .btn-add,
 .btn-back {
   padding: 8px 14px;
+  
   font-size: 14px;
   border: none;
   border-radius: 6px;
@@ -99,6 +101,7 @@
 
 .location-manager-header-buttons {
   display: flex;
+  background: #000;
   justify-content: flex-end;
   gap: 1rem;
   margin-bottom: 1rem;

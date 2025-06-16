@@ -12,13 +12,15 @@ export default function LocationSelector({ onSelect }) {
   const [selectedVillage, setSelectedVillage] = useState('');
   const [ikiminaName, setIkiminaName] = useState('');
 
+  // fetched categories and selected f_id
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+
   const [districts, setDistricts] = useState([]);
   const [sectors, setSectors] = useState([]);
   const [cells, setCells] = useState([]);
   const [villages, setVillages] = useState([]);
 
-
-  // Error messages keyed by field name
   const [errorMessages, setErrorMessages] = useState({
     province: '',
     district: '',
@@ -26,6 +28,7 @@ export default function LocationSelector({ onSelect }) {
     cell: '',
     village: '',
     ikiminaName: '',
+    category: '',
   });
 
   const [loggedUserName, setLoggedUserName] = useState('');
@@ -34,44 +37,52 @@ export default function LocationSelector({ onSelect }) {
     if (user?.name) setLoggedUserName(user.name);
   }, []);
 
-
-
+  // fetch categories once
   useEffect(() => {
-    const province = locations.provinces.find(p => p.name === selectedProvince);
-    setDistricts(province ? province.districts : []);
-    setSelectedDistrict('');
-    setSelectedSector('');
-    setSelectedCell('');
-    setSelectedVillage('');
-    setSectors([]);
-    setCells([]);
-    setVillages([]);
+    async function fetchCategories() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const res = await axios.get(
+          'http://localhost:5000/api/frequencyCategory/selectCategories',
+          { headers: { 'x-sad-id': user.id } }
+        );
+        setCategories(res.data);
+      } catch (err) {
+        console.error('Failed to fetch categories', err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  // cascade selects
+  useEffect(() => {
+    const p = locations.provinces.find(p => p.name === selectedProvince);
+    setDistricts(p ? p.districts : []);
+    setSelectedDistrict(''); setSelectedSector(''); setSelectedCell(''); setSelectedVillage('');
+    setSectors([]); setCells([]); setVillages([]);
   }, [selectedProvince]);
 
   useEffect(() => {
-    const district = districts.find(d => d.name === selectedDistrict);
-    setSectors(district ? district.sectors : []);
-    setSelectedSector('');
-    setSelectedCell('');
-    setSelectedVillage('');
-    setCells([]);
-    setVillages([]);
+    const d = districts.find(d => d.name === selectedDistrict);
+    setSectors(d ? d.sectors : []);
+    setSelectedSector(''); setSelectedCell(''); setSelectedVillage('');
+    setCells([]); setVillages([]);
   }, [selectedDistrict]);
 
   useEffect(() => {
-    const sector = sectors.find(s => s.name === selectedSector);
-    setCells(sector ? sector.cells : []);
-    setSelectedCell('');
-    setSelectedVillage('');
+    const s = sectors.find(s => s.name === selectedSector);
+    setCells(s ? s.cells : []);
+    setSelectedCell(''); setSelectedVillage('');
     setVillages([]);
   }, [selectedSector]);
 
   useEffect(() => {
-    const cell = cells.find(c => c.name === selectedCell);
-    setVillages(cell ? cell.villages : []);
+    const c = cells.find(c => c.name === selectedCell);
+    setVillages(c ? c.villages : []);
     setSelectedVillage('');
   }, [selectedCell]);
 
+  // notify parent if needed
   useEffect(() => {
     if (onSelect) {
       onSelect({
@@ -81,93 +92,87 @@ export default function LocationSelector({ onSelect }) {
         cell: selectedCell,
         village: selectedVillage,
         ikiminaName,
+        f_id: selectedCategoryId,
       });
     }
-  }, [selectedVillage, selectedCell, selectedSector, selectedDistrict, selectedProvince, ikiminaName, onSelect]);
+  }, [
+    selectedProvince, selectedDistrict, selectedSector,
+    selectedCell, selectedVillage, ikiminaName,
+    selectedCategoryId, onSelect
+  ]);
 
   const handleReset = () => {
-    setSelectedProvince('');
-    setSelectedDistrict('');
-    setSelectedSector('');
-    setSelectedCell('');
-    setSelectedVillage('');
-    setIkiminaName('');
+    setSelectedProvince(''); setSelectedDistrict(''); setSelectedSector('');
+    setSelectedCell(''); setSelectedVillage(''); setIkiminaName('');
+    setSelectedCategoryId('');
     setErrorMessages({
-      province: '',
-      district: '',
-      sector: '',
-      cell: '',
-      village: '',
-      ikiminaName: '',
+      province: '', district: '', sector: '',
+      cell: '', village: '', ikiminaName: '',
+      category: '',
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-
-    // get logged user sector
     const user = JSON.parse(localStorage.getItem('user'));
     const userLocation = user?.userLocation;
 
-    // Validation errors
     const errors = {
-      province: selectedProvince ? '' : 'Please select a Province.',
-      district: selectedDistrict ? '' : 'Please select a District.',
-      sector: selectedSector ? '' : 'Please select a Sector.',
-      cell: selectedCell ? '' : 'Please select a Cell.',
-      village: selectedVillage ? '' : 'Please select a Village.',
-      ikiminaName: ikiminaName.trim() ? '' : 'Please enter Ikimina Name.'
+      province: selectedProvince ? '' : 'Select a Province.',
+      district: selectedDistrict ? '' : 'Select a District.',
+      sector: selectedSector ? '' : 'Select a Sector.',
+      cell: selectedCell ? '' : 'Select a Cell.',
+      village: selectedVillage ? '' : 'Select a Village.',
+      ikiminaName: ikiminaName.trim() ? '' : 'Enter Ikimina Name.',
+      category: selectedCategoryId ? '' : 'Select a Category.',
     };
-
-    // New validation for sector match ignoring case
-    if (selectedSector && userLocation && selectedSector.toLowerCase() !== userLocation.toLowerCase()) {
-      errors.sector = 'Please you can not Manage Ikimina outside your sector!';
+    if (
+      selectedSector &&
+      userLocation &&
+      selectedSector.toLowerCase() !== userLocation.toLowerCase()
+    ) {
+      errors.sector = 'Cannot manage outside your sector!';
     }
-
     setErrorMessages(errors);
-
-    const hasErrors = Object.values(errors).some(msg => msg !== '');
-    if (hasErrors) return;
+    if (Object.values(errors).some(m => m)) return;
 
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const sad_id = user?.id || user?.sad_id;
-      if (!sad_id) {
-        alert('User not logged in properly.');
-        return;
-      }
-
-      const res = await axios.post('http://localhost:5000/api/LocationManagerRoutes/create', {
-        ikiminaName,
-        province: selectedProvince,
-        district: selectedDistrict,
-        sector: selectedSector,
-        cell: selectedCell,
-        village: selectedVillage,
-        sad_id,
-      });
-
-      alert(res.data.message);
+      await axios.post(
+        'http://localhost:5000/api/LocationManagerRoutes/create',
+        {
+          ikiminaName,
+          f_id: selectedCategoryId,
+          province: selectedProvince,
+          district: selectedDistrict,
+          sector: selectedSector,
+          cell: selectedCell,
+          village: selectedVillage,
+          sad_id: user.id,
+        }
+      );
+      alert('Ikimina saved successfully.');
       handleReset();
     } catch (err) {
       if (err.response?.status === 409) {
         setErrorMessages(prev => ({
           ...prev,
-          ikiminaName: 'This Ikimina name already exists in this Cell. Please use Other name!.'
+          ikiminaName: 'Name exists in this Cell. Choose another.',
         }));
       } else {
-        alert('Failed to save: ' + (err.response?.data?.message || err.message));
+        alert('Save failed: ' + (err.response?.data?.message || err.message));
       }
     }
   };
 
-
-
   return (
     <form className="location-selector" onSubmit={handleSubmit} noValidate>
+      <a href="/FrequencyCategoryManagement" className="btn-add-location">
+        + Add Category
+      </a>
       <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
         Logged in user: {loggedUserName}
       </div>
+
       <input
         type="text"
         name="ikiminaName"
@@ -176,7 +181,31 @@ export default function LocationSelector({ onSelect }) {
         placeholder="Enter Ikimina Name"
         aria-describedby="ikiminaName-error"
       />
-      {errorMessages.ikiminaName && <p className="field-error" id="ikiminaName-error">{errorMessages.ikiminaName}</p>}
+      {errorMessages.ikiminaName && (
+        <p className="field-error" id="ikiminaName-error">
+          {errorMessages.ikiminaName}
+        </p>
+      )}
+
+      <select
+        value={selectedCategoryId}
+        onChange={e => setSelectedCategoryId(e.target.value)}
+        aria-describedby="category-error"
+        required
+      >
+        <option value="">Select Category</option>
+        {categories.map(cat => (
+          <option key={cat.f_id} value={cat.f_id}>
+            {cat.f_category}
+          </option>
+        ))}
+      </select>
+      {errorMessages.category && (
+        <p className="field-error" id="category-error">
+          {errorMessages.category}
+        </p>
+      )}
+
       <select
         name="province"
         value={selectedProvince}
@@ -185,10 +214,16 @@ export default function LocationSelector({ onSelect }) {
       >
         <option value="">Select Province</option>
         {locations.provinces.map(p => (
-          <option key={p.name} value={p.name}>{p.name}</option>
+          <option key={p.name} value={p.name}>
+            {p.name}
+          </option>
         ))}
       </select>
-      {errorMessages.province && <p className="field-error" id="province-error">{errorMessages.province}</p>}
+      {errorMessages.province && (
+        <p className="field-error" id="province-error">
+          {errorMessages.province}
+        </p>
+      )}
 
       <select
         name="district"
@@ -199,10 +234,16 @@ export default function LocationSelector({ onSelect }) {
       >
         <option value="">Select District</option>
         {districts.map(d => (
-          <option key={d.name} value={d.name}>{d.name}</option>
+          <option key={d.name} value={d.name}>
+            {d.name}
+          </option>
         ))}
       </select>
-      {errorMessages.district && <p className="field-error" id="district-error">{errorMessages.district}</p>}
+      {errorMessages.district && (
+        <p className="field-error" id="district-error">
+          {errorMessages.district}
+        </p>
+      )}
 
       <select
         name="sector"
@@ -213,10 +254,16 @@ export default function LocationSelector({ onSelect }) {
       >
         <option value="">Select Sector</option>
         {sectors.map(s => (
-          <option key={s.name} value={s.name}>{s.name}</option>
+          <option key={s.name} value={s.name}>
+            {s.name}
+          </option>
         ))}
       </select>
-      {errorMessages.sector && <p className="field-error" id="sector-error">{errorMessages.sector}</p>}
+      {errorMessages.sector && (
+        <p className="field-error" id="sector-error">
+          {errorMessages.sector}
+        </p>
+      )}
 
       <select
         name="cell"
@@ -227,10 +274,16 @@ export default function LocationSelector({ onSelect }) {
       >
         <option value="">Select Cell</option>
         {cells.map(c => (
-          <option key={c.name} value={c.name}>{c.name}</option>
+          <option key={c.name} value={c.name}>
+            {c.name}
+          </option>
         ))}
       </select>
-      {errorMessages.cell && <p className="field-error" id="cell-error">{errorMessages.cell}</p>}
+      {errorMessages.cell && (
+        <p className="field-error" id="cell-error">
+          {errorMessages.cell}
+        </p>
+      )}
 
       <select
         name="village"
@@ -241,16 +294,28 @@ export default function LocationSelector({ onSelect }) {
       >
         <option value="">Select Village</option>
         {villages.map(v => (
-          <option key={v.name} value={v.name}>{v.name}</option>
+          <option key={v.name} value={v.name}>
+            {v.name}
+          </option>
         ))}
       </select>
-      {errorMessages.village && <p className="field-error" id="village-error">{errorMessages.village}</p>}
-
-
+      {errorMessages.village && (
+        <p className="field-error" id="village-error">
+          {errorMessages.village}
+        </p>
+      )}
 
       <div className="buttons-wrapper" style={{ marginLeft: '10px' }}>
-        <button type="submit" className="btn-submit">Submit</button>
-        <button type="button" className="btn-reset" onClick={handleReset}>Reset</button>
+        <button type="submit" className="btn-submit">
+          Submit
+        </button>
+        <button
+          type="button"
+          className="btn-reset"
+          onClick={handleReset}
+        >
+          Reset
+        </button>
         <Link to="/LocationManager" className="btn-back" style={{ marginLeft: '10px' }}>
           ⬅ Back
         </Link>

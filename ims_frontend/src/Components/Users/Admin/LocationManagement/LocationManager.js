@@ -6,6 +6,7 @@ import '../../../CSS/LocationManager.css';
 
 export default function LocationManager() {
   const [locations, setLocations] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -24,6 +25,7 @@ export default function LocationManager() {
 
     if (sad_id) {
       fetchLocations(sad_id);
+      fetchCategories(sad_id);
     } else {
       showToast('error', 'User ID missing. Please login again.');
     }
@@ -37,6 +39,22 @@ export default function LocationManager() {
       console.error(err);
       showToast('error', 'Failed to load locations.');
     }
+  };
+
+  const fetchCategories = async (sad_id) => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
+        headers: { 'x-sad-id': sad_id }
+      });
+      setCategories(res.data);
+    } catch (err) {
+      console.error('Failed to fetch categories', err);
+    }
+  };
+
+  const getCategoryName = (f_id) => {
+    const category = categories.find(cat => cat.f_id === f_id);
+    return category ? category.f_category : 'Unknown';
   };
 
   const handleEdit = (location) => {
@@ -79,38 +97,26 @@ export default function LocationManager() {
     }
   };
 
+  const handleUpdated = (msg) => {
+    const storedUser = localStorage.getItem('user');
+    const user = JSON.parse(storedUser);
+    const sad_id = user?.id;
 
+    if (!sad_id) {
+      showToast('error', 'User ID missing. Please login again.');
+      return;
+    }
 
-const handleUpdated = (msg) => {
-  const storedUser = localStorage.getItem('user');
-  const user = JSON.parse(storedUser);
-  const sad_id = user?.id;
-
-  if (!sad_id) {
-    showToast('error', 'User ID missing. Please login again.');
-    return;
-  }
-
-  showToast('success', msg || 'Location updated successfully.');
-  setShowEditModal(false); // ✅ CLOSE THE MODAL
-  setSelectedLocation(null); // ✅ RESET SELECTION
-  fetchLocations(sad_id);    // ✅ REFRESH THE DATA
-};
-
-
-
-
-
-
-
+    showToast('success', msg || 'Location updated successfully.');
+    setShowEditModal(false);
+    setSelectedLocation(null);
+    fetchLocations(sad_id);
+  };
 
   const showToast = (type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast({ type: '', message: '' }), 3000);
   };
-
-
-
 
   return (
     <div className="location-manager">
@@ -129,8 +135,9 @@ const handleUpdated = (msg) => {
       <table className="locations-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>Number</th>
             <th>Ikimina Name</th>
+            <th>Category</th>
             <th>Province</th>
             <th>District</th>
             <th>Sector</th>
@@ -141,12 +148,13 @@ const handleUpdated = (msg) => {
         </thead>
         <tbody>
           {locations.length === 0 ? (
-            <tr><td colSpan="8">No locations found.</td></tr>
+            <tr><td colSpan="9">No locations found.</td></tr>
           ) : (
             locations.map((loc, index) => (
               <tr key={loc.id || index}>
                 <td>{index + 1}</td>
                 <td>{loc.ikimina_name}</td>
+                <td>{getCategoryName(loc.f_id)}</td>
                 <td>{loc.province}</td>
                 <td>{loc.district}</td>
                 <td>{loc.sector}</td>

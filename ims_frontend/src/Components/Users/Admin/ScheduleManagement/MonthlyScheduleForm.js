@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Select from 'react-select';
 
 const MonthlyScheduleForm = ({ f_id, onClose }) => {
   const [ikiminaList, setIkiminaList] = useState([]);
@@ -32,19 +33,40 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
     fetchIkiminaList();
   }, []);
 
-  const handleIkiminaChange = (e) => {
-    const selectedId = e.target.value;
-    setSelectedIkiminaId(selectedId);
-    const selected = ikiminaList.find(item => item.ikimina_id.toString() === selectedId);
-    setSelectedIkiminaName(selected?.ikimina_name || '');
+  // Filter ikiminaList by f_id
+  const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
+
+  // Prepare options for Ikimina dropdown
+  const ikiminaOptions = filteredIkiminaList.map(item => ({
+    value: item.ikimina_id.toString(),
+    label: `${item.ikimina_name} - Cell: ${item.cell}`,
+    ikimina_name: item.ikimina_name,
+  }));
+
+  // Prepare options for days dropdown (1 to 31) with leading zeros
+  const dayOptions = Array.from({ length: 31 }, (_, i) => {
+    const dayStr = (i + 1).toString().padStart(2, '0'); // '01', '02', ..., '31'
+    return {
+      value: dayStr,
+      label: dayStr,
+    };
+  });
+
+  const handleIkiminaChange = (selectedOption) => {
+    if (selectedOption) {
+      setSelectedIkiminaId(selectedOption.value);
+      setSelectedIkiminaName(selectedOption.ikimina_name);
+    } else {
+      setSelectedIkiminaId('');
+      setSelectedIkiminaName('');
+    }
   };
 
-  const handleDateChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setSelectedDates([...selectedDates, value]);
+  const handleDaysChange = (selectedOptions) => {
+    if (selectedOptions) {
+      setSelectedDates(selectedOptions.map(opt => opt.value));
     } else {
-      setSelectedDates(selectedDates.filter(date => date !== value));
+      setSelectedDates([]);
     }
   };
 
@@ -65,10 +87,10 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
           ikimina_name: selectedIkiminaName,
           selected_dates: selectedDates,
           mtime_time: time,
-          f_id
+          f_id,
         },
         {
-          headers: { 'x-sad-id': user.id }
+          headers: { 'x-sad-id': user.id },
         }
       );
       alert('Monthly schedule saved successfully');
@@ -81,42 +103,29 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
     }
   };
 
-  // Create array for days 1 to 31
-  const daysInMonth = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-
   return (
     <form onSubmit={handleSubmit} className="schedule-form">
       <div className="form-group">
         <label>Ikimina:</label>
-        <select
-          value={selectedIkiminaId}
+        <Select
+          options={ikiminaOptions}
           onChange={handleIkiminaChange}
-          required
-        >
-          <option value="">-- Select Ikimina --</option>
-          {ikiminaList.map(item => (
-            <option key={item.ikimina_id} value={item.ikimina_id}>
-              {item.ikimina_id} == {item.ikimina_name} - Cell: {item.cell}
-            </option>
-          ))}
-        </select>
+          isClearable
+          placeholder="Search and select Ikimina"
+          value={ikiminaOptions.find(opt => opt.value === selectedIkiminaId) || null}
+        />
       </div>
 
       <div className="form-group">
         <label>Dates of the Month:</label>
-        <div className="checkbox-group">
-          {daysInMonth.map(date => (
-            <label key={date}>
-              <input
-                type="checkbox"
-                value={date}
-                checked={selectedDates.includes(date)}
-                onChange={handleDateChange}
-              />
-              {date}
-            </label>
-          ))}
-        </div>
+        <Select
+          options={dayOptions}
+          onChange={handleDaysChange}
+          isMulti
+          placeholder="Select one or more dates"
+          value={dayOptions.filter(opt => selectedDates.includes(opt.value))}
+          closeMenuOnSelect={false}
+        />
       </div>
 
       <div className="form-group">
@@ -130,7 +139,10 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
       </div>
 
       <div className="form-buttons">
-        <button type="submit" disabled={saving || !selectedIkiminaId || selectedDates.length === 0 || !time}>
+        <button
+          type="submit"
+          disabled={saving || !selectedIkiminaId || selectedDates.length === 0 || !time}
+        >
           {saving ? 'Saving...' : 'Save Schedule'}
         </button>
         <button type="button" onClick={onClose} disabled={saving}>

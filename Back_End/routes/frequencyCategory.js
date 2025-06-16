@@ -3,8 +3,7 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Get all categories for the logged-in user based on x-sad-id header
-// Get all categories with admin name
+// Get all categories for logged-in admin (using x-sad-id header)
 router.get('/selectCategories', async (req, res) => {
   const sadId = req.headers['x-sad-id'];
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
@@ -18,29 +17,52 @@ router.get('/selectCategories', async (req, res) => {
       [sadId]
     );
 
-    const mapped = rows.map(row => ({
+    const categories = rows.map(row => ({
       f_id: row.f_id,
       f_category: row.f_category,
-      createdBy: row.sad_names, // now full name
+      createdBy: row.sad_names,
     }));
 
-    res.json(mapped);
+    res.json(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
+// Get category type by f_id
+router.get('/type/:f_id', async (req, res) => {
+  const sadId = req.headers['x-sad-id'];
+  const { f_id } = req.params;
+  if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
+  try {
+    const [rows] = await db.execute(
+      'SELECT f_category FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
+      [f_id, sadId]
+    );
 
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
 
+    const category = rows[0].f_category.toLowerCase();
 
-// Add a new category
+    if (!['daily', 'weekly', 'monthly'].includes(category)) {
+      return res.status(400).json({ message: 'Invalid category type' });
+    }
+
+    res.json({ type: category });
+  } catch (error) {
+    console.error('Error fetching category type:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+// Add new category
 router.post('/newCategory', async (req, res) => {
   const sadId = req.headers['x-sad-id'];
   const { categoryName } = req.body;
-
-  console.log('POST /newCategory', { sadId, categoryName });
 
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
   if (!categoryName || categoryName.trim() === '') {
@@ -48,7 +70,6 @@ router.post('/newCategory', async (req, res) => {
   }
 
   try {
-    // Check for duplicates (case-insensitive)
     const [existing] = await db.execute(
       'SELECT * FROM frequency_category_info WHERE LOWER(f_category) = LOWER(?) AND sad_id = ?',
       [categoryName, sadId]
@@ -58,7 +79,6 @@ router.post('/newCategory', async (req, res) => {
       return res.status(409).json({ message: 'Category already exists' });
     }
 
-    // Insert new category
     const [result] = await db.execute(
       'INSERT INTO frequency_category_info (f_category, sad_id) VALUES (?, ?)',
       [categoryName, sadId]
@@ -70,7 +90,6 @@ router.post('/newCategory', async (req, res) => {
     res.status(500).json({ message: 'Error saving category' });
   }
 });
-
 
 // Update category by id
 router.put('/:id', async (req, res) => {
