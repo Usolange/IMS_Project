@@ -1,101 +1,122 @@
-/* IkiminaInfoForm.css */
+form {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", sans-serif;
+}
 
-.ikimina-info-form {
-  margin-top: 20%;
-  max-width: 480px;
-  margin: 1rem auto;
-  padding: 1.5rem 2rem;
-  background: #fff;
+form h2 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 24px;
+  font-size: 24px;
+}
+
+form label {
+  display: block;
+  font-weight: 600;
+  color: #34495e;
+  margin-top: 18px;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 15px;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fefefe;
+  box-sizing: border-box;
 }
 
-.ikimina-info-form .form-group {
-  margin-bottom: 1.25rem;
-  display: flex;
-  flex-direction: column;
+form input[type="text"]:read-only {
+  background-color: #f3f3f3;
+  animation: autofillFade 0.4s ease-in-out;
 }
 
-.ikimina-info-form label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-  font-size: 1rem;
+@keyframes autofillFade {
+  from {
+    background-color: #e1f5fe;
+  }
+  to {
+    background-color: #f3f3f3;
+  }
 }
 
-.ikimina-info-form input[type="text"],
-.ikimina-info-form input[type="email"],
-.ikimina-info-form input[type="password"],
-.ikimina-info-form select {
-  padding: 0.5rem 0.75rem;
-  font-size: 1rem;
-  border: 1.8px solid #ccc;
-  border-radius: 5px;
-  outline-offset: 2px;
-  transition: border-color 0.3s ease;
+form input::placeholder {
+  color: #aaa;
+  font-style: italic;
 }
 
-.ikimina-info-form input[type="text"]:focus,
-.ikimina-info-form input[type="email"]:focus,
-.ikimina-info-form input[type="password"]:focus,
-.ikimina-info-form select:focus {
-  border-color: #3b82f6; /* blue-500 */
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
-}
-
-.form-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-}
-
-.form-buttons button {
-  cursor: pointer;
-  padding: 0.55rem 1.2rem;
-  font-size: 1rem;
-  border-radius: 5px;
+form button {
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #00695c;
   border: none;
-  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
   transition: background-color 0.3s ease;
-  user-select: none;
 }
 
-.form-buttons button[type="submit"] {
-  background-color: #3b82f6;
-  color: white;
+form button:hover {
+  background-color: #004d40;
 }
 
-.form-buttons button[type="submit"]:hover:not(:disabled) {
-  background-color: #2563eb; /* darker blue */
-}
-
-.form-buttons button[type="submit"]:disabled {
-  background-color: #93c5fd;
+form button:disabled {
+  background-color: #b2dfdb;
   cursor: not-allowed;
 }
 
-.form-buttons button[type="button"] {
-  background-color: #e5e7eb; /* gray-200 */
-  color: #374151; /* gray-700 */
+form .toast-success,
+form .toast-error {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
 }
 
-.form-buttons button[type="button"]:hover:not(:disabled) {
-  background-color: #d1d5db; /* gray-300 */
+.toast-success {
+  background-color: #e0f2f1;
+  color: #00695c;
 }
 
-@media (max-width: 520px) {
-  .ikimina-info-form {
-    padding: 1rem 1rem;
-    max-width: 100%;
+.toast-error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+@media screen and (max-width: 768px) {
+  form {
+    padding: 16px;
   }
 
-  .form-buttons {
-    flex-direction: column;
+  form h2 {
+    font-size: 20px;
   }
 
-  .form-buttons button {
+  form label {
+    font-size: 14px;
+  }
+
+  form input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  form button {
     width: 100%;
+    margin-bottom: 12px;
   }
 }

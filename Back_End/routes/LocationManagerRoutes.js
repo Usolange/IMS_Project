@@ -87,6 +87,40 @@ router.get('/select', async (req, res) => {
   }
 });
 
+router.get('/selectAvailableIkimina', async (req, res) => {
+  const sad_id = req.query.sad_id;
+
+  if (!sad_id) {
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
+  try {
+    // Get user's sector
+    const [userRows] = await db.query('SELECT sad_loc FROM supper_admin WHERE sad_id = ?', [sad_id]);
+    if (userRows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userSector = userRows[0].sad_loc;
+
+    // Get available Ikimina: same sector, same user, and not used in ikimina_info
+    const [locations] = await db.query(
+      `SELECT * FROM ikimina_locations 
+       WHERE sad_id = ? 
+         AND LOWER(sector) = LOWER(?) 
+         AND id NOT IN (SELECT iki_location FROM ikimina_info)`,
+      [sad_id, userSector]
+    );
+
+    res.json(locations);
+  } catch (err) {
+    console.error('Error in /selectAvailableIkimina:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
 router.put('/update/:id', async (req, res) => {
   const id = req.params.id;
   const {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
+import '../../../CSS/IkiminaManagement.css';
 
 export default function IkiminaInfoForm({ onClose }) {
   const [ikiminaList, setIkiminaList] = useState([]);
@@ -14,71 +15,66 @@ export default function IkiminaInfoForm({ onClose }) {
   const [categoryOfEvent, setCategoryOfEvent] = useState('');
   const [dayOfEvent, setDayOfEvent] = useState('');
   const [timeOfEvent, setTimeOfEvent] = useState('');
+  const [numberOfEvents, setNumberOfEvents] = useState('');
 
   // User input
   const [ikiEmail, setIkiEmail] = useState('');
   const [ikiUsername, setIkiUsername] = useState('');
   const [ikiPassword, setIkiPassword] = useState('');
 
+  // UI state
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
-  // Get sad_id from localStorage safely
   const getSadId = () => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) return null;
     try {
       const user = JSON.parse(storedUser);
-      // Your backend might use 'id' or 'sad_id'; adjust if needed
       return user?.sad_id || user?.id || null;
     } catch {
       return null;
     }
   };
 
-  // Fetch Ikimina locations and categories on mount
   useEffect(() => {
     const fetchData = async () => {
       const sad_id = getSadId();
       if (!sad_id) {
-        alert('User not logged in or session expired. Please login again.');
+        setError('User not logged in or session expired. Please login again.');
         return;
       }
-
       try {
         const [ikiminaRes, freqRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/LocationManagerRoutes/select?sad_id=${sad_id}`, {
-            headers: { 'x-sad-id': sad_id }
+          axios.get(`http://localhost:5000/api/LocationManagerRoutes/selectAvailableIkimina?sad_id=${sad_id}`, {
+            headers: { 'x-sad-id': sad_id },
           }),
           axios.get(`http://localhost:5000/api/frequencyCategory/selectCategories?sad_id=${sad_id}`, {
-            headers: { 'x-sad-id': sad_id }
-          })
+            headers: { 'x-sad-id': sad_id },
+          }),
         ]);
-
         setIkiminaList(ikiminaRes.data);
         setFreqCategories(freqRes.data);
-      } catch (error) {
-        console.error('Failed to load data:', error.response || error.message);
-        alert('Failed to load data. Please try again later.');
+      } catch (err) {
+        setError('Failed to load data. Please try again later.');
+        console.error(err.response || err.message);
       }
     };
-
     fetchData();
   }, []);
 
-  // Helper to get category name from f_id
   const getCategoryName = (f_id) => {
-    const cat = freqCategories.find(c => c.f_id === f_id);
+    const cat = freqCategories.find((c) => c.f_id === f_id);
     return cat ? cat.f_category : '';
   };
 
-  // Prepare options for react-select with concatenated label
-  const ikiminaOptions = ikiminaList.map(item => ({
-    value: item.id || item.ikimina_id, // Use id or ikimina_id depending on API response
+  const ikiminaOptions = ikiminaList.map((item) => ({
+    value: item.id || item.ikimina_id,
     label: `${item.ikimina_name} (Cell: ${item.cell}, Village: ${item.village}) - Category: ${getCategoryName(item.f_id)}`,
-    data: item
+    data: item,
   }));
 
-  // When user selects an Ikimina, update auto-filled fields and fetch schedule
   useEffect(() => {
     if (!selectedIkimina) {
       setIkiId('');
@@ -87,81 +83,91 @@ export default function IkiminaInfoForm({ onClose }) {
       setCategoryOfEvent('');
       setDayOfEvent('');
       setTimeOfEvent('');
+      setNumberOfEvents('');
       return;
     }
 
     const ikimina = selectedIkimina.data;
     setIkiId(ikimina.id || ikimina.ikimina_id);
-    setIkiName(ikimina.ikimina_name); // clean name only
+    setIkiName(ikimina.ikimina_name);
     setIkiLocation(`${ikimina.cell}, ${ikimina.village}`);
     setCategoryOfEvent(getCategoryName(ikimina.f_id));
 
-    // Fetch schedules for the selected Ikimina
     const fetchSchedule = async () => {
       const sad_id = getSadId();
-      if (!sad_id) {
-        alert('User not logged in or session expired. Please login again.');
-        return;
-      }
+      if (!sad_id) return;
+
+      const ikiminaName = ikimina.ikimina_name;
+      const f_id = ikimina.f_id;
+      const frequency = getCategoryName(f_id).toLowerCase();
+
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/ScheduleManagerRoutes/allSchedules?ikimina_id=${ikimina.ikimina_id}`,
-          {
-            headers: { 'x-sad-id': sad_id }
-          }
-        );
+        const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/eventTimes`, {
+          headers: { 'x-sad-id': sad_id },
+          params: { frequency, ikimina_name: ikiminaName },
+        });
 
-        if (res.data && res.data.length > 0) {
-          // Pick first schedule for simplicity
-          const firstSchedule = res.data[0];
-
-          // Detect schedule type explicitly and set day/time accordingly
-          if ('dtime_time' in firstSchedule) {
-            // Daily schedule
+        if (res.data.length > 0) {
+          if (frequency === 'daily') {
             setDayOfEvent('Daily');
-            setTimeOfEvent(firstSchedule.dtime_time || '');
-          } else if ('weeklytime_day' in firstSchedule) {
-            // Weekly schedule
-            setDayOfEvent(firstSchedule.weeklytime_day || '');
-            setTimeOfEvent(firstSchedule.weeklytime_time || '');
-          } else if ('monthlytime_date' in firstSchedule) {
-            // Monthly schedule
-            setDayOfEvent(firstSchedule.monthlytime_date || '');
-            setTimeOfEvent(firstSchedule.monthlytime_time || '');
+            setTimeOfEvent(res.data[0].time || '');
+            setNumberOfEvents('1');
           } else {
-            // Unknown format fallback
-            setDayOfEvent('');
-            setTimeOfEvent('');
+            const allDays = res.data.map(ev => ev.day);
+            const allTimes = res.data.map(ev => ev.time);
+            const uniqueDays = [...new Set(allDays)];
+            const uniqueTimes = [...new Set(allTimes)];
+
+            setDayOfEvent(uniqueDays.join(', '));
+            setTimeOfEvent(uniqueTimes.join(', '));
+            setNumberOfEvents(String(uniqueDays.length));
           }
         } else {
-          setDayOfEvent('');
-          setTimeOfEvent('');
+          setDayOfEvent('N/A');
+          setTimeOfEvent('N/A');
+          setNumberOfEvents('0');
         }
       } catch (err) {
-        console.error('Failed to fetch schedule:', err.response || err.message);
-        setDayOfEvent('');
-        setTimeOfEvent('');
+        setDayOfEvent('N/A');
+        setTimeOfEvent('N/A');
+        console.error('Error fetching schedule:', err);
       }
     };
 
     fetchSchedule();
   }, [selectedIkimina, freqCategories]);
 
-  // Form submission handler
+  const clearForm = () => {
+    setSelectedIkimina(null);
+    setIkiId('');
+    setIkiName('');
+    setIkiLocation('');
+    setCategoryOfEvent('');
+    setDayOfEvent('');
+    setTimeOfEvent('');
+    setIkiEmail('');
+    setIkiUsername('');
+    setIkiPassword('');
+    setNumberOfEvents('');
+    setSuccess(false);
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccess(false);
+    setError('');
 
     if (!ikiName || !ikiEmail || !ikiUsername || !ikiPassword) {
-      alert('Please fill in all required fields');
+      setError('Please fill in all required fields.');
       return;
     }
 
     setSaving(true);
-
     try {
       const sad_id = getSadId();
       if (!sad_id) {
-        alert('User not logged in');
+        setError('User not logged in.');
         setSaving(false);
         return;
       }
@@ -171,29 +177,34 @@ export default function IkiminaInfoForm({ onClose }) {
         iki_email: ikiEmail,
         iki_username: ikiUsername,
         iki_password: ikiPassword,
-        iki_location: ikiLocation,
-        CategoryOfEvent: categoryOfEvent,
-        dayOfEvent: dayOfEvent,
-        timeOfEvent: timeOfEvent,
+        iki_location: ikiId,
+        dayOfEvent,
+        timeOfEvent,
+        f_id: selectedIkimina?.data?.f_id,
+        numberOfEvents: Number(numberOfEvents),
+        sad_id,
       };
 
-      await axios.post('http://localhost:5000/api/ikimina_info/create', payload, {
-        headers: { 'x-sad-id': sad_id }
+      console.log('Submitting Ikimina creation payload:', payload);
+
+      await axios.post('http://localhost:5000/api/ikiminaInfo/create', payload, {
+        headers: { 'x-sad-id': sad_id },
       });
 
-      alert('Ikimina info created successfully');
+      setSuccess(true);
+      clearForm();
       if (onClose) onClose();
-
-    } catch (error) {
-      console.error('Error creating Ikimina info:', error.response || error.message);
-      alert(error?.response?.data?.message || 'Failed to create Ikimina info');
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to create Ikimina info.');
+      console.error('Error creating Ikimina info:', err.response || err.message);
     } finally {
       setSaving(false);
     }
   };
 
+
   return (
-    <form onSubmit={handleSubmit} noValidate style={{ maxWidth: '600px', margin: 'auto' }}>
+    <form onSubmit={handleSubmit} noValidate>
       <h2>Create Ikimina Info</h2>
 
       <label>Ikimina Name (Searchable):</label>
@@ -204,56 +215,64 @@ export default function IkiminaInfoForm({ onClose }) {
         placeholder="Select Ikimina location..."
         isClearable
         isSearchable
+        classNamePrefix="react-select"
       />
 
       <label>Ikimina ID (Auto):</label>
-      <input type="text" value={ikiId} readOnly />
+      <input type="text" value={ikiId} readOnly className="readonly-input" />
 
       <label>Ikimina Location (Auto):</label>
-      <input type="text" value={ikiLocation} readOnly />
+      <input type="text" value={ikiLocation} readOnly className="readonly-input" />
 
       <label>Category of Event (Auto):</label>
-      <input type="text" value={categoryOfEvent} readOnly />
+      <input type="text" value={categoryOfEvent} readOnly className="readonly-input" />
 
       <label>Day of Event (Auto):</label>
-      <input type="text" value={dayOfEvent} readOnly />
+      <input type="text" value={dayOfEvent} readOnly className="readonly-input" />
 
       <label>Time of Event (Auto):</label>
-      <input type="text" value={timeOfEvent} readOnly />
+      <input type="text" value={timeOfEvent} readOnly className="readonly-input" />
+
+      <label>Number of Events (Auto):</label>
+      <input type="text" value={numberOfEvents} readOnly className="readonly-input" />
 
       <label>Ikimina Email:</label>
       <input
         type="email"
         value={ikiEmail}
-        onChange={e => setIkiEmail(e.target.value)}
+        onChange={(e) => setIkiEmail(e.target.value)}
         required
+        placeholder="Enter Ikimina email"
       />
 
       <label>Ikimina Username:</label>
       <input
         type="text"
         value={ikiUsername}
-        onChange={e => setIkiUsername(e.target.value)}
+        onChange={(e) => setIkiUsername(e.target.value)}
         required
+        placeholder="Enter Ikimina username"
       />
 
       <label>Ikimina Password:</label>
       <input
         type="password"
         value={ikiPassword}
-        onChange={e => setIkiPassword(e.target.value)}
+        onChange={(e) => setIkiPassword(e.target.value)}
         required
         minLength={5}
+        placeholder="Enter password (min 5 characters)"
       />
 
-      <div style={{ marginTop: '20px' }}>
-        <button type="submit" disabled={saving} style={{ marginRight: '10px' }}>
+      <div style={{ marginTop: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <button type="submit" disabled={saving}>
           {saving ? 'Saving...' : 'Create Ikimina Info'}
         </button>
-        <button type="button" onClick={onClose} disabled={saving}>
-          Cancel
-        </button>
+        <a href="/AllIkiminaPage" className="btn-back-home">Back</a>
       </div>
+
+      {success && <div className="toast-success">Ikimina info created successfully!</div>}
+      {error && <div className="toast-error">{error}</div>}
     </form>
   );
 }

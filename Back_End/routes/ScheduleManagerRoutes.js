@@ -26,7 +26,7 @@ router.get('/allSchedules', async (req, res) => {
     // DAILY schedules
     const [dailyRows] = await db.execute(
       `SELECT d.dtime_id AS id,
-              d.ikimina_name,
+              l.ikimina_name,
               CONCAT('Every day at ', TIME_FORMAT(d.dtime_time, '%H:%i:%s')) AS schedule,
               l.cell,
               l.village,
@@ -42,7 +42,7 @@ router.get('/allSchedules', async (req, res) => {
     // WEEKLY schedules
     const [weeklyRows] = await db.execute(
       `SELECT w.weeklytime_id AS id,
-              w.ikimina_name,
+              l.ikimina_name,
               CONCAT('Every ', w.weeklytime_day, ' at ', TIME_FORMAT(w.weeklytime_time, '%H:%i:%s')) AS schedule,
               l.cell,
               l.village,
@@ -58,7 +58,7 @@ router.get('/allSchedules', async (req, res) => {
     // MONTHLY schedules
     const [monthlyRows] = await db.execute(
       `SELECT m.monthlytime_id AS id,
-              m.ikimina_name,
+              l.ikimina_name,
               CONCAT('Every ', CAST(m.monthlytime_date AS CHAR), ' at ', TIME_FORMAT(m.monthlytime_time, '%H:%i:%s')) AS schedule,
               l.cell,
               l.village,
@@ -71,16 +71,19 @@ router.get('/allSchedules', async (req, res) => {
       [userId, userSector]
     );
 
-    const allSchedules = [...dailyRows, ...weeklyRows, ...monthlyRows];
+    const allSchedules = [...dailyRows, ...weeklyRows, ...monthlyRows].sort((a, b) =>
+      a.ikimina_name.localeCompare(b.ikimina_name)
+    );
 
     console.log('All schedules:', allSchedules); // debug log
 
     res.json(allSchedules);
   } catch (error) {
-    console.error('Error fetching schedules:', error.message);
+    console.error('Error fetching schedules:', error.stack || error.message);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 // GET event times by frequency and ikimina_name
 router.get('/eventTimes', async (req, res) => {
@@ -102,32 +105,37 @@ router.get('/eventTimes', async (req, res) => {
     switch (frequency.toLowerCase()) {
       case 'daily':
         sql = `
-          SELECT d.dtime_id AS id, d.dtime_time AS time, d.ikimina_name, d.f_id
+          SELECT d.dtime_id AS id, d.dtime_time AS time, l.ikimina_name, d.f_id
           FROM ik_daily_time_info d
           JOIN ikimina_locations l ON d.ikimina_id = l.ikimina_id
-          WHERE d.ikimina_name = ? AND l.sad_id = ?`;
+          JOIN frequency_category_info c ON d.f_id = c.f_id
+          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];
         break;
 
       case 'weekly':
         sql = `
           SELECT w.weeklytime_id AS id,
-                 CONCAT(w.weeklytime_day, ' - ', TIME_FORMAT(w.weeklytime_time, '%H:%i:%s')) AS time,
-                 w.ikimina_name, w.f_id
+                 w.weeklytime_day AS day,
+                 TIME_FORMAT(w.weeklytime_time, '%H:%i:%s') AS time,
+                 l.ikimina_name, w.f_id
           FROM ik_weekly_time_info w
           JOIN ikimina_locations l ON w.ikimina_id = l.ikimina_id
-          WHERE w.ikimina_name = ? AND l.sad_id = ?`;
+          JOIN frequency_category_info c ON w.f_id = c.f_id
+          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];
         break;
 
       case 'monthly':
         sql = `
           SELECT m.monthlytime_id AS id,
-                 CONCAT('Day ', m.monthlytime_date, ' at ', TIME_FORMAT(m.monthlytime_time, '%H:%i:%s')) AS time,
-                 m.ikimina_name, m.f_id
+                 m.monthlytime_date AS day,
+                 TIME_FORMAT(m.monthlytime_time, '%H:%i:%s') AS time,
+                 l.ikimina_name, m.f_id
           FROM ik_monthly_time_info m
           JOIN ikimina_locations l ON m.ikimina_id = l.ikimina_id
-          WHERE m.ikimina_name = ? AND l.sad_id = ?`;
+          JOIN frequency_category_info c ON m.f_id = c.f_id
+          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];
         break;
 
@@ -139,16 +147,19 @@ router.get('/eventTimes', async (req, res) => {
 
     const response = rows.map(r => ({
       id: r.id,
-      label: r.time,
       ikimina_name: r.ikimina_name,
       f_id: r.f_id,
+      day: r.day,
+      time: r.time,
     }));
 
     res.json(response);
+
   } catch (error) {
-    console.error('Error fetching event times:', error);
+    console.error('Error fetching event times:', error.stack || error.message);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 module.exports = router;

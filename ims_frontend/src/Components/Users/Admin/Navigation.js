@@ -23,7 +23,7 @@ export default function Navigation() {
       </Link>
     </li>
     <li>
-      <Link to="/IkiminaManagement" className="nav-link">
+      <Link to="/AllIkiminaPage" className="nav-link">
         Create Ikimina Group
       </Link>
     </li>

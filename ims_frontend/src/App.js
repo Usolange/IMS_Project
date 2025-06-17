@@ -35,6 +35,8 @@ import LocationManager from './Components/Users/Admin/LocationManagement/Locatio
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation'
 
 import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
+import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
+
 
 export default function App() {
   return (
@@ -74,8 +76,8 @@ export default function App() {
         <Route path="/LocationManager" element={<RoleProtectedRoute allowedRoles={['admin']}><LocationManager/></RoleProtectedRoute>} />
         <Route path="/AddLocation" element={<RoleProtectedRoute allowedRoles={['admin']}><AddLocation/></RoleProtectedRoute>} />
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
+        <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
-
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
 
         {/* Unauthorized fallback */}

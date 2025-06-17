@@ -1,0 +1,86 @@
+/* src/CSS/AllIkiminaPage.css */
+.ikimina-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: c;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+.btn-primary {
+  background-color: #4CAF50;
+}
+
+.btn-secondary {
+  background-color: #607D8B;
+}
+
+.ikimina-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ikimina-table th, .ikimina-table td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+}
+
+.ikimina-table th {
+  background-color: #f4f4f4;
+  color: #444;
+}
+
+.btn-icon {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0 4px;
+}
+
+.btn-icon.edit {
+  color: #2196F3;
+}
+
+.btn-icon.delete {
+  color: #f44336;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+.success-message {
+  color: green;
+  margin-bottom: 10px;
+}
+
+.no-data {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
