@@ -10,8 +10,8 @@ const AvailableSchedules = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [modalData, setModalData] = useState(null);
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -36,7 +36,9 @@ const AvailableSchedules = () => {
 
     const fetchSchedules = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/allSchedules?sad_id=${sad_id}`);
+        const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/allSchedules`, {
+          headers: { 'x-sad-id': sad_id }
+        });
         setSchedules(res.data);
         setError('');
       } catch (err) {
@@ -49,51 +51,29 @@ const AvailableSchedules = () => {
     fetchSchedules();
   }, []);
 
-  // Reset page when filter or search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [filterType, searchTerm]);
 
-  // Filtering and sorting
   const filteredSortedSchedules = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
+    const order = { daily: 1, weekly: 2, monthly: 3 };
 
-    const filtered = schedules.filter(sch => {
-      const matchesType = filterType === 'all' || sch.scheduleType === filterType;
-      const matchesSearch =
-        sch.ikimina_name?.toLowerCase().includes(lowerSearch) ||
-        sch.cell?.toLowerCase().includes(lowerSearch) ||
-        sch.village?.toLowerCase().includes(lowerSearch) ||
-        sch.scheduleType?.toLowerCase().includes(lowerSearch);
-
-      return matchesType && matchesSearch;
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (a.scheduleType < b.scheduleType) return -1;
-      if (a.scheduleType > b.scheduleType) return 1;
-
-      const cellA = a.cell || '';
-      const cellB = b.cell || '';
-      if (cellA < cellB) return -1;
-      if (cellA > cellB) return 1;
-
-      const nameA = a.ikimina_name || '';
-      const nameB = b.ikimina_name || '';
-      if (nameA < nameB) return -1;
-      if (nameA > nameB) return 1;
-
-      // Sort by schedule as last criteria
-      const scheduleA = a.schedule || '';
-      const scheduleB = b.schedule || '';
-      if (scheduleA < scheduleB) return -1;
-      if (scheduleA > scheduleB) return 1;
-
-      return 0;
-    });
+    return schedules
+      .filter(sch => {
+        const matchesType = filterType === 'all' || sch.scheduleType === filterType;
+        const matchesSearch =
+          sch.ikimina_name?.toLowerCase().includes(lowerSearch) ||
+          sch.cell?.toLowerCase().includes(lowerSearch) ||
+          sch.village?.toLowerCase().includes(lowerSearch) ||
+          sch.scheduleType?.toLowerCase().includes(lowerSearch);
+        return matchesType && matchesSearch;
+      })
+      .sort((a, b) => {
+        return (order[a.scheduleType] || 99) - (order[b.scheduleType] || 99);
+      });
   }, [schedules, filterType, searchTerm]);
 
-  // Pagination calculation
   const totalPages = Math.ceil(filteredSortedSchedules.length / itemsPerPage);
 
   const paginatedSchedules = useMemo(() => {
@@ -101,7 +81,6 @@ const AvailableSchedules = () => {
     return filteredSortedSchedules.slice(start, start + itemsPerPage);
   }, [filteredSortedSchedules, currentPage, itemsPerPage]);
 
-  // Export filtered & sorted (full, not paginated) to Excel
   const handleExportExcel = () => {
     const exportData = filteredSortedSchedules.map(({ id, ikimina_name, schedule, cell, village, scheduleType }) => ({
       ID: id,
@@ -118,6 +97,8 @@ const AvailableSchedules = () => {
     XLSX.writeFile(workbook, "AvailableSchedules.xlsx");
   };
 
+  const closeModal = () => setModalData(null);
+
   return (
     <div className="schedules-container">
       <Link to="/TimeManager" className="nav-link">⬅ Back to Time Manager</Link>
@@ -126,7 +107,7 @@ const AvailableSchedules = () => {
       <div className="controls">
         <input
           type="text"
-          placeholder="Search by Ikimina, Cell, Village or Type..."
+          placeholder="Search Ikimina, Cell, Village, or Type..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           className="search-input"
@@ -154,7 +135,7 @@ const AvailableSchedules = () => {
         <p>No schedules found.</p>
       ) : (
         <>
-          <table>
+          <table className="schedules-table">
             <thead>
               <tr>
                 <th>Number</th>
@@ -167,7 +148,11 @@ const AvailableSchedules = () => {
             </thead>
             <tbody>
               {paginatedSchedules.map((item, index) => (
-                <tr key={item.id + '-' + index}>
+                <tr
+                  key={item.id + '-' + index}
+                  className="clickable-row"
+                  onClick={() => setModalData(item)}
+                >
                   <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td>{item.ikimina_name}</td>
                   <td>{item.schedule}</td>
@@ -180,23 +165,25 @@ const AvailableSchedules = () => {
           </table>
 
           <div className="pagination">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Prev
-            </button>
-
-            <span> Page {currentPage} of {totalPages} </span>
-
-            <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
+            <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Prev</button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Next</button>
           </div>
         </>
+      )}
+
+      {modalData && (
+        <div className="modal-backdrop" onClick={closeModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Schedule Details</h3>
+            <p><strong>Ikimina:</strong> {modalData.ikimina_name}</p>
+            <p><strong>Schedule:</strong> {modalData.schedule}</p>
+            <p><strong>Cell:</strong> {modalData.cell || 'N/A'}</p>
+            <p><strong>Village:</strong> {modalData.village || 'N/A'}</p>
+            <p><strong>Type:</strong> {modalData.scheduleType}</p>
+            <button onClick={closeModal} className="close-btn">Close</button>
+          </div>
+        </div>
       )}
     </div>
   );

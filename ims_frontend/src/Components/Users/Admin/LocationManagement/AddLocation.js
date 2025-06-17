@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import locations from './locations.json';
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 import '../../../CSS/AddLocation.css';
 import axios from 'axios';
 
@@ -12,7 +12,6 @@ export default function LocationSelector({ onSelect }) {
   const [selectedVillage, setSelectedVillage] = useState('');
   const [ikiminaName, setIkiminaName] = useState('');
 
-  // fetched categories and selected f_id
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
@@ -22,13 +21,7 @@ export default function LocationSelector({ onSelect }) {
   const [villages, setVillages] = useState([]);
 
   const [errorMessages, setErrorMessages] = useState({
-    province: '',
-    district: '',
-    sector: '',
-    cell: '',
-    village: '',
-    ikiminaName: '',
-    category: '',
+    province: '', district: '', sector: '', cell: '', village: '', ikiminaName: '', category: '',
   });
 
   const [loggedUserName, setLoggedUserName] = useState('');
@@ -37,7 +30,6 @@ export default function LocationSelector({ onSelect }) {
     if (user?.name) setLoggedUserName(user.name);
   }, []);
 
-  // fetch categories once
   useEffect(() => {
     async function fetchCategories() {
       try {
@@ -54,7 +46,6 @@ export default function LocationSelector({ onSelect }) {
     fetchCategories();
   }, []);
 
-  // cascade selects
   useEffect(() => {
     const p = locations.provinces.find(p => p.name === selectedProvince);
     setDistricts(p ? p.districts : []);
@@ -82,7 +73,6 @@ export default function LocationSelector({ onSelect }) {
     setSelectedVillage('');
   }, [selectedCell]);
 
-  // notify parent if needed
   useEffect(() => {
     if (onSelect) {
       onSelect({
@@ -106,9 +96,7 @@ export default function LocationSelector({ onSelect }) {
     setSelectedCell(''); setSelectedVillage(''); setIkiminaName('');
     setSelectedCategoryId('');
     setErrorMessages({
-      province: '', district: '', sector: '',
-      cell: '', village: '', ikiminaName: '',
-      category: '',
+      province: '', district: '', sector: '', cell: '', village: '', ikiminaName: '', category: '',
     });
   };
 
@@ -126,6 +114,7 @@ export default function LocationSelector({ onSelect }) {
       ikiminaName: ikiminaName.trim() ? '' : 'Enter Ikimina Name.',
       category: selectedCategoryId ? '' : 'Select a Category.',
     };
+
     if (
       selectedSector &&
       userLocation &&
@@ -133,6 +122,7 @@ export default function LocationSelector({ onSelect }) {
     ) {
       errors.sector = 'Cannot manage outside your sector!';
     }
+
     setErrorMessages(errors);
     if (Object.values(errors).some(m => m)) return;
 
@@ -165,160 +155,81 @@ export default function LocationSelector({ onSelect }) {
   };
 
   return (
-    <form className="location-selector" onSubmit={handleSubmit} noValidate>
-      <a href="/FrequencyCategoryManagement" className="btn-add-location">
-        + Add Category
-      </a>
-      <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
-        Logged in user: {loggedUserName}
+    <form className="location-selector-form" onSubmit={handleSubmit} noValidate>
+       <div className="form-group">
+        <label>Logged in user: <strong>{loggedUserName}</strong></label>
+      </div>
+      <div className="flex-end">
+        <a href="/FrequencyCategoryManagement" className="btn-add-category">+ Add Category</a>
       </div>
 
-      <input
-        type="text"
-        name="ikiminaName"
-        value={ikiminaName}
-        onChange={e => setIkiminaName(e.target.value)}
-        placeholder="Enter Ikimina Name"
-        aria-describedby="ikiminaName-error"
-      />
-      {errorMessages.ikiminaName && (
-        <p className="field-error" id="ikiminaName-error">
-          {errorMessages.ikiminaName}
-        </p>
-      )}
+       <div className="form-group">
+        <input
+          type="text"
+          name="ikiminaName"
+          value={ikiminaName}
+          onChange={e => setIkiminaName(e.target.value)}
+          placeholder="Enter Ikimina Name"
+          className="form-input"
+          aria-describedby="ikiminaName-error"
+        />
+        {errorMessages.ikiminaName && (
+          <p className="field-error">{errorMessages.ikiminaName}</p>
+        )}
+      </div>
 
-      <select
-        value={selectedCategoryId}
-        onChange={e => setSelectedCategoryId(e.target.value)}
-        aria-describedby="category-error"
-        required
-      >
-        <option value="">Select Category</option>
-        {categories.map(cat => (
-          <option key={cat.f_id} value={cat.f_id}>
-            {cat.f_category}
-          </option>
-        ))}
-      </select>
-      {errorMessages.category && (
-        <p className="field-error" id="category-error">
-          {errorMessages.category}
-        </p>
-      )}
-
-      <select
-        name="province"
-        value={selectedProvince}
-        onChange={e => setSelectedProvince(e.target.value)}
-        aria-describedby="province-error"
-      >
-        <option value="">Select Province</option>
-        {locations.provinces.map(p => (
-          <option key={p.name} value={p.name}>
-            {p.name}
-          </option>
-        ))}
-      </select>
-      {errorMessages.province && (
-        <p className="field-error" id="province-error">
-          {errorMessages.province}
-        </p>
-      )}
-
-      <select
-        name="district"
-        value={selectedDistrict}
-        onChange={e => setSelectedDistrict(e.target.value)}
-        disabled={!districts.length}
-        aria-describedby="district-error"
-      >
-        <option value="">Select District</option>
-        {districts.map(d => (
-          <option key={d.name} value={d.name}>
-            {d.name}
-          </option>
-        ))}
-      </select>
-      {errorMessages.district && (
-        <p className="field-error" id="district-error">
-          {errorMessages.district}
-        </p>
-      )}
-
-      <select
-        name="sector"
-        value={selectedSector}
-        onChange={e => setSelectedSector(e.target.value)}
-        disabled={!sectors.length}
-        aria-describedby="sector-error"
-      >
-        <option value="">Select Sector</option>
-        {sectors.map(s => (
-          <option key={s.name} value={s.name}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-      {errorMessages.sector && (
-        <p className="field-error" id="sector-error">
-          {errorMessages.sector}
-        </p>
-      )}
-
-      <select
-        name="cell"
-        value={selectedCell}
-        onChange={e => setSelectedCell(e.target.value)}
-        disabled={!cells.length}
-        aria-describedby="cell-error"
-      >
-        <option value="">Select Cell</option>
-        {cells.map(c => (
-          <option key={c.name} value={c.name}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-      {errorMessages.cell && (
-        <p className="field-error" id="cell-error">
-          {errorMessages.cell}
-        </p>
-      )}
-
-      <select
-        name="village"
-        value={selectedVillage}
-        onChange={e => setSelectedVillage(e.target.value)}
-        disabled={!villages.length}
-        aria-describedby="village-error"
-      >
-        <option value="">Select Village</option>
-        {villages.map(v => (
-          <option key={v.name} value={v.name}>
-            {v.name}
-          </option>
-        ))}
-      </select>
-      {errorMessages.village && (
-        <p className="field-error" id="village-error">
-          {errorMessages.village}
-        </p>
-      )}
-
-      <div className="buttons-wrapper" style={{ marginLeft: '10px' }}>
-        <button type="submit" className="btn-submit">
-          Submit
-        </button>
-        <button
-          type="button"
-          className="btn-reset"
-          onClick={handleReset}
+      <div className="form-group">
+        <select
+          value={selectedCategoryId}
+          onChange={e => setSelectedCategoryId(e.target.value)}
+          className="form-select"
         >
-          Reset
-        </button>
-        <Link to="/LocationManager" className="btn-back" style={{ marginLeft: '10px' }}>
-          ⬅ Back
-        </Link>
+          <option value="">Select Category</option>
+          {categories.map(cat => (
+            <option key={cat.f_id} value={cat.f_id}>
+              {cat.f_category}
+            </option>
+          ))}
+        </select>
+        {errorMessages.category && <p className="field-error">{errorMessages.category}</p>}
+      </div>
+
+      {[{
+        label: 'Province', value: selectedProvince, set: setSelectedProvince, list: locations.provinces,
+        error: errorMessages.province, disabled: false
+      }, {
+        label: 'District', value: selectedDistrict, set: setSelectedDistrict, list: districts,
+        error: errorMessages.district, disabled: !districts.length
+      }, {
+        label: 'Sector', value: selectedSector, set: setSelectedSector, list: sectors,
+        error: errorMessages.sector, disabled: !sectors.length
+      }, {
+        label: 'Cell', value: selectedCell, set: setSelectedCell, list: cells,
+        error: errorMessages.cell, disabled: !cells.length
+      }, {
+        label: 'Village', value: selectedVillage, set: setSelectedVillage, list: villages,
+        error: errorMessages.village, disabled: !villages.length
+      }].map(({ label, value, set, list, error, disabled }) => (
+        <div className="form-group" key={label}>
+          <select
+            className="form-select"
+            value={value}
+            onChange={e => set(e.target.value)}
+            disabled={disabled}
+          >
+            <option value="">{`Select ${label}`}</option>
+            {list.map(item => (
+              <option key={item.name} value={item.name}>{item.name}</option>
+            ))}
+          </select>
+          {error && <p className="field-error">{error}</p>}
+        </div>
+      ))}
+
+      <div className="buttons-wrapper">
+        <button type="submit" className="form-button submit-button">Submit</button>
+        <button type="button" className="form-button reset-button" onClick={handleReset}>Reset</button>
+        <Link to="/LocationManager" className="form-link back-link">⬅ Back</Link>
       </div>
     </form>
   );

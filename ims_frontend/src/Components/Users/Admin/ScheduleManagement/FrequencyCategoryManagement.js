@@ -14,6 +14,7 @@ export default function CategoryManagement() {
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
+  // Check user auth on mount
   useEffect(() => {
     const rawUser = localStorage.getItem('user');
     if (!rawUser) {
@@ -36,18 +37,32 @@ export default function CategoryManagement() {
     }
   }, [navigate]);
 
+  // Fetch categories when sadId is ready
   useEffect(() => {
     if (sadId) {
       fetchFrequencies(sadId);
     }
   }, [sadId]);
 
+  // Autofocus input when modal opens
   useEffect(() => {
     if (modalOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [modalOpen]);
 
+  // Close modal on ESC key
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape' && modalOpen) {
+        closeModal();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [modalOpen]);
+
+  // Fetch frequency categories for current admin
   const fetchFrequencies = async (id) => {
     setLoading(true);
     try {
@@ -84,6 +99,7 @@ export default function CategoryManagement() {
     setMessage('');
   };
 
+  // Save or update category
   const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmedCategory = category.trim();
@@ -118,6 +134,7 @@ export default function CategoryManagement() {
     }
   };
 
+  // Delete a category
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this category?')) return;
     setLoading(true);
@@ -141,15 +158,16 @@ export default function CategoryManagement() {
       {message && <p className="message">{message}</p>}
 
       <div className="button-group">
-        <button className="action-button back-button" onClick={openModalForAdd}>Add New Category</button>
-        <button
-          className="action-button back-button"
-          onClick={() => navigate('/AddLocation')}
-        > ← Back     </button>
-      </div>        
+        <button className="action-button" onClick={openModalForAdd}>
+          + Add New Category
+        </button>
+        <button className="action-button" onClick={() => navigate('/AddLocation')}>
+          ← Back
+        </button>
+      </div>
 
       <div className="table-container">
-        <table className="table">
+        <table className="table" aria-label="Frequency categories table">
           <thead>
             <tr>
               <th>ID</th>
@@ -160,7 +178,9 @@ export default function CategoryManagement() {
           <tbody>
             {frequencies.length === 0 ? (
               <tr>
-                <td colSpan="3" style={{ textAlign: 'center' }}>No categories found</td>
+                <td colSpan="3" style={{ textAlign: 'center' }}>
+                  No categories found
+                </td>
               </tr>
             ) : (
               frequencies.map((f, index) => (
@@ -168,8 +188,20 @@ export default function CategoryManagement() {
                   <td>{index + 1}</td>
                   <td>{f.f_category}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <button className="action-button" onClick={() => openModalForEdit(f.f_id, f.f_category)}>Edit</button>
-                    <button className="action-button delete-button" onClick={() => handleDelete(f.f_id)}>Delete</button>
+                    <button
+                      className="action-button"
+                      onClick={() => openModalForEdit(f.f_id, f.f_category)}
+                      aria-label={`Edit category ${f.f_category}`}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="action-button delete-button"
+                      onClick={() => handleDelete(f.f_id)}
+                      aria-label={`Delete category ${f.f_category}`}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))
@@ -179,9 +211,20 @@ export default function CategoryManagement() {
       </div>
 
       {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>{editId ? 'Edit Category' : 'Add New Category'}</h3>
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          onClick={(e) => {
+            // Close modal if clicking outside the modal box
+            if (e.target.classList.contains('modal-overlay')) {
+              closeModal();
+            }
+          }}
+        >
+          <div className="modal" tabIndex={-1}>
+            <h3 id="modal-title">{editId ? 'Edit Category' : 'Add New Category'}</h3>
             <form onSubmit={handleSubmit}>
               <input
                 ref={inputRef}
@@ -189,13 +232,17 @@ export default function CategoryManagement() {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="Category Name"
+                aria-label="Category Name"
                 autoFocus
+                disabled={loading}
               />
               <div className="modal-buttons">
                 <button type="submit" disabled={loading}>
                   {loading ? 'Saving...' : 'Save'}
                 </button>
-                <button type="button" onClick={closeModal}>Cancel</button>
+                <button type="button" onClick={closeModal} disabled={loading}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
