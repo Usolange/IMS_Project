@@ -29,11 +29,11 @@ import Members from './Components/Member/Members';
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import FrequencyCategoryManagement from './Components/Users/Admin/ScheduleManagement/FrequencyCategoryManagement';
 import AvailableDailySchedules from './Components/Users/Admin/ScheduleManagement/AvailableDailySchedules';
-
 import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager';
-import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager'
-import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation'
+import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
+import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 
+import IkiminaDashboard  from './Components/Users/IkiminaManager/ikiminaDashboard';
 import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
 
@@ -73,12 +73,17 @@ export default function App() {
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/FrequencyCategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><FrequencyCategoryManagement /></RoleProtectedRoute>} />
         <Route path="/TimeManager" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeManager /></RoleProtectedRoute>} />
-        <Route path="/LocationManager" element={<RoleProtectedRoute allowedRoles={['admin']}><LocationManager/></RoleProtectedRoute>} />
-        <Route path="/AddLocation" element={<RoleProtectedRoute allowedRoles={['admin']}><AddLocation/></RoleProtectedRoute>} />
+        <Route path="/LocationManager" element={<RoleProtectedRoute allowedRoles={['admin']}><LocationManager /></RoleProtectedRoute>} />
+        <Route path="/AddLocation" element={<RoleProtectedRoute allowedRoles={['admin']}><AddLocation /></RoleProtectedRoute>} />
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
         <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
+
+
+
+        {/* Managers of Ibimina */}
+        <Route path="/ikiminaDshboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard  /></RoleProtectedRoute>} />
 
         {/* Unauthorized fallback */}
         <Route path="/unauthorized" element={<Unauthorized />} />

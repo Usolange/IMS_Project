@@ -92,15 +92,12 @@ router.get('/select', async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT 
-        i.*, 
-        l.cell, 
-        l.village, 
-        f.f_category AS category_name
-      FROM Ikimina_info i
-      JOIN ikimina_locations l ON i.iki_location = l.ikimina_id
-      JOIN frequency_category_info f ON l.f_id = f.f_id
-      WHERE l.sad_id = ?
+    SELECT i.*, l.cell, l.village, 
+    f.f_category AS category_name FROM Ikimina_info i 
+    JOIN ikimina_locations l ON i.iki_location = l.id 
+    JOIN frequency_category_info f ON l.f_id = f.f_id 
+    WHERE
+       l.sad_id = ?
     `, [sad_id]);
 
     res.json(rows);

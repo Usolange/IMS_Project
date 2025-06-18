@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import '../../../CSS/AllIkiminaPage.css';
-import { FaTrash, FaEdit } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaFileExcel, FaSearch } from 'react-icons/fa';
 import EditIkiminaModal from './EditIkiminaModal';
+import * as XLSX from 'xlsx';
 
 const AllIkiminaPage = () => {
   const [ikiminas, setIkiminas] = useState([]);
@@ -10,6 +11,7 @@ const AllIkiminaPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editingIkimina, setEditingIkimina] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const getSadId = () => {
     const storedUser = localStorage.getItem('user');
@@ -48,13 +50,11 @@ const AllIkiminaPage = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this Ikimina?')) return;
-
     const sad_id = getSadId();
     if (!sad_id) {
       setError('User not logged in.');
       return;
     }
-
     try {
       await axios.delete(`http://localhost:5000/api/ikiminaInfo/delete/${id}`, {
         headers: { 'x-sad-id': sad_id }
@@ -83,6 +83,19 @@ const AllIkiminaPage = () => {
     setTimeout(() => setSuccess(''), 3000);
   };
 
+  const handleExportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(ikiminas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ikiminas');
+    XLSX.writeFile(wb, 'ikiminas.xlsx');
+  };
+
+  const filteredIkiminas = ikiminas.filter((ikimina) =>
+    ikimina.iki_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ikimina.iki_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ikimina.iki_username?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="ikimina-container">
       <h1>All Ikimina Accounts (Your Data)</h1>
@@ -90,7 +103,16 @@ const AllIkiminaPage = () => {
       <div className="action-buttons">
         <a href="/IkiminaManagement" className="btn-primary">New Ikimina</a>
         <a href="/adminDashboard" className="btn-secondary">Back to Home</a>
+        <button className="btn-primary" onClick={handleExportToExcel}><FaFileExcel /> Export</button>
       </div>
+
+      <input
+        type="text"
+        placeholder="Search by name, email, or username..."
+        className="search-input"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
 
       {loading && <p>Loading Ikimina data...</p>}
       {error && <div className="error-message">{error}</div>}
@@ -105,7 +127,7 @@ const AllIkiminaPage = () => {
               <th>Email</th>
               <th>Username</th>
               <th>Location (Cell, Village)</th>
-              <th>Day of Event</th>
+              <th className="nowrap-col">Day of Event</th>
               <th>Time of Event</th>
               <th>Number of Events</th>
               <th>Category</th>
@@ -113,12 +135,12 @@ const AllIkiminaPage = () => {
             </tr>
           </thead>
           <tbody>
-            {ikiminas.length === 0 ? (
+            {filteredIkiminas.length === 0 ? (
               <tr>
-                <td colSpan="10" className="no-data">No Ikimina found for your account.</td>
+                <td colSpan="10" className="no-data">No matching Ikimina found.</td>
               </tr>
             ) : (
-              ikiminas.map((ikimina) => {
+              filteredIkiminas.map((ikimina) => {
                 const locationStr = `${ikimina.cell || ''}, ${ikimina.village || ''}`;
                 return (
                   <tr key={ikimina.iki_id}>
@@ -127,7 +149,7 @@ const AllIkiminaPage = () => {
                     <td>{ikimina.iki_email}</td>
                     <td>{ikimina.iki_username}</td>
                     <td>{locationStr}</td>
-                    <td>{ikimina.dayOfEvent}</td>
+                    <td className="nowrap-col">{ikimina.dayOfEvent}</td>
                     <td>{ikimina.timeOfEvent}</td>
                     <td>{ikimina.numberOfEvents}</td>
                     <td>{ikimina.category_name}</td>

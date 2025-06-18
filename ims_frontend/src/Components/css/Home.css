@@ -1,6 +1,7 @@
 /* === Layout Wrappers === */
 .home-container {
   @apply flex flex-col min-h-screen bg-gray-50 text-gray-800;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
 /* Remove container global styling to avoid conflicts */
@@ -28,15 +29,21 @@
 
 .nav-links a {
   @apply text-gray-700 hover:text-blue-600 transition-colors;
+  white-space: nowrap; /* prevent nav items from breaking */
 }
 
 /* === Hero Section === */
 .hero-section {
   @apply bg-gradient-to-br from-blue-50 to-white py-16 flex flex-col items-center w-full;
+  box-sizing: border-box;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 .welcome-title {
   @apply text-3xl sm:text-4xl font-bold mb-8 text-center;
+  max-width: 100%;
+  word-break: break-word; /* break long words if needed */
 }
 
 .highlight {
@@ -45,10 +52,15 @@
 
 .welcome-card {
   @apply bg-white rounded-2xl shadow-lg p-8 max-w-lg w-full text-center mx-auto;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .welcome-card p {
   @apply text-base text-gray-600 mb-6;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .action-buttons {
@@ -74,15 +86,21 @@
 /* === Cards Section === */
 .animated-cards-section {
   @apply py-16 bg-white;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  box-sizing: border-box;
 }
 
 .cards-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8;
-  max-width: 100%; /* override if needed */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .card-item {
   @apply bg-white border border-gray-200 rounded-xl shadow-sm p-6 text-left hover:shadow-md transition;
+  word-break: break-word; /* break long text */
+  overflow-wrap: break-word;
 }
 
 .card-item h2 {
@@ -91,6 +109,8 @@
 
 .card-item p {
   @apply text-sm text-gray-600 mb-4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .card-btn {
@@ -100,6 +120,8 @@
 /* === About Section === */
 .about-section {
   @apply py-16 px-6 bg-gray-100 text-left;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .about-section h3 {
@@ -108,19 +130,27 @@
 
 .about-section p {
   @apply text-gray-700 text-base leading-relaxed;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* === Features Section === */
 .features-section {
   @apply py-16 bg-white px-6;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .features-grid {
   @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6 max-w-7xl mx-auto;
+  box-sizing: border-box;
 }
 
 .feature-card {
   @apply bg-gray-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-500 ease-in-out;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .feature-card h4 {
@@ -129,6 +159,8 @@
 
 .feature-card p {
   @apply text-sm text-gray-600;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* === Footer === */
@@ -137,10 +169,9 @@
 }
 
 .sub-container {
-  @apply max-w-7xl mx-auto px-6 text-center text-xl text-white font-bold;
+  @apply max-w-7xl mx-auto px-6 text-center text-xl font-bold text-gray-800; /* changed from white to dark for visibility */
+  box-sizing: border-box;
 }
-
-
 
 /* === Welcome Overlay === */
 .welcome-overlay {
@@ -154,6 +185,7 @@
 /* === Modal Enhancements (Optional) === */
 .modal {
   @apply bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-auto;
+  box-sizing: border-box;
 }
 
 .modal h2 {

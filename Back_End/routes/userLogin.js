@@ -44,70 +44,96 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    // 2) Member
-    const [memberRows] = await db.execute(
-      `SELECT m_id, m_names, m_email, m_phone_number, m_type_id, iki_id, m_password
-       FROM members_info
-       WHERE m_email = ? OR m_phone_number = ?`,
-      [identifier, identifier]
-    );
-    if (memberRows.length) {
-      const m = memberRows[0];
-      if (password === m.m_password) {
-        const token = jwt.sign(
-          { userId: m.m_id, role: 'member' },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' }
-        );
-        return res.json({
-          token,
-          user: {
-            id: m.m_id,
-            name: m.m_names,
-            email: m.m_email,
-            phone: m.m_phone_number,
-            type_id: m.m_type_id,
-            iki_id: m.iki_id,
-            role: 'member'
-          }
-        });
-      }
-    }
+    // // 2) Member
+    // const [memberRows] = await db.execute(
+    //   `SELECT m_id, m_names, m_email, m_phone_number, m_type_id, iki_id, m_password
+    //    FROM members_info
+    //    WHERE m_email = ? OR m_phone_number = ?`,
+    //   [identifier, identifier]
+    // );
+    // if (memberRows.length) {
+    //   const m = memberRows[0];
+    //   if (password === m.m_password) {
+    //     const token = jwt.sign(
+    //       { userId: m.m_id, role: 'member' },
+    //       process.env.JWT_SECRET,
+    //       { expiresIn: '1h' }
+    //     );
+    //     return res.json({
+    //       token,
+    //       user: {
+    //         id: m.m_id,
+    //         name: m.m_names,
+    //         email: m.m_email,
+    //         phone: m.m_phone_number,
+    //         type_id: m.m_type_id,
+    //         iki_id: m.iki_id,
+    //         role: 'member'
+    //       }
+    //     });
+    //   }
+    // }
 
-    // 3) Ikimina
-    const [ikRows] = await db.execute(
-      `SELECT iki_id, iki_name, iki_email, iki_password
-       FROM ikimina_info
-       WHERE iki_email = ?`,
-      [identifier]
-    );
+
+// 3) Ikimina
+ const [ikRows] = await db.execute(
+    
+  `SELECT 
+     iki_id, 
+     iki_name, 
+     iki_email, 
+     iki_username, 
+     iki_password, 
+     iki_location, 
+     f_id, 
+     dayOfEvent, 
+     timeOfEvent, 
+     numberOfEvents
+   FROM ikimina_info
+   WHERE LOWER(iki_email) = LOWER(?) OR LOWER(iki_username) = LOWER(?)`,
+  [identifier, identifier]
+);
+
+
     if (ikRows.length) {
       const ik = ikRows[0];
+
       if (password === ik.iki_password) {
         const token = jwt.sign(
           { userId: ik.iki_id, role: 'ikimina' },
           process.env.JWT_SECRET,
           { expiresIn: '1h' }
         );
+
         return res.json({
           token,
           user: {
             id: ik.iki_id,
             name: ik.iki_name,
             email: ik.iki_email,
+            username: ik.iki_username,
+            location: ik.iki_location,
+            f_id: ik.f_id,
+            dayOfEvent: ik.dayOfEvent,
+            timeOfEvent: ik.timeOfEvent,
+            numberOfEvents: ik.numberOfEvents,
             role: 'ikimina'
           }
         });
+      } else {
+        return res.status(401).json({ message: 'Incorrect password.' });
       }
+    } else {
+      return res.status(404).json({ message: 'Ikimina user not found.' });
     }
 
-    // No match
-    res.status(401).json({ message: 'Invalid credentials.' });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error during login.' });
+    res.status(500).json({ message: 'Server error. Try again later.' });
   }
 });
+
+
 
 // ✅ REGISTER SUPER‑ADMIN (plain-text password)
 router.post('/register', async (req, res) => {

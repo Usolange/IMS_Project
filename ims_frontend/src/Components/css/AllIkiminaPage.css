@@ -1,86 +1,204 @@
-/* src/CSS/AllIkiminaPage.css */
+/* General container */
 .ikimina-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-h2 {
-  text-align: center;
+  width: max-content;   /* Let content decide width */
+  margin: 5% auto;
+  padding: 0 20px;    /* Horizontal scroll if needed */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
-  margin-bottom: 20px;
 }
 
+/* Page title */
+h1 {
+  text-align: left;
+  margin-bottom: 20px;
+  margin-left: 25%;
+  font-weight: 700;
+  
+  color: #2c3e50;
+}
+
+/* Action buttons section */
 .action-buttons {
   display: flex;
-  justify-content: c;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: left;
+  margin-left: 25%;
+  margin-bottom: 15px;
 }
 
-.btn {
+.action-buttons a,
+.action-buttons button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 16px;
+  border: none;
   border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
   text-decoration: none;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  text-align: center;
+  font-size: 15px;
 }
 
 .btn-primary {
-  background-color: #4CAF50;
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 
 .btn-secondary {
-  background-color: #607D8B;
+  background-color: #e1e4e8;
+  color: #333;
 }
 
-.ikimina-table {
+.btn-secondary:hover {
+  background-color: #cfd3d7;
+}
+
+/* Search input */
+.search-input {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 400px;
+  margin-left: 25%;
+  display: block;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1.8px solid #ddd;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
 }
 
-.ikimina-table th, .ikimina-table td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: left;
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
 }
 
-.ikimina-table th {
-  background-color: #f4f4f4;
-  color: #444;
-}
-
-.btn-icon {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 18px;
-  margin: 0 4px;
-}
-
-.btn-icon.edit {
-  color: #2196F3;
-}
-
-.btn-icon.delete {
-  color: #f44336;
+/* Error and success messages */
+.error-message,
+.success-message {
+  max-width: 400px;
+  margin: 0 auto 20px auto;
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+  font-size: 16px;
 }
 
 .error-message {
-  color: red;
-  margin-bottom: 10px;
+  background-color: #fdecea;
+  color: #d93025;
+  border: 1.5px solid #d93025;
 }
 
 .success-message {
-  color: green;
-  margin-bottom: 10px;
+  background-color: #e6f4ea;
+  color: #188038;
+  border: 1.5px solid #188038;
 }
 
-.no-data {
-  text-align: center;
-  font-style: italic;
-  color: #666;
+/* Table container */
+.table-scroll-container {
+  margin-top: 2%;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  background: white;
+  padding: 10px;
+}
+
+/* Table styling */
+.ikimina-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* Let column width depend on content */
+  white-space: nowrap; /* Keep all text on one line */
+  min-width: 900px;
+}
+
+.ikimina-table th,
+.ikimina-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 15px;
+  white-space: nowrap; /* No line breaks in cells */
+  max-width: none;
+}
+
+.ikimina-table th {
+  background-color: #f7f9fc;
+  font-weight: bold;
+  color: #2c3e50;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ikimina-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.ikimina-table tr:hover {
+  background-color: #eef2f6;
+}
+
+.nowrap-col {
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .ikimina-table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .action-buttons a,
+  .action-buttons button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .ikimina-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ikimina-table {
+    min-width: 500px;
+    font-size: 14px;
+  }
+
+  .ikimina-table th,
+  .ikimina-table td {
+    padding: 10px 12px;
+  }
+
+  /* Hide less relevant columns for small screens */
+  .ikimina-table th:nth-child(5),
+  .ikimina-table td:nth-child(5),
+  .ikimina-table th:nth-child(8),
+  .ikimina-table td:nth-child(8),
+  .ikimina-table th:nth-child(9),
+  .ikimina-table td:nth-child(9) {
+    display: none;
+  }
 }

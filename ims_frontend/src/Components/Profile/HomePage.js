@@ -112,9 +112,16 @@ export default function HomePage() {
         <section id="about" className="section animated-cards-section w-full px-6 text-center">
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <h3 className="text-2xl sm:text-3xl font-semibold mb-8">About the Project</h3>
-            <p className="text-gray-700 text-base leading-relaxed">
-              The <strong>Ikimina Management System (IMS)</strong> streamlines community-based savings and lending groups with powerful modules, fraud protection, and mobile access all within a clean, intuitive interface. It eliminates human error, enhances transparency, and automates everything from member registration to loan approvals and real-time financial reporting.
-            </p>
+           <p className="text-gray-700 text-base leading-relaxed">
+  The <strong>Ikimina Management System (IMS)</strong> streamlines community-based savings and lending groups with powerful modules,
+   <br /><br />
+   Fraud protection, and mobile access all within a clean, intuitive interface.
+  <br /><br />
+  It eliminates human error, enhances transparency, and automates everything from member registration to loan approvals and 
+   <br /><br />
+  Real-time financial reporting.
+</p>
+
           </div>
 
         </section>
