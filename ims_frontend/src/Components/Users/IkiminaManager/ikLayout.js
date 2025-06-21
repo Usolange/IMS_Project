@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, ChevronLeft, Search } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import './CSS/Layout.css';
+import '../../CSS/Layout.css';
 
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
@@ -66,7 +66,7 @@ export default function Layout() {
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
         <nav className="sidebar-menu" aria-label="Sidebar">
           <ul className="menu-list">
-            <li><Link to="/" className="sidebar-item">Dashboard</Link></li>
+            <li><Link to="/" className="sidebar-item">Member Management</Link></li>
             <li><Link to="/report" className="sidebar-item">Reports</Link></li>
             <li><Link to="/members" className="sidebar-item">Members</Link></li>
             <li><Link to="/loans" className="sidebar-item">Loans</Link></li>
@@ -78,7 +78,7 @@ export default function Layout() {
       {/* Main Section */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
         <header className="navbar" role="banner">
-          <div className="navbar-title">Sector: {userLocation}</div>
+          <div className="navbar-titleikimina">Location: {userLocation}</div>
 
           <div className="navbar-links">
             {/* Search Bar */}

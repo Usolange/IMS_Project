@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, ChevronLeft, Search } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import './CSS/Layout.css';
+import '../../CSS/Layout.css';
 
 export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
@@ -78,7 +78,7 @@ export default function Layout() {
       {/* Main Section */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>
         <header className="navbar" role="banner">
-          <div className="navbar-title">Sector: {userLocation}</div>
+          <div className="navbar-titleadmin">Admin Sector: {userLocation}</div>
 
           <div className="navbar-links">
             {/* Search Bar */}

@@ -5,7 +5,6 @@ import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
 import Profile from './Components/Profile/Profile';
 
-
 import GuestLayout from './Components/Users/Guests/files/GuestLayout';
 import MemberManagement from './Components/Users/Guests/files/MemberManagement';
 import EventTimeScheduling from './Components/Users/Guests/files/EventTimeScheduling';
@@ -22,10 +21,13 @@ import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 
 import Layout from './Components/Layout';
-import Dashboard from './Components/Dashboard';
-import Report from './Components/Report';
+import Dashboard from './Components/Users/IkiminaManager/Dashboard';
+import Report from './Components/Users/IkiminaManager/Report';
 import Members from './Components/Member/Members';
 
+
+
+import AdLayout from './Components/Users/Admin/adLayout';
 import AdminDashboard from './Components/Users/Admin/AdminDashoard';
 import FrequencyCategoryManagement from './Components/Users/Admin/ScheduleManagement/FrequencyCategoryManagement';
 import AvailableDailySchedules from './Components/Users/Admin/ScheduleManagement/AvailableDailySchedules';
@@ -33,10 +35,11 @@ import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 
-import IkiminaDashboard  from './Components/Users/IkiminaManager/ikiminaDashboard';
+
+import IkLayout from './Components/Users/IkiminaManager/ikLayout';
+import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
 import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
-
 
 export default function App() {
   return (
@@ -44,7 +47,7 @@ export default function App() {
       {/* Public Home */}
       <Route path="/" element={<HomePage />} />
 
-      {/* Guest layout wrapper for all feature pages */}
+      {/* Guest layout wrapper */}
       <Route path="/guest" element={<GuestLayout />}>
         <Route path="member-management" element={<MemberManagement />} />
         <Route path="financial-management" element={<FinancialManagement />} />
@@ -63,13 +66,18 @@ export default function App() {
       {/* Logout */}
       <Route path="/logout" element={<Logout />} />
 
-      {/* Protected layout for authenticated users */}
+      {/* Authenticated layout */}
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Dashboard /></RoleProtectedRoute>} />
         <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
         <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
+        <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Dashboard /></RoleProtectedRoute>} />
+        <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
+        <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
+      </Route>
 
-        {/* Admin-only */}
+ {/* Admin routes */}
+      <Route element={<AdLayout />}> 
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/FrequencyCategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><FrequencyCategoryManagement /></RoleProtectedRoute>} />
         <Route path="/TimeManager" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeManager /></RoleProtectedRoute>} />
@@ -79,17 +87,17 @@ export default function App() {
         <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
         <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
-
-
-
-        {/* Managers of Ibimina */}
-        <Route path="/ikiminaDshboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard  /></RoleProtectedRoute>} />
-
-        {/* Unauthorized fallback */}
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
-      {/* Catch-all route */}
+      {/* Ikimina routes for 'ikimina' role */}
+      <Route element={<IkLayout />}>
+        <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+      </Route>
+
+
+      {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -55,7 +55,7 @@ export default function Login({ switchToRegister, onCancel }) {
       const user = res.data.user;
       if (user.role === 'admin') navigate('/adminDashboard');
       else if (user.role === 'member') navigate('/dashboard');
-      else if (user.role === 'ikimina') navigate('/ikiminaDshboard');
+      else if (user.role === 'ikimina') navigate('/ikiminaDashboard');
       else navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err.response?.data || err.message);
