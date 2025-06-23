@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 
 // 🔍 Get all members
-router.get('/', async (req, res) => {
+router.get('/select', async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT mi.*, mt.m_type, ik.ik_name

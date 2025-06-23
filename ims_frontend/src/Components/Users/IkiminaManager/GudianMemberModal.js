@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../../CSS/ModalForm.css';
 
 export default function GudianMemberModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({

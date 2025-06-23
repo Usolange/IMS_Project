@@ -71,7 +71,7 @@ export default function Layout() {
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
         <nav className="sidebar-menu" aria-label="Sidebar">
           <ul className="menu-list">
-            <li><Link to="/RegisterMember" className="sidebar-item">Member Management</Link></li>
+            <li><Link to="/MemberManager" className="sidebar-item">Member Management</Link></li>
             <li><Link to="/report" className="sidebar-item">Reports</Link></li>
             <li><Link to="/members" className="sidebar-item">Members</Link></li>
             <li><Link to="/loans" className="sidebar-item">Loans</Link></li>

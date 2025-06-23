@@ -23,7 +23,7 @@ import Unauthorized from './Components/Auth/Unauthorized';
 import Layout from './Components/Layout';
 import Dashboard from './Components/Users/IkiminaManager/Dashboard';
 import Report from './Components/Users/IkiminaManager/Report';
-import Members from './Components/Users/Members/Members';
+// import Members from './Components/Users/Members/Members';
 
 
 
@@ -35,9 +35,9 @@ import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 
-
+import MemberManager from './Components/Users/IkiminaManager/MemberManagement';
 import IkLayout from './Components/Users/IkiminaManager/ikLayout';
-import RegisterMember from './Components/Users/IkiminaManager/RegisterMember';
+import RegisterMember from './Components/Users/IkiminaManager/RegisterMemberModal';
 import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
 import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
@@ -87,13 +87,14 @@ export default function App() {
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
         <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
-        <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} />
+        {/* <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} /> */}
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
       {/* Ikimina routes for 'ikimina' role */}
       <Route element={<IkLayout />}>
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/MemberManager" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManager/></RoleProtectedRoute>} />
         <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>

@@ -1,0 +1,55 @@
+.member-management {
+  padding: 2rem;
+}
+
+.member-management h2 {
+  margin-bottom: 1rem;
+}
+
+.action-buttons {
+  margin-bottom: 1rem;
+}
+
+.action-buttons button {
+  margin-right: 10px;
+  padding: 8px 14px;
+  font-weight: bold;
+  border-radius: 6px;
+  background-color: #2e84e0;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.styled-table thead {
+  background-color: #2e84e0;
+  color: white;
+}
+
+.styled-table th, .styled-table td {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+.edit-btn, .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.edit-btn:hover {
+  color: orange;
+}
+
+.delete-btn:hover {
+  color: red;
+}
