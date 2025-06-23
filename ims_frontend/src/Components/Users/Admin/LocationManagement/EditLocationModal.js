@@ -142,7 +142,7 @@ export default function EditLocationModal({ location, onClose, onUpdated }) {
 
   try {
     const response = await axios.put(
-      `http://localhost:5000/api/LocationManagerRoutes/update/${location.id}`,
+      `http://localhost:5000/api/locationManagerRoutes/update/${location.id}`,
       {
         ikiminaName: ikimina_name,
         province,

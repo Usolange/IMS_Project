@@ -19,38 +19,35 @@ router.get('/', async (req, res) => {
 });
 
 // ➕ Add new member
-router.post('/', async (req, res) => {
+router.post('/newMember', async (req, res) => {
   const {
-    m_names,
-    m_Nid,
+    member_names,
+    member_Nid,
     gm_Nid,
-    m_phone_number,
-    m_email,
-    m_type_id,
-    iki_id
+    member_phone_number,
+    member_email,
+    member_type_id,
+    iki_id,
   } = req.body;
 
-  if (!m_Nid && !gm_Nid) {
-    return res.status(400).json({ message: 'Either m_Nid or gm_Nid is required' });
-  }
-
-  if (!/^\d{10}$/.test(m_phone_number)) {
-    return res.status(400).json({ message: 'Phone number must be 10 digits' });
+  if (!member_names || !member_Nid || !gm_Nid || !member_phone_number || !member_email || !member_type_id || !iki_id) {
+    return res.status(400).json({ message: 'All fields are required.' });
   }
 
   try {
-    const [result] = await db.execute(`
-      INSERT INTO Members_info 
-      (m_names, m_Nid, gm_Nid, m_phone_number, m_email, m_type_id, iki_id) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [m_names, m_Nid || null, gm_Nid || null, m_phone_number, m_email || null, m_type_id, iki_id]);
-
-    res.status(201).json({ message: 'Member added successfully', id: result.insertId });
-  } catch (error) {
-    console.error('Error adding member_info:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    await db.execute(
+      `INSERT INTO members_info 
+        (member_names, member_Nid, gm_Nid, member_phone_number, member_email, member_type_id, iki_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [member_names, member_Nid, gm_Nid, member_phone_number, member_email, member_type_id, iki_id]
+    );
+    res.status(201).json({ message: 'Member registered successfully.' });
+  } catch (err) {
+    console.error('DB Error:', err);
+    res.status(500).json({ message: 'Failed to register member.' });
   }
 });
+
 
 // ✏️ Update member
 router.put('/:m_id', async (req, res) => {

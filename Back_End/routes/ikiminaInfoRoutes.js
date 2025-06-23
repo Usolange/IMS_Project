@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 
 // Create Ikimina_info
-router.post('/create', async (req, res) => {
+router.post('/newIkimina', async (req, res) => {
   const {
     iki_name, iki_email, iki_username, iki_password,
     iki_location, f_id, dayOfEvent, timeOfEvent,

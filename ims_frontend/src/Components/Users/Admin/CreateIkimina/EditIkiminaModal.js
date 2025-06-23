@@ -50,7 +50,7 @@ const EditIkiminaModal = ({ ikimina, onClose, onSuccess }) => {
     setLoading(true);
     try {
       await axios.put(
-        `http://localhost:5000/api/ikiminaInfo/update/${ikimina.iki_id}`,
+        `http://localhost:5000/api/ikiminaInfoRoutes/update/${ikimina.iki_id}`,
         { iki_name, iki_email, iki_username, dayOfEvent, timeOfEvent, numberOfEvents },
         { headers: { 'x-sad-id': sad_id } }
       );

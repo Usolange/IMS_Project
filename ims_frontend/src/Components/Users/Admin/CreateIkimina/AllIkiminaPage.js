@@ -33,7 +33,7 @@ const AllIkiminaPage = () => {
     }
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/ikiminaInfo/select?sad_id=${sad_id}`);
+      const response = await axios.get(`http://localhost:5000/api/ikiminaInfoRoutes/select?sad_id=${sad_id}`);
       setIkiminas(response.data);
       setError('');
     } catch (err) {
@@ -56,7 +56,7 @@ const AllIkiminaPage = () => {
       return;
     }
     try {
-      await axios.delete(`http://localhost:5000/api/ikiminaInfo/delete/${id}`, {
+      await axios.delete(`http://localhost:5000/api/ikiminaInfoRoutes/delete/${id}`, {
         headers: { 'x-sad-id': sad_id }
       });
       setSuccess('Ikimina deleted successfully.');

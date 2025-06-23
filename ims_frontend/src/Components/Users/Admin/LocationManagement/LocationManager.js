@@ -33,7 +33,7 @@ export default function LocationManager() {
 
   const fetchLocations = async (sad_id) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/LocationManagerRoutes/select?sad_id=${sad_id}`);
+      const res = await axios.get(`http://localhost:5000/api/locationManagerRoutes/select?sad_id=${sad_id}`);
       setLocations(res.data);
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ export default function LocationManager() {
 
   const fetchCategories = async (sad_id) => {
     try {
-      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategoryRoutes/selectCategories', {
         headers: { 'x-sad-id': sad_id }
       });
       setCategories(res.data);
@@ -83,7 +83,7 @@ export default function LocationManager() {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/LocationManagerRoutes/delete/${locationToDelete.id}`, {
+      await axios.delete(`http://localhost:5000/api/locationManagerRoutes/delete/${locationToDelete.id}`, {
         data: { sad_id }
       });
       showToast('success', `${locationToDelete.ikimina_name} deleted successfully.`);

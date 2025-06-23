@@ -36,7 +36,7 @@ const AvailableSchedules = () => {
 
     const fetchSchedules = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/allSchedules`, {
+        const res = await axios.get(`http://localhost:5000/api/scheduleManagerRoutes/allSchedules`, {
           headers: { 'x-sad-id': sad_id }
         });
         setSchedules(res.data);

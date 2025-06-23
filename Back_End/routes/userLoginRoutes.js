@@ -75,25 +75,29 @@ router.post('/login', async (req, res) => {
     // }
 
 
-// 3) Ikimina
- const [ikRows] = await db.execute(
-    
-  `SELECT 
-     iki_id, 
-     iki_name, 
-     iki_email, 
-     iki_username, 
-     iki_password, 
-     iki_location, 
-     f_id, 
-     dayOfEvent, 
-     timeOfEvent, 
-     numberOfEvents
-   FROM ikimina_info
-   WHERE LOWER(iki_email) = LOWER(?) OR LOWER(iki_username) = LOWER(?)`,
-  [identifier, identifier]
-);
-
+    // 3) Ikimina
+    const [ikRows] = await db.execute(
+      `SELECT 
+     i.iki_id,
+     i.iki_name,
+     i.iki_email,
+     i.iki_username,
+     i.iki_password,
+     i.iki_location,
+     i.f_id,
+     i.dayOfEvent,
+     i.timeOfEvent,
+     i.numberOfEvents,
+     l.cell,
+     l.village,
+     l.sector,
+     l.district,
+     l.province
+   FROM ikimina_info i
+   LEFT JOIN ikimina_locations l ON i.iki_id = l.ikimina_id
+   WHERE LOWER(i.iki_email) = LOWER(?) OR LOWER(i.iki_username) = LOWER(?)`,
+      [identifier, identifier]
+    );
 
     if (ikRows.length) {
       const ik = ikRows[0];
@@ -117,6 +121,11 @@ router.post('/login', async (req, res) => {
             dayOfEvent: ik.dayOfEvent,
             timeOfEvent: ik.timeOfEvent,
             numberOfEvents: ik.numberOfEvents,
+            cell: ik.cell,
+            village: ik.village,
+            sector: ik.sector,
+            district: ik.district,
+            province: ik.province,
             role: 'ikimina'
           }
         });
@@ -126,6 +135,7 @@ router.post('/login', async (req, res) => {
     } else {
       return res.status(404).json({ message: 'Ikimina user not found.' });
     }
+
 
   } catch (err) {
     console.error('Login error:', err);
@@ -138,7 +148,7 @@ router.post('/login', async (req, res) => {
 // ✅ REGISTER SUPER‑ADMIN (plain-text password)
 router.post('/register', async (req, res) => {
   const { name, email, phone, username, password } = req.body;
-  
+
   // Validate input
   if (!name || !email || !username || !password) {
     return res.status(400).json({ message: 'All fields are required.' });

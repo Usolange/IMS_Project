@@ -4,7 +4,7 @@ const db = require('../config/db');
 const router = express.Router();
 
 // Get all Gudian members
-router.get('/', async (req, res) => {
+router.get('/select', async (req, res) => {
   try {
     const [rows] = await db.execute('SELECT * FROM Gudian_members');
     res.json(rows);
@@ -15,17 +15,20 @@ router.get('/', async (req, res) => {
 });
 
 // Add a new Gudian member
-router.post('/', async (req, res) => {
-  const { name, memberTypeId } = req.body;
+router.post('/newGudianMember', async (req, res) => {
+  const { gm_names, gm_Nid, gm_phonenumber } = req.body;
+  if (!gm_names || !gm_Nid || !gm_phonenumber) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
   try {
-    const [result] = await db.execute(
-      'INSERT INTO Gudian_members (name, member_type_id) VALUES (?, ?)',
-      [name, memberTypeId]
+    await db.execute(
+      `INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber) VALUES (?, ?, ?)`,
+      [gm_names, gm_Nid, gm_phonenumber]
     );
-    res.status(201).json({ id: result.insertId, name, memberTypeId });
-  } catch (error) {
-    console.error('Error adding Gudian member:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(201).json({ message: 'Gudian member added successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to add Gudian member.' });
   }
 });
 

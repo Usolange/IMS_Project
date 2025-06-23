@@ -47,10 +47,10 @@ export default function IkiminaInfoForm({ onClose }) {
       }
       try {
         const [ikiminaRes, freqRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/LocationManagerRoutes/selectAvailableIkimina?sad_id=${sad_id}`, {
+          axios.get(`http://localhost:5000/api/locationManagerRoutes/selectAvailableIkimina?sad_id=${sad_id}`, {
             headers: { 'x-sad-id': sad_id },
           }),
-          axios.get(`http://localhost:5000/api/frequencyCategory/selectCategories?sad_id=${sad_id}`, {
+          axios.get(`http://localhost:5000/api/frequencyCategoryRoutes/selectCategories?sad_id=${sad_id}`, {
             headers: { 'x-sad-id': sad_id },
           }),
         ]);
@@ -187,7 +187,7 @@ export default function IkiminaInfoForm({ onClose }) {
 
       console.log('Submitting Ikimina creation payload:', payload);
 
-      await axios.post('http://localhost:5000/api/ikiminaInfo/create', payload, {
+      await axios.post('http://localhost:5000/api/ikiminaInfoRoutes/create', payload, {
         headers: { 'x-sad-id': sad_id },
       });
 

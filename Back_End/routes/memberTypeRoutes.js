@@ -4,7 +4,7 @@ const db = require('../config/db');
 const router = express.Router();
 
 // Get all member types
-router.get('/', async (req, res) => {
+router.get('/select', async (req, res) => {
   try {
     const [rows] = await db.execute('SELECT * FROM Member_type_info');
     res.json(rows);
@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add a new member type
-router.post('/', async (req, res) => {
+router.post('/newMemberType', async (req, res) => {
   const { typeName, description } = req.body;
   try {
     const [result] = await db.execute(

@@ -23,7 +23,7 @@ import Unauthorized from './Components/Auth/Unauthorized';
 import Layout from './Components/Layout';
 import Dashboard from './Components/Users/IkiminaManager/Dashboard';
 import Report from './Components/Users/IkiminaManager/Report';
-import Members from './Components/Member/Members';
+import Members from './Components/Users/Members/Members';
 
 
 
@@ -37,6 +37,7 @@ import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation
 
 
 import IkLayout from './Components/Users/IkiminaManager/ikLayout';
+import RegisterMember from './Components/Users/IkiminaManager/RegisterMember';
 import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
 import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
@@ -93,6 +94,7 @@ export default function App() {
       {/* Ikimina routes for 'ikimina' role */}
       <Route element={<IkLayout />}>
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 

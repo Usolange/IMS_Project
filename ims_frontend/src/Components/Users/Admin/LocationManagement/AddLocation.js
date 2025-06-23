@@ -35,7 +35,7 @@ export default function LocationSelector({ onSelect }) {
       try {
         const user = JSON.parse(localStorage.getItem('user'));
         const res = await axios.get(
-          'http://localhost:5000/api/frequencyCategory/selectCategories',
+          'http://localhost:5000/api/frequencyCategoryRoutes/selectCategories',
           { headers: { 'x-sad-id': user.id } }
         );
         setCategories(res.data);
@@ -128,7 +128,7 @@ export default function LocationSelector({ onSelect }) {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/LocationManagerRoutes/create',
+        'http://localhost:5000/api/locationManagerRoutes/create',
         {
           ikiminaName,
           f_id: selectedCategoryId,

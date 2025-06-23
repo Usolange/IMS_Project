@@ -22,7 +22,7 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/LocationManagerRoutes/select?sad_id=${sad_id}`);
+        const response = await axios.get(`http://localhost:5000/api/locationManagerRoutes/select?sad_id=${sad_id}`);
         setIkiminaList(response.data);
       } catch (err) {
         console.error('Failed to load Ikimina list:', err);

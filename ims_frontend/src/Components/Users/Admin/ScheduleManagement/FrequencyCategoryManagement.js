@@ -66,7 +66,7 @@ export default function CategoryManagement() {
   const fetchFrequencies = async (id) => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategoryRoutes/selectCategories', {
         headers: { 'x-sad-id': id }
       });
       setFrequencies(res.data);
@@ -112,14 +112,14 @@ export default function CategoryManagement() {
     try {
       if (editId) {
         await axios.put(
-          `http://localhost:5000/api/frequencyCategory/${editId}`,
+          `http://localhost:5000/api/frequencyCategoryRoutes/${editId}`,
           { categoryName: trimmedCategory },
           { headers: { 'x-sad-id': sadId } }
         );
         setMessage('✅ Category updated');
       } else {
         await axios.post(
-          'http://localhost:5000/api/frequencyCategory/newCategory',
+          'http://localhost:5000/api/frequencyCategoryRoutes/newCategory',
           { categoryName: trimmedCategory },
           { headers: { 'x-sad-id': sadId } }
         );
@@ -139,7 +139,7 @@ export default function CategoryManagement() {
     if (!window.confirm('Delete this category?')) return;
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/frequencyCategory/${id}`, {
+      await axios.delete(`http://localhost:5000/api/frequencyCategoryRoutes/${id}`, {
         headers: { 'x-sad-id': sadId }
       });
       setMessage('🗑️ Category deleted');

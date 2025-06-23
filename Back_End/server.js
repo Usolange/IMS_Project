@@ -3,21 +3,21 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const db = require('./config/db');
 
-const userLoginRoutes = require('./routes/userLogin');
-const ScheduleManagerRoutes = require('./routes/ScheduleManagerRoutes');
-const supperAdminRoutes = require('./routes/supperAdmin');
-const frequencyCategoryRoutes = require('./routes/frequencyCategory');
-const ikiminaInfoRoutes = require('./routes/ikiminaInfo');
+
+
 const DailyTimeRoutes = require('./routes/dailyTimeRoutes');
+const frequencyCategoryRoutes = require('./routes/frequencyCategoryRoutes');
+const gudianMembersRoutes = require('./routes/gudianMembersRoutes');
+const userLoginRoutes = require('./routes/userLoginRoutes');
+const ScheduleManagerRoutes = require('./routes/ScheduleManagerRoutes');
+const supperAdminRoutes = require('./routes/supperAdminRoutes');
+const ikiminaInfoRoutes = require('./routes/ikiminaInfoRoutes');
 const WeeklyTimeRoutes = require('./routes/weeklyTimeRoutes');
 const MonthlyTimeRoutes = require('./routes/monthlyTimeRoutes');
-
 const LocationManagerRoutes = require('./routes/LocationManagerRoutes');
-
-const memberTypeRoutes = require('./routes/memberType');
-const gudianMembersRoutes = require('./routes/gudianMembers');
-const membersInfoRoutes = require('./routes/membersInfo');
-const memberAccessRoutes = require('./routes/memberAccess');
+const memberTypeRoutes = require('./routes/memberTypeRoutes');
+const membersInfoRoutes = require('./routes/membersInfoRoutes');
+const memberAccessRoutes = require('./routes/memberAccessRoutes');
 
 dotenv.config();
 
@@ -34,20 +34,19 @@ app.use(cors({
 app.use(express.json());
 
 // Route Middleware
-app.use('/api/userLogin', userLoginRoutes);
-app.use('/api/supperAdmin', supperAdminRoutes);
+app.use('/api/userLoginRoutes', userLoginRoutes);
+app.use('/api/supperAdminRoutes', supperAdminRoutes);
 app.use('/api/ScheduleManagerRoutes', ScheduleManagerRoutes);
-
-app.use('/api/frequencyCategory', frequencyCategoryRoutes);
-app.use('/api/ikiminaInfo', ikiminaInfoRoutes);
+app.use('/api/frequencyCategoryRoutes', frequencyCategoryRoutes);
+app.use('/api/ikiminaInfoRoutes', ikiminaInfoRoutes);
 app.use('/api/DailyTimeRoutes', DailyTimeRoutes);
 app.use('/api/LocationManagerRoutes', LocationManagerRoutes);
 app.use('/api/WeeklyTimeRoutes', WeeklyTimeRoutes);
 app.use('/api/MonthlyTimeRoutes', MonthlyTimeRoutes);
-app.use('/api/memberType', memberTypeRoutes);
-app.use('/api/gudianMembers', gudianMembersRoutes);
-app.use('/api/membersInfo', membersInfoRoutes);
-app.use('/api/memberAccess', memberAccessRoutes);
+app.use('/api/memberTypeRoutes', memberTypeRoutes);
+app.use('/api/gudianMembersRoutes', gudianMembersRoutes);
+app.use('/api/membersInfoRoutes', membersInfoRoutes);
+app.use('/api/memberAccessRoutes', memberAccessRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

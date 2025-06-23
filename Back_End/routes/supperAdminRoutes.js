@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
 
-router.post('/register', async (req, res) => {
+router.post('/newSupperUser', async (req, res) => {
   const { name, email, username, phone, location, password } = req.body;
 
   if (!name || !email || !username || !phone || !location || !password) {

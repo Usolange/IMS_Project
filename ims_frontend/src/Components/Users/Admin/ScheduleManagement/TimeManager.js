@@ -70,7 +70,7 @@ export default function TimeManager() {
     setLoading(true);
     setMessage('');
     try {
-      const res = await axios.get('http://localhost:5000/api/frequencyCategory/selectCategories', {
+      const res = await axios.get('http://localhost:5000/api/frequencyCategoryRoutes/selectCategories', {
         headers: { 'x-sad-id': id },
       });
       setFrequencies(res.data);

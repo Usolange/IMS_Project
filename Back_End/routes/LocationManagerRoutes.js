@@ -14,7 +14,7 @@ function isSameSector(sectorA, sectorB) {
   return sectorA.trim().toLowerCase() === sectorB.trim().toLowerCase();
 }
 
-router.post('/create', async (req, res) => {
+router.post('/newLocation', async (req, res) => {
   const { ikiminaName, province, district, sector, cell, village, f_id, sad_id } = req.body;
 
   if (!ikiminaName || !province || !district || !sector || !cell || !village || !f_id || !sad_id) {

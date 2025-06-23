@@ -67,7 +67,7 @@ router.post('/newSchedule', async (req, res) => {
  * - Prevents duplicate ikimina_name for the same frequency category
  * - Validates ikimina_id uniqueness across all schedule tables (daily, weekly, monthly)
  */
-router.post('/monthly/newSchedule', async (req, res) => {
+router.post('/newSchedule', async (req, res) => {
   const userId = req.headers['x-sad-id'];
   const { ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id } = req.body;
 

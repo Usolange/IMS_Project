@@ -49,7 +49,7 @@ export default function Login({ switchToRegister, onCancel }) {
     refs.password.current?.blur();
 
     try {
-      const res = await axios.post('http://localhost:5000/api/userLogin/login', cleanedFormData);
+      const res = await axios.post('http://localhost:5000/api/userLoginRoutes/login', cleanedFormData);
       login(res.data.token, res.data.user);
 
       const user = res.data.user;

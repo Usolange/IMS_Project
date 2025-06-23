@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add new member access info
-router.post('/', async (req, res) => {
+router.post('/newMemberAccess', async (req, res) => {
   const { memberId, accessLevel } = req.body;
   try {
     const [result] = await db.execute(
