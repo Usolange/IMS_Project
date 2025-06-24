@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 17, 2025 at 06:55 PM
+-- Generation Time: Jun 24, 2025 at 03:31 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -55,8 +55,16 @@ CREATE TABLE `gudian_members` (
   `gm_id` int(11) NOT NULL,
   `gm_names` varchar(100) NOT NULL,
   `gm_Nid` varchar(20) NOT NULL,
-  `gm_phonenumber` varchar(10) NOT NULL
+  `gm_phonenumber` varchar(10) NOT NULL,
+  `iki_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `gudian_members`
+--
+
+INSERT INTO `gudian_members` (`gm_id`, `gm_names`, `gm_Nid`, `gm_phonenumber`, `iki_id`) VALUES
+(1, 'HARERIMANA Alphonse', '11996680056500008', '0787439194', 2);
 
 -- --------------------------------------------------------
 
@@ -84,8 +92,8 @@ CREATE TABLE `ikimina_info` (
 INSERT INTO `ikimina_info` (`iki_id`, `iki_name`, `iki_email`, `iki_username`, `iki_password`, `iki_location`, `f_id`, `dayOfEvent`, `timeOfEvent`, `numberOfEvents`) VALUES
 (1, 'Tuzamurane', 'tuzamurane@gmail.com', 'tuzamurane', '12345', 6, 4, 'Daily', '18:00:00', 1),
 (2, 'Umurava', 'umurava@gmail.com', 'umurava', '12345', 7, 5, 'Monday, Friday, Wednesday, Sunday', '19:00:00', 4),
-(3, 'Tuzamurane', 'umurava123@gmail.com', 'umura', '12345', 2, 2, 'N/A', '00:00:00', 0),
-(4, 'Umurava', 'umu@gmai.com', 'uy', '12345', 4, 3, '01, 02, 03, 07, 12, 08, 15, 22, 24, 26', '19:08:00', 10);
+(4, 'Umurava', 'umu@gmai.com', 'uy', '12345', 4, 3, '01, 02, 03, 07, 12, 08, 15, 22, 24, 26', '19:08:00', 10),
+(5, 'Tuzamurane', 'tuzamurane123@gmail.com', 'tuzamurane123', '12345', 1, 1, 'Daily', '22:51:00', 1);
 
 -- --------------------------------------------------------
 
@@ -117,7 +125,8 @@ INSERT INTO `ikimina_locations` (`id`, `ikimina_id`, `ikimina_name`, `province`,
 (5, 4, 'Umurava', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Rubona', 'Ruyenzi I', 1, 1),
 (6, 5, 'Tuzamurane', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 9, 4),
 (7, 6, 'Umurava', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Kivumu', 'Gitega', 9, 5),
-(8, 7, 'NEW Vission', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 9, 6);
+(8, 7, 'NEW Vission', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 9, 6),
+(9, 8, 'NewDel', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Rubona', 'Rugenda Ii', 1, 3);
 
 -- --------------------------------------------------------
 
@@ -178,7 +187,17 @@ INSERT INTO `ik_monthly_time_info` (`monthlytime_id`, `ikimina_name`, `monthlyti
 (14, 'NEW Vission', '15', '20:00:00', 6, 7),
 (15, 'NEW Vission', '30', '20:00:00', 6, 7),
 (16, 'NEW Vission', '25', '20:00:00', 6, 7),
-(17, 'NEW Vission', '20', '20:00:00', 6, 7);
+(17, 'NEW Vission', '20', '20:00:00', 6, 7),
+(18, 'NewDel', '01', '01:00:00', 3, 8),
+(19, 'NewDel', '04', '01:00:00', 3, 8),
+(20, 'NewDel', '10', '01:00:00', 3, 8),
+(21, 'NewDel', '25', '01:00:00', 3, 8),
+(22, 'NewDel', '29', '01:00:00', 3, 8),
+(23, 'NewDel', '30', '01:00:00', 3, 8),
+(24, 'NewDel', '07', '01:00:00', 3, 8),
+(25, 'NewDel', '13', '01:00:00', 3, 8),
+(26, 'NewDel', '16', '01:00:00', 3, 8),
+(27, 'NewDel', '21', '01:00:00', 3, 8);
 
 -- --------------------------------------------------------
 
@@ -222,6 +241,13 @@ CREATE TABLE `members_info` (
   `iki_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `members_info`
+--
+
+INSERT INTO `members_info` (`member_id`, `member_names`, `member_Nid`, `gm_Nid`, `member_phone_number`, `member_email`, `member_type_id`, `iki_id`) VALUES
+(1, 'Soso UWINGABIRE', NULL, '11996680056500008', '0785310415', 'uwingabiresolange2000@gmail.com', 1, 2);
+
 -- --------------------------------------------------------
 
 --
@@ -235,6 +261,13 @@ CREATE TABLE `member_access_info` (
   `member_pass` char(5) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `member_access_info`
+--
+
+INSERT INTO `member_access_info` (`maccess_id`, `member_id`, `member_code`, `member_pass`) VALUES
+(1, 1, '02001', '14430');
+
 -- --------------------------------------------------------
 
 --
@@ -243,8 +276,16 @@ CREATE TABLE `member_access_info` (
 
 CREATE TABLE `member_type_info` (
   `member_type_id` int(11) NOT NULL,
-  `member_type` varchar(50) NOT NULL
+  `member_type` varchar(50) NOT NULL,
+  `type_desc` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `member_type_info`
+--
+
+INSERT INTO `member_type_info` (`member_type_id`, `member_type`, `type_desc`) VALUES
+(1, 'Presedent', 'umuyobozi mukuru');
 
 -- --------------------------------------------------------
 
@@ -286,7 +327,8 @@ ALTER TABLE `frequency_category_info`
 --
 ALTER TABLE `gudian_members`
   ADD PRIMARY KEY (`gm_id`),
-  ADD UNIQUE KEY `gm_Nid` (`gm_Nid`);
+  ADD UNIQUE KEY `gm_Nid` (`gm_Nid`),
+  ADD KEY `fk_gudian_ikimina` (`iki_id`);
 
 --
 -- Indexes for table `ikimina_info`
@@ -377,19 +419,19 @@ ALTER TABLE `frequency_category_info`
 -- AUTO_INCREMENT for table `gudian_members`
 --
 ALTER TABLE `gudian_members`
-  MODIFY `gm_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `gm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `ikimina_info`
 --
 ALTER TABLE `ikimina_info`
-  MODIFY `iki_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `iki_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ikimina_locations`
 --
 ALTER TABLE `ikimina_locations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `ik_daily_time_info`
@@ -401,7 +443,7 @@ ALTER TABLE `ik_daily_time_info`
 -- AUTO_INCREMENT for table `ik_monthly_time_info`
 --
 ALTER TABLE `ik_monthly_time_info`
-  MODIFY `monthlytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `monthlytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `ik_weekly_time_info`
@@ -413,19 +455,19 @@ ALTER TABLE `ik_weekly_time_info`
 -- AUTO_INCREMENT for table `members_info`
 --
 ALTER TABLE `members_info`
-  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `member_access_info`
 --
 ALTER TABLE `member_access_info`
-  MODIFY `maccess_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `maccess_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `member_type_info`
 --
 ALTER TABLE `member_type_info`
-  MODIFY `member_type_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `member_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `supper_admin`
@@ -442,6 +484,12 @@ ALTER TABLE `supper_admin`
 --
 ALTER TABLE `frequency_category_info`
   ADD CONSTRAINT `frequency_category_info_ibfk_1` FOREIGN KEY (`sad_id`) REFERENCES `supper_admin` (`sad_id`);
+
+--
+-- Constraints for table `gudian_members`
+--
+ALTER TABLE `gudian_members`
+  ADD CONSTRAINT `fk_gudian_ikimina` FOREIGN KEY (`iki_id`) REFERENCES `ikimina_info` (`iki_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `ikimina_info`
