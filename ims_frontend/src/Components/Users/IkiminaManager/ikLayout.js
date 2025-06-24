@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, ChevronLeft, Search } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { FaListAlt, FaChartBar, FaUsers, FaMoneyBill, FaCog } from 'react-icons/fa';
+import { NavLink } from 'react-router-dom'; // ✅ correct import
+
 import '../../CSS/Layout.css';
 
 export default function Layout() {
@@ -71,11 +74,12 @@ export default function Layout() {
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
         <nav className="sidebar-menu" aria-label="Sidebar">
           <ul className="menu-list">
-            <li><Link to="/MemberManager" className="sidebar-item">Member Management</Link></li>
-            <li><Link to="/report" className="sidebar-item">Reports</Link></li>
-            <li><Link to="/members" className="sidebar-item">Members</Link></li>
-            <li><Link to="/loans" className="sidebar-item">Loans</Link></li>
-            <li><Link to="/settings" className="sidebar-item">Settings</Link></li>
+      <li><NavLink to="/MemberManager" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaListAlt style={{ marginRight: '8px' }} />Member Management</NavLink></li>
+<li><NavLink to="/report" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaChartBar style={{ marginRight: '8px' }} />Reports</NavLink></li>
+<li><NavLink to="/members" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaUsers style={{ marginRight: '8px' }} />Members</NavLink></li>
+<li><NavLink to="/loans" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaMoneyBill style={{ marginRight: '8px' }} />Loans</NavLink></li>
+<li><NavLink to="/settings" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaCog style={{ marginRight: '8px' }} />Settings</NavLink></li>
+
           </ul>
         </nav>
       </aside>

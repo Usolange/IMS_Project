@@ -3,7 +3,7 @@ import axios from 'axios';
 import GudianMemberModal from './GudianMemberModal';
 import RegisterMemberModal from './RegisterMemberModal';
 import MemberTypeModal from './MemberTypeModal';
-import '../../CSS/MemberManagement.css';
+import '../../../CSS/MemberManagement.css';
 
 export default function MemberManagement() {
   const [members, setMembers] = useState([]);

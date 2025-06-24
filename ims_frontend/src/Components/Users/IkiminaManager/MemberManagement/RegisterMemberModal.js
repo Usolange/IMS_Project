@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../../CSS/ModalForm.css';
+import '../../../CSS/ModalForm.css';
 
 export default function RegisterMemberModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({

@@ -1,7 +1,7 @@
 // src/Components/Dashboard.js
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../../CSS/Dashboard.css';
+import '../../CSS/adminDashboard.css';
 
 export default function Dashboard() {
   const [members, setMembers] = useState([]);

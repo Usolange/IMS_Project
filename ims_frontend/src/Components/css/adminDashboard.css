@@ -1,0 +1,115 @@
+/* Dashboard.css */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container Layout */
+.flex {
+  display: flex;
+}
+.flex-1 {
+  flex: 1;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+/* Text Styling */
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-gray-600 {
+  color: #4b5563;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-right {
+  text-align: right;
+}
+.text-xl {
+  font-size: 1.25rem;
+}
+.font-bold {
+  font-weight: 700;
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+}
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+/* Error Message */
+.error-message {
+  color: #dc2626;
+  font-weight: 500;
+  margin: 10px 0;
+}
+
+/* Table Container */
+.table-scroll-container {
+  overflow-x: auto;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background-color: white;
+}
+
+/* Table Styling */
+.ikimina-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.ikimina-table thead {
+  background-color: #f3f4f6;
+}
+.ikimina-table th,
+.ikimina-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.ikimina-table th {
+  font-weight: 600;
+}
+.ikimina-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Responsive Font */
+@media (max-width: 768px) {
+  .ikimina-table th,
+  .ikimina-table td {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .btn-primary {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { FaChartBar, FaMapMarkerAlt, FaClock, FaListAlt, FaUsers, FaUserFriends, FaMoneyBill, FaCog } from 'react-icons/fa';
 import { Menu, ChevronLeft, Search } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import '../../CSS/Layout.css';
 
 export default function Layout() {
@@ -63,17 +65,59 @@ export default function Layout() {
       </button>
 
       {/* Sidebar Navigation */}
-      <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
-        <nav className="sidebar-menu" aria-label="Sidebar">
-          <ul className="menu-list">
-            <li><Link to="/" className="sidebar-item">Dashboard</Link></li>
-            <li><Link to="/report" className="sidebar-item">Reports</Link></li>
-            <li><Link to="/members" className="sidebar-item">Members</Link></li>
-            <li><Link to="/loans" className="sidebar-item">Loans</Link></li>
-            <li><Link to="/settings" className="sidebar-item">Settings</Link></li>
-          </ul>
-        </nav>
-      </aside>
+ <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
+  <nav className="sidebar-menu" aria-label="Sidebar">
+    <ul className="menu-list">
+      <li>
+        <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaChartBar />Dashboard
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/LocationManager" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaMapMarkerAlt />Manage Location
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/TimeManager" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaClock />Manage Time
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/AllIkiminaPage" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaListAlt />Manage Ikimina
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/MemberManager" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaUsers />Member Management
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/report" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaChartBar />Reports
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/members" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaUserFriends />Members
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/loans" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaMoneyBill />Loans
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+          <FaCog />Settings
+        </NavLink>
+      </li>
+    </ul>
+  </nav>
+</aside>
+
+
 
       {/* Main Section */}
       <div className={`main-wrapper ${isSidebarVisible ? '' : 'full-width'}`}>

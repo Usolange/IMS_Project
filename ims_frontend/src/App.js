@@ -21,7 +21,7 @@ import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 
 import Layout from './Components/Layout';
-import Dashboard from './Components/Users/IkiminaManager/Dashboard';
+import Dashboard from './Components/Dashboard';
 import Report from './Components/Users/IkiminaManager/Report';
 // import Members from './Components/Users/Members/Members';
 
@@ -35,12 +35,16 @@ import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 
-import MemberManager from './Components/Users/IkiminaManager/MemberManagement';
 import IkLayout from './Components/Users/IkiminaManager/ikLayout';
-import RegisterMember from './Components/Users/IkiminaManager/RegisterMemberModal';
 import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
-import IkiminaManagement from './Components/Users/Admin/CreateIkimina/IkiminaManagement';
-import AllIkiminaPage from './Components/Users/Admin/CreateIkimina/AllIkiminaPage';
+import MemberManager from './Components/Users/IkiminaManager/MemberManagement/MemberManagement';
+import RegisterMember from './Components/Users/IkiminaManager/MemberManagement/RegisterMemberModal';
+
+
+
+
+import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
+import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
 
 export default function App() {
   return (

@@ -43,11 +43,10 @@ body, html, #root {
   left: 0;
   width: 250px;
   height: calc(100vh - 60px);
-  background-color: #90bbe3;
+  background-color: #44779c;
   padding-top: 20px;
   color: #fff;
   transition: transform 0.3s ease;
-  z-index: 1050;
   overflow-y: auto;
 }
 
@@ -56,33 +55,84 @@ body, html, #root {
 }
 
 /* === Sidebar Menu Links === */
-.sidebar-menu {
-  padding: 0 20px;
-}
-
-.menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.menu-list li {
-  margin-bottom: 20px;
-}
-
-.sidebar-item {
-  color: #ffffffd9;
+.nav-linkadmin {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 16px;
+  margin-left: 10px;
+  font-weight: 500;
+  color: #dae1e1; /* light text */
   text-decoration: none;
+  border-radius: 8px;
+  background-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-linkadmin:hover {
+  background-color: #334155; /* hover gray */
+  color: #ffffff;
+}
+
+.nav-linkadmin.active {
+  background-color: #2563eb; /* active blue */
+  color: #ffffff;
+}
+
+/* Optional if you use a second style */
+.linkadmin {
+  font-weight: 500;
+  padding-left: 30px;
+  font-size: 15.5px;
+}
+
+/* Icons inside links */
+.nav-linkadmin svg {
   font-size: 18px;
-  display: block;
-  padding: 10px;
-  border-radius: 5px;
+}
+
+/* === Responsive sidebar nav link === */
+@media (max-width: 768px) {
+  .nav-linkadmin {
+    font-size: 15px;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .nav-linkadmin svg {
+    font-size: 16px;
+  }
+}
+
+.sidebar-itemikimina {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #f1f1f1;
+  text-decoration: none;
+  border-radius: 6px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.sidebar-item:hover {
-  color: #ffc107;
-  background-color: #495057;
+.sidebar-itemikimina:hover {
+  background-color: #374151;
+  color: #ffffff;
+}
+
+.sidebar-itemikimina.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* Responsive: sidebar width and visibility on smaller screens */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+    top: 60px;
+    height: calc(100vh - 60px);
+  }
 }
 
 /* === Main Wrapper === */
@@ -327,3 +377,5 @@ body, html, #root {
     gap: 10px;
   }
 }
+
+
