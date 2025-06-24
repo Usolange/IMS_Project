@@ -2,7 +2,7 @@
 
 .location-manager {
   padding: 20px;
-  background-color: #f9fafb;
+  background-color: #eaebed;
   width: 200vh;
   margin-top: 10%;
   border-radius: 12px;
@@ -66,64 +66,68 @@
   margin-bottom: 20px;
 }
 
+.header-row h2 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
 .header-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  margin-left: 10%;
+  flex-wrap: wrap;
+  margin-top: 8px;
 }
 
-.btn-add,
-.btn-back {
-  padding: 8px 14px;
-  
-  font-size: 14px;
-  border: none;
+.header-buttons a {
+  text-decoration: none;
+  padding: 0 18px;       /* remove vertical padding, keep horizontal */
+  height: 40px;          /* fixed height */
   border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
   cursor: pointer;
   color: white;
-  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;   /* vertically center text */
+  justify-content: center;
 }
 
-.btn-add {
-  background-color: #3b82f6;
+
+.btn-add-location {
+  background-color: #1abc9c; /* turquoise */
 }
 
-.btn-add:hover {
-  background-color: #2563eb;
-}
 
-.btn-back {
-  background-color: #6b7280;
-}
-
-.btn-back:hover {
-  background-color: #4b5563;
-}
-
-.location-manager-header-buttons {
-  display: flex;
-  background: #000;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.btn-add-location,
-.btn-back-home {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: white;
-  text-decoration: none;
-  border-radius: 6px;
-  font-weight: bold;
-}
 
 .btn-back-home {
-  background-color: #6c757d;
+  background-color: #34495e;
+  
 }
 
-.btn-add-location:hover,
 .btn-back-home:hover {
-  opacity: 0.9;
+  background-color: #2c3e50;
+}
+
+/* Responsive for smaller screens */
+@media (max-width: 480px) {
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-buttons {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .header-buttons a {
+    flex: 1 1 100%;
+    text-align: center;
+  }
 }
 
 

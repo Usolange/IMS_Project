@@ -7,19 +7,20 @@ export default function Dashboard() {
   const [members, setMembers] = useState([]);
   const [gudians, setGudians] = useState([]);
   const [memberTypes, setMemberTypes] = useState([]);
+  const user = JSON.parse(localStorage.getItem('user'));
+  const iki_id = user?.id;
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [iki_id]);
 
   const fetchAllData = async () => {
     try {
       const [memberRes, gudianRes, typeRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/members'),
-        axios.get('http://localhost:5000/api/gudian-members'),
-        axios.get('http://localhost:5000/api/member-types'),
+        axios.get(`http://localhost:5000/api/membersInfoRoutes/select?iki_id=${iki_id}`),
+        axios.get('http://localhost:5000/api/gudianMembersRoutes/select', { params: { iki_id } }),
+        axios.get('http://localhost:5000/api/memberTypeRoutes/select'),
       ]);
-
       setMembers(memberRes.data);
       setGudians(gudianRes.data);
       setMemberTypes(typeRes.data);
@@ -48,26 +49,34 @@ export default function Dashboard() {
             <th>#</th>
             <th>Member Names</th>
             <th>National ID</th>
-            <th>Gudian Name</th>
+            <th>Guardian Name</th>
             <th>Phone</th>
             <th>Email</th>
             <th>Type</th>
-            <th>Ikimina ID</th>
+            <th>Ikimina Name</th>
           </tr>
         </thead>
         <tbody>
-          {members.map((m, idx) => (
-            <tr key={m.member_id}>
-              <td>{idx + 1}</td>
-              <td>{m.member_names}</td>
-              <td>{m.member_Nid}</td>
-              <td>{getGudianName(m.gm_Nid)}</td>
-              <td>{m.member_phone_number}</td>
-              <td>{m.member_email}</td>
-              <td>{getMemberType(m.member_type_id)}</td>
-              <td>{m.iki_id}</td>
+          {members.length > 0 ? (
+            members.map((m, idx) => (
+              <tr key={m.member_id}>
+                <td>{idx + 1}</td>
+                <td>{m.member_names}</td>
+                <td>{m.member_Nid}</td>
+                <td>{getGudianName(m.gm_Nid)}</td>
+                <td>{m.member_phone_number}</td>
+                <td>{m.member_email || '—'}</td>
+                <td>{getMemberType(m.member_type_id)}</td>
+                <td>{m.iki_name}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="8" style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                No members found.
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

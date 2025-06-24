@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../../../CSS/ModalForm.css';
 
 export default function MemberTypeModal({ isOpen, onClose, onSuccess }) {
   const [typeName, setTypeName] = useState('');
+  const [description, setDescription] = useState('');
   const [message, setMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!typeName) return;
+
+    if (!typeName.trim()) {
+      setMessage('❌ Member Type is required.');
+      return;
+    }
+
+    if (typeName.trim().length < 3) {
+      setMessage('❌ Member Type must be at least 3 characters.');
+      return;
+    }
 
     try {
-      await axios.post('http://localhost:5000/api/member-types', { member_type: typeName });
-      setMessage('Type added successfully.');
+      await axios.post('http://localhost:5000/api/memberTypeRoutes/newMemberType', {
+        member_type: typeName.trim(),
+        type_desc: description.trim()
+      });
+      setMessage('✅ Type added successfully.');
       setTypeName('');
+      setDescription('');
       if (onSuccess) onSuccess();
     } catch (err) {
-      setMessage('Failed to add type.');
+      setMessage('❌ Failed to add type.');
     }
   };
 
@@ -25,13 +40,20 @@ export default function MemberTypeModal({ isOpen, onClose, onSuccess }) {
     <div className="modal-overlay">
       <div className="modal-form">
         <h3>Add Member Type</h3>
-        {message && <div>{message}</div>}
+        {message && <div className="message">{message}</div>}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             placeholder="Enter Member Type"
             value={typeName}
             onChange={(e) => setTypeName(e.target.value)}
+            required
+          />
+          <textarea
+            placeholder="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
           />
           <div className="modal-actions">
             <button type="submit">Save</button>

@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import '../../../CSS/ModalForm.css'
 
 export default function GudianMemberModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     gm_names: '',
     gm_Nid: '',
-    gm_phonenumber: ''
+    gm_phonenumber: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [ikiId, setIkiId] = useState(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.id) {
+      setIkiId(user.id);
+    } else {
+      setError('No logged-in user found. Please log in.');
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -19,16 +30,25 @@ export default function GudianMemberModal({ isOpen, onClose, onSuccess }) {
     setError('');
     setSuccess('');
 
+    if (!ikiId) {
+      setError('No logged-in user found. Please log in.');
+      return;
+    }
+
     const { gm_names, gm_Nid, gm_phonenumber } = formData;
     if (!gm_names || !gm_Nid || !gm_phonenumber) {
-      return setError('All fields are required.');
+      setError('All fields are required.');
+      return;
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/gudian-members', formData);
+      const res = await axios.post('http://localhost:5000/api/gudianMembersRoutes/newGudianMember', {
+        ...formData,
+        iki_id: ikiId,
+      });
       setSuccess(res.data.message || 'Gudian member added!');
       setFormData({ gm_names: '', gm_Nid: '', gm_phonenumber: '' });
-      onSuccess();
+      if (onSuccess) onSuccess();
     } catch (err) {
       setError(err.response?.data?.message || 'Submission failed.');
     }
@@ -68,7 +88,7 @@ export default function GudianMemberModal({ isOpen, onClose, onSuccess }) {
           />
 
           <div className="modal-actions">
-            <button type="submit">Save</button>
+            <button type="submit" disabled={!ikiId}>Save</button>
             <button type="button" className="cancel" onClick={onClose}>Cancel</button>
           </div>
         </form>

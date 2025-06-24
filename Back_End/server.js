@@ -17,7 +17,6 @@ const MonthlyTimeRoutes = require('./routes/monthlyTimeRoutes');
 const LocationManagerRoutes = require('./routes/LocationManagerRoutes');
 const memberTypeRoutes = require('./routes/memberTypeRoutes');
 const membersInfoRoutes = require('./routes/membersInfoRoutes');
-const memberAccessRoutes = require('./routes/memberAccessRoutes');
 
 dotenv.config();
 
@@ -46,7 +45,6 @@ app.use('/api/MonthlyTimeRoutes', MonthlyTimeRoutes);
 app.use('/api/memberTypeRoutes', memberTypeRoutes);
 app.use('/api/gudianMembersRoutes', gudianMembersRoutes);
 app.use('/api/membersInfoRoutes', membersInfoRoutes);
-app.use('/api/memberAccessRoutes', memberAccessRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

@@ -1,55 +1,114 @@
+/* MemberManagement.css */
+
+/* --- General page container --- */
 .member-management {
-  padding: 2rem;
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 0 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
 }
 
+/* Page title */
 .member-management h2 {
-  margin-bottom: 1rem;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
 }
 
+/* --- Action Buttons Container --- */
 .action-buttons {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.action-buttons button {
-  margin-right: 10px;
-  padding: 8px 14px;
-  font-weight: bold;
-  border-radius: 6px;
-  background-color: #2e84e0;
+.action-buttons button,
+.action-buttons a.btn-primary {
+  background-color: #007bff;
   color: white;
+  padding: 10px 18px;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.25s ease;
+}
+.action-buttons button:hover,
+.action-buttons a.btn-primary:hover {
+  background-color: #0056b3;
 }
 
+/* --- Table wrapper for horizontal scroll --- */
+.table-container {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+/* --- Table Styling --- */
 .styled-table {
-  width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  width: max-content;    /* shrink‐to‐fit columns */
+  min-width: 100%;       /* but at least fill parent */
+  table-layout: auto;    /* auto column widths */
 }
 
-.styled-table thead {
-  background-color: #2e84e0;
-  color: white;
-}
-
-.styled-table th, .styled-table td {
-  padding: 10px 15px;
-  border: 1px solid #ccc;
+.styled-table thead tr {
+  background-color: #007bff;
+  color: #fff;
   text-align: left;
+  font-weight: 700;
 }
 
-.edit-btn, .delete-btn {
+.styled-table th,
+.styled-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ddd;
+  vertical-align: middle;
+
+  /* allow long text to break and wrap */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #f1f9ff;
+}
+
+.styled-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Action buttons inside table */
+.edit-btn,
+.delete-btn {
   background: none;
   border: none;
+  font-size: 1.2rem;
   cursor: pointer;
-  font-size: 1.1rem;
+  margin-right: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background-color 0.25s ease;
 }
+.edit-btn:hover    { background-color: #ffc107; }
+.delete-btn:hover  { background-color: #dc3545; color: #fff; }
 
-.edit-btn:hover {
-  color: orange;
-}
-
-.delete-btn:hover {
-  color: red;
+/* No data row */
+.styled-table tbody tr td[colspan] {
+  text-align: center;
+  font-style: italic;
+  color: #888;
 }

@@ -28,7 +28,7 @@ import Report from './Components/Users/IkiminaManager/Report';
 
 
 import AdLayout from './Components/Users/Admin/adLayout';
-import AdminDashboard from './Components/Users/Admin/AdminDashoard';
+import AdminDashboard from './Components/Users/Admin/AdminDashboard';
 import FrequencyCategoryManagement from './Components/Users/Admin/ScheduleManagement/FrequencyCategoryManagement';
 import AvailableDailySchedules from './Components/Users/Admin/ScheduleManagement/AvailableDailySchedules';
 import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager';

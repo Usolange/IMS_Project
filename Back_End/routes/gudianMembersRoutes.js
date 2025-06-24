@@ -3,10 +3,19 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Get all Gudian members
+// Get all Gudian members, optionally filtered by iki_id
 router.get('/select', async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM Gudian_members');
+    const { iki_id } = req.query;
+    let query = 'SELECT gm_id, gm_names, gm_Nid, gm_phonenumber, iki_id FROM gudian_members';
+    const params = [];
+
+    if (iki_id) {
+      query += ' WHERE iki_id = ?';
+      params.push(iki_id);
+    }
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (error) {
     console.error('Error fetching Gudian members:', error);
@@ -16,18 +25,20 @@ router.get('/select', async (req, res) => {
 
 // Add a new Gudian member
 router.post('/newGudianMember', async (req, res) => {
-  const { gm_names, gm_Nid, gm_phonenumber } = req.body;
-  if (!gm_names || !gm_Nid || !gm_phonenumber) {
-    return res.status(400).json({ message: 'All fields are required.' });
+  const { gm_names, gm_Nid, gm_phonenumber, iki_id } = req.body;
+
+  if (!gm_names || !gm_Nid || !gm_phonenumber || !iki_id) {
+    return res.status(400).json({ message: 'All fields including iki_id are required.' });
   }
+
   try {
     await db.execute(
-      `INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber) VALUES (?, ?, ?)`,
-      [gm_names, gm_Nid, gm_phonenumber]
+      'INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber, iki_id) VALUES (?, ?, ?, ?)',
+      [gm_names, gm_Nid, gm_phonenumber, iki_id]
     );
     res.status(201).json({ message: 'Gudian member added successfully.' });
   } catch (err) {
-    console.error(err);
+    console.error('Error adding Gudian member:', err);
     res.status(500).json({ message: 'Failed to add Gudian member.' });
   }
 });
@@ -35,13 +46,23 @@ router.post('/newGudianMember', async (req, res) => {
 // Update a Gudian member
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, memberTypeId } = req.body;
+  const { gm_names, gm_Nid, gm_phonenumber } = req.body;
+
+  if (!gm_names || !gm_Nid || !gm_phonenumber) {
+    return res.status(400).json({ message: 'All fields are required for update.' });
+  }
+
   try {
-    await db.execute(
-      'UPDATE Gudian_members SET name = ?, member_type_id = ? WHERE id = ?',
-      [name, memberTypeId, id]
+    const [result] = await db.execute(
+      'UPDATE gudian_members SET gm_names = ?, gm_Nid = ?, gm_phonenumber = ? WHERE gm_id = ?',
+      [gm_names, gm_Nid, gm_phonenumber, id]
     );
-    res.status(200).json({ id, name, memberTypeId });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Gudian member not found.' });
+    }
+
+    res.status(200).json({ message: 'Gudian member updated successfully.' });
   } catch (error) {
     console.error('Error updating Gudian member:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -52,7 +73,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await db.execute('DELETE FROM Gudian_members WHERE id = ?', [id]);
+    const [result] = await db.execute('DELETE FROM gudian_members WHERE gm_id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Gudian member not found.' });
+    }
     res.status(200).json({ message: 'Gudian member deleted successfully' });
   } catch (error) {
     console.error('Error deleting Gudian member:', error);

@@ -69,7 +69,7 @@ export default function Layout() {
   <nav className="sidebar-menu" aria-label="Sidebar">
     <ul className="menu-list">
       <li>
-        <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+        <NavLink to="/AdminDashboard" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
           <FaChartBar />Dashboard
         </NavLink>
       </li>
