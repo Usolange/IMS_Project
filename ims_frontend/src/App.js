@@ -23,9 +23,6 @@ import Unauthorized from './Components/Auth/Unauthorized';
 import Layout from './Components/Layout';
 import Dashboard from './Components/Dashboard';
 import Report from './Components/Users/IkiminaManager/Report';
-// import Members from './Components/Users/Members/Members';
-
-
 
 import AdLayout from './Components/Users/Admin/adLayout';
 import AdminDashboard from './Components/Users/Admin/AdminDashboard';
@@ -40,11 +37,14 @@ import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard
 import MemberManager from './Components/Users/IkiminaManager/MemberManagement/MemberManagement';
 import RegisterMember from './Components/Users/IkiminaManager/MemberManagement/RegisterMemberModal';
 
-
-
-
 import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
+
+
+
+import MemberDashboard from './Components/Users/Members/memberDashboard'
+import MeLayout from './Components/Users/Members/meLayout'
+
 
 export default function App() {
   return (
@@ -102,6 +102,18 @@ export default function App() {
         <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
+
+
+
+        {/* Ikimina routes for 'member' role */}
+      <Route element={<MeLayout />}>
+        <Route path="/memberDashboard" element={<RoleProtectedRoute allowedRoles={['member']}><MemberDashboard /></RoleProtectedRoute>} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+      </Route>
+
+
+
+
 
 
       {/* Fallback route */}

@@ -10,19 +10,40 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
+
+  /* fade-in animation */
+  animation: fadeInOverlay 0.5s ease forwards;
+  opacity: 0;
+}
+
+/* Fade in overlay animation (slow) */
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Modal container */
 .modal-form {
   background-color: #fff;
-  border-radius: 10px;
-  width: 100%;
+  width: 90%;
   max-width: 480px;
-  padding: 32px 36px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
   box-sizing: border-box;
   position: relative;
+
+  /* fade-in animation */
+  animation: fadeInModal 0.5s ease forwards;
+  opacity: 0;
+}
+
+/* Fade in modal animation (slow) */
+@keyframes fadeInModal {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Modal headings */
@@ -35,44 +56,47 @@
   text-align: center;
 }
 
+/* Slightly smaller heading for h3 only */
+.modal-form h3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
 /* Form message box for general feedback */
 .form-msg {
-  background-color: #d93025; /* Red background for errors */
-  color: white;
-  font-weight: 600;
-  padding: 14px 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  background-color: #f0f4f8;
+  border: 1px solid #b0c4de;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+  color: #2a3a53;
+  font-weight: 500;
   text-align: center;
   user-select: none;
 }
 
 /* Success message variant */
-.form-msg.success {
-  background-color: #188038; /* Green background */
-}
-
-/* Success message specific to GudianMemberModal */
+.form-msg.success,
 .successs {
-  background-color: #188038;
+  background-color: #188038; /* Green background */
   color: white;
   font-weight: 600;
   padding: 14px 20px;
   border-radius: 8px;
   margin-bottom: 16px;
-  text-align: center;
   user-select: none;
 }
 
-/* Error message specific to GudianMemberModal */
+/* Error message variant */
+.form-msg.error,
 .erroor {
-  background-color: #d93025;
+  background-color: #d93025; /* Red background */
   color: white;
   font-weight: 600;
   padding: 14px 20px;
   border-radius: 8px;
   margin-bottom: 16px;
-  text-align: center;
   user-select: none;
 }
 
@@ -82,109 +106,213 @@
 .modal-form select,
 .modal-form textarea {
   width: 100%;
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  border: 1.8px solid #ccc;
-  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem;
   font-size: 1rem;
   font-weight: 400;
+  border: 2px solid #ccc;
+  border-radius: 6px;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
+  outline-offset: 2px;
+  outline-color: transparent;
 }
 
-/* Focus style */
+/* Input focus style */
 .modal-form input[type="text"]:focus,
 .modal-form input[type="email"]:focus,
 .modal-form select:focus,
 .modal-form textarea:focus {
+  border-color: #2e86de;
+  outline-color: #2e86de;
+  box-shadow: 0 0 6px rgba(46, 134, 222, 0.5);
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 6px rgba(0, 123, 255, 0.5);
 }
 
-/* Error text below fields */
+/* Small helper text */
+.modal-form small {
+  display: block;
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+/* Inline field errors */
 .error {
-  color: #d93025;
+  color: #cc3333;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
   font-weight: 600;
-  font-size: 0.875rem;
-  margin-top: -10px;
-  margin-bottom: 12px;
-  user-select: none;
+  animation: fadeInError 0.4s ease forwards;
+  opacity: 0;
 }
 
-/* Modal form buttons container */
-/* Center buttons horizontally */
-.modal-actions {
+/* Fade in error message */
+@keyframes fadeInError {
+  to { opacity: 1; }
+}
+
+/* Modal buttons container */
+.modal-btns {
   display: flex;
-  justify-content: center;  /* center buttons horizontally */
-  gap: 16px;
-  margin-top: 16px;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  gap: 0.75rem;
 }
 
-/* Buttons style */
-.modal-actions button {
-  padding: 12px 32px;
+/* Submit and Cancel buttons */
+.modal-btns button {
+  padding: 0.65rem 1.25rem;
   font-size: 1rem;
-  font-weight: 700;
-  border-radius: 8px;
+  border-radius: 6px;
   border: none;
   cursor: pointer;
-  user-select: none;
-  /* Smooth transition on background color over 0.6 seconds */
+  font-weight: 600;
   transition: background-color 0.6s ease;
+  flex: 1;
+  margin: 0 0.25rem;
 }
 
-/* Submit / Save / Register / Update button */
-.modal-actions button[type="submit"] {
-  background-color: #007bff;
-  color: white;
+/* Submit button style */
+.modal-btns button[type="submit"] {
+  background-color: #2e86de;
+  color: #fff;
 }
 
-/* Submit button slow smooth hover */
-.modal-actions button[type="submit"]:hover:not(:disabled) {
-  background-color: #0056b3;
-  transition: background-color 0.6s ease; /* slower smooth transition */
+.modal-btns button[type="submit"]:hover:not(:disabled) {
+  background-color: #1b4f72;
 }
 
-/* Disabled submit button */
-.modal-actions button[type="submit"]:disabled {
-  background-color: #a0c8f0;
+.modal-btns button[type="submit"]:disabled {
+  background-color: #a0bce6;
   cursor: not-allowed;
 }
 
-/* Cancel button */
-.modal-actions button.cancel {
-  background-color: #6c757d;
-  color: white;
+/* Cancel button style */
+.modal-btns .cancel-btn {
+  background-color: #ccc;
+  color: #333;
 }
 
-/* Cancel button hover */
-.modal-actions button.cancel:hover {
-  background-color: #5a6268;
+.modal-btns .cancel-btn:hover {
+  background-color: #999;
 }
 
-
+/* Generated credentials box */
 .generated-box {
-  background-color: #e6ffed;
-  border: 2px solid #1eaa4b;
-  color: #155724;
-  padding: 16px;
+  background-color: #e6ffe6;
+  border: 1px solid #66bb66;
+  padding: 1rem 1.25rem;
   border-radius: 8px;
-  margin: 16px 0;
-  font-weight: 500;
-  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  color: #2d6a2d;
+  font-weight: 600;
+  text-align: left;
+  line-height: 1.4;
 }
 
 .generated-box h4 {
   margin-top: 0;
   font-weight: bold;
   font-size: 1.2rem;
+  color: #1b5e20;
 }
 
 .generated-box .note {
-  font-size: 0.875rem;
-  color: #444;
-  margin-top: 10px;
+  color: #996633;
+  font-weight: 500;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* Buttons inside generated box */
+.generated-box button {
+  margin-right: 0.75rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background-color: #2e7d32;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.generated-box button:hover:not(:disabled) {
+  background-color: #1b5e20;
+}
+
+.generated-box button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* Toast container */
+.toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  min-width: 260px;
+  max-width: 320px;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  color: white;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* Fade in/out with slower animation */
+  animation: fadeInToast 0.6s ease forwards;
+  opacity: 0;
+  z-index: 9999;
+}
+
+/* Toast types */
+.toast-info {
+  background-color: #3498db;
+}
+
+.toast-success {
+  background-color: #2ecc71;
+}
+
+.toast-error {
+  background-color: #e74c3c;
+}
+
+/* Toast fade-in */
+@keyframes fadeInToast {
+  to { opacity: 1; }
+}
+
+/* Toast close button */
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  margin-left: 1rem;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.toast-close-btn:hover {
+  color: #ddd;
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  .modal-form {
+    padding: 1.5rem 1.75rem;
+  }
 }
 
 
@@ -192,113 +320,100 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 9999;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Modal container */
 .modal-form {
   background: #fff;
-  border-radius: 10px;
-  max-width: 480px;
-  width: 90%;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
   padding: 2rem;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  max-height: 90vh;
+  animation: slideIn 0.3s ease forwards;
 }
 
-/* Heading */
+/* Slide in from above */
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0);      opacity: 1; }
+}
+
 .modal-form h3 {
   margin: 0 0 1.5rem;
-  font-size: 1.5rem;
   text-align: center;
+  font-size: 1.6rem;
+  color: #333;
 }
 
-/* General message banner */
-.form-msg {
-  background: #ffebee;
-  color: #c62828;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-/* Generated credentials box */
-.generated-box {
-  background: #e8f5e9;
-  border: 2px solid #2e7d32;
+/* Ikimina Info */
+.ikimina-info {
+  background: #f1f8ff;
+  border-left: 4px solid #007bff;
   padding: 1rem;
-  border-radius: 6px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
 }
-.generated-box h4 {
-  margin-top: 0;
-  font-size: 1.2rem;
-  color: #1b5e20;
-}
-.generated-box .note {
-  font-size: 0.85rem;
-  color: #2e7d32;
-  margin-top: 0.5rem;
-}
-/* Buttons inside generated box */
-.generated-box button {
-  background: #2e7d32;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 0.5rem 1rem;
-  margin-right: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.generated-box button:disabled {
-  background: #a5d6a7;
-  cursor: not-allowed;
-}
-.generated-box button:hover:not(:disabled) {
-  background: #1b5e20;
+.ikimina-info p {
+  margin: 0.25rem 0;
 }
 
-/* Inputs & selects */
+/* Form messages */
+.form-msg {
+  background: #fdecea;
+  color: #611a15;
+  border: 1px solid #f5c6cb;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Inputs & Selects */
 .modal-form input,
 .modal-form select {
   width: 100%;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  border: 1.5px solid #bbb;
-  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1.5px solid #ccc;
+  border-radius: 4px;
   font-size: 1rem;
   transition: border-color 0.2s ease;
 }
 .modal-form input:focus,
 .modal-form select:focus {
+  border-color: #007bff;
   outline: none;
-  border-color: #2e7d32;
-  box-shadow: 0 0 5px rgba(46,125,50,0.4);
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
 
-/* Helper text under national ID */
+/* Helper text */
 .modal-form small {
   display: block;
-  margin-bottom: 0.5rem;
   font-size: 0.85rem;
   color: #666;
+  margin: -0.5rem 0 0.75rem;
 }
 
-/* Inline field errors */
+/* Field-level errors */
 .error {
-  color: #c62828;
+  color: #c00;
   font-size: 0.85rem;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
+  margin: -0.5rem 0 0.75rem;
 }
 
 /* Buttons row */
@@ -308,43 +423,101 @@
   gap: 0.75rem;
   margin-top: 1rem;
 }
-
-/* Submit & Cancel buttons */
 .modal-btns button {
   padding: 0.6rem 1.2rem;
   font-size: 1rem;
-  font-weight: 600;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.6s ease;
+  transition: background 0.2s ease;
 }
-
-/* Submit button */
 .modal-btns button[type="submit"] {
-  background: #2e7d32;
+  background: #007bff;
   color: white;
 }
 .modal-btns button[type="submit"]:hover:not(:disabled) {
-  background: #1b5e20;
+  background: #0056b3;
 }
 .modal-btns button[type="submit"]:disabled {
-  background: #a5d6a7;
+  background: #a0c4ff;
   cursor: not-allowed;
 }
-
-/* Cancel button */
 .modal-btns .cancel-btn {
-  background: #e0e0e0;
+  background: #ccc;
   color: #333;
 }
 .modal-btns .cancel-btn:hover {
-  background: #bdbdbd;
+  background: #b3b3b3;
 }
 
-/* Responsive tweaks */
-@media (max-width: 480px) {
-  .modal-form {
-    padding: 1.5rem;
-  }
+/* Generated credentials box */
+.generated-box {
+  background: #e8f6f3;
+  border: 1px solid #5bb5a2;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+.generated-box h4 {
+  margin: 0 0 0.75rem;
+  color: #2c6f61;
+}
+.generated-box p {
+  margin: 0.4rem 0;
+  line-height: 1.4;
+}
+.generated-box .note {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.5rem;
+}
+
+/* Credential actions */
+.generated-box > div {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.generated-box button {
+  background: #007bff;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.generated-box button:hover:not(:disabled) {
+  background: #0056b3;
+}
+.generated-box button:disabled {
+  background: #a0c4ff;
+  cursor: not-allowed;
+}
+
+/* Toast (if used) */
+.toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #333;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 4px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toast-success { background: #2ecc71; }
+.toast-error   { background: #e74c3c; }
+.toast-info    { background: #3498db; }
+.toast-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
 }

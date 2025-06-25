@@ -1,114 +1,301 @@
-/* MemberManagement.css */
-
-/* --- General page container --- */
-.member-management {
-  max-width: 1200px;
-  margin: 30px auto;
-  padding: 0 16px;
+/* Container */
+.member-management-container {
+  max-width: 1500px;
+  margin: 20px auto;
+  padding: 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #222;
+  background: #fefefe;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  color: #2c3e50;
 }
 
-/* Page title */
-.member-management h2 {
+/* Page Title */
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
   margin-bottom: 24px;
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
+  color: #1b4f72;
 }
 
-/* --- Action Buttons Container --- */
-.action-buttons {
+/* Actions bar with buttons */
+.actions-bar {
   display: flex;
+  gap: 12px;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
-.action-buttons button,
-.action-buttons a.btn-primary {
-  background-color: #007bff;
+.action-btn {
+  background-color: #117a65;
   color: white;
+  border: none;
   padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.25s ease;
-}
-.action-buttons button:hover,
-.action-buttons a.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-/* --- Table wrapper for horizontal scroll --- */
-.table-container {
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-/* --- Table Styling --- */
-.styled-table {
-  border-collapse: collapse;
-  font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border-radius: 10px;
-  width: max-content;    /* shrink‐to‐fit columns */
-  min-width: 100%;       /* but at least fill parent */
-  table-layout: auto;    /* auto column widths */
-}
-
-.styled-table thead tr {
-  background-color: #007bff;
-  color: #fff;
-  text-align: left;
-  font-weight: 700;
-}
-
-.styled-table th,
-.styled-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #ddd;
-  vertical-align: middle;
-
-  /* allow long text to break and wrap */
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.styled-table tbody tr:hover {
-  background-color: #f1f9ff;
-}
-
-.styled-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Action buttons inside table */
-.edit-btn,
-.delete-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
   cursor: pointer;
-  margin-right: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  transition: background-color 0.25s ease;
+  transition: background-color 0.3s ease;
+  user-select: none;
+  text-decoration: none;
 }
-.edit-btn:hover    { background-color: #ffc107; }
-.delete-btn:hover  { background-color: #dc3545; color: #fff; }
 
-/* No data row */
-.styled-table tbody tr td[colspan] {
+.action-btn:hover {
+  background-color: #0e5e4a;
+}
+
+.btn-primary {
+  background-color: #2980b9;
+}
+
+.btn-primary:hover {
+  background-color: #1f6391;
+}
+
+/* SECTION HEADER: single line layout for title, search, rows-per-page */
+.members-section .section-header,
+.gudians-section .section-header {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  margin-bottom: 14px;
+  user-select: none;
+}
+
+/* Section Titles */
+.members-section .section-title,
+.gudians-section .section-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #117a65;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+/* Search Inputs */
+.members-section .search-input,
+.gudians-section .search-input {
+  width: 220px;
+  min-width: 2px;
+  padding: 8px 14px;
+  border: 1.5px solid #b0b9b8;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.members-section .search-input:focus,
+.gudians-section .search-input:focus {
+  border-color: #117a65;
+  outline: none;
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 250px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  font-weight: 600;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  z-index: 9999;
+  animation: fadeInOut 4s forwards;
+}
+
+.toast-info {
+  background-color: #2196f3;
+}
+
+.toast-success {
+  background-color: #4caf50;
+}
+
+.toast-error {
+  background-color: #f44336;
+}
+
+.toast-close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  margin-left: 20px;
+  padding: 0;
+  user-select: none;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+
+/* Rows per page container */
+.members-section .rows-per-page-container,
+.gudians-section .rows-per-page-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #34495e;
+  margin-left: auto;
+}
+
+/* Rows per page select */
+.rows-per-page-select {
+  padding: 6px 8px;
+  border-radius: 5px;
+  border: 1.5px solid #b0b9b8;
+  cursor: pointer;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.rows-per-page-select:focus {
+  border-color: #117a65;
+  outline: none;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 12px;
+}
+
+/* Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: auto;
+  min-width: 800px; /* ensure horizontal scroll on smaller screens */
+}
+
+/* Table Head */
+.data-table thead tr {
+  background: linear-gradient(45deg, #117a65, #0e5e4a);
+  color: #fff;
+  user-select: none;
+}
+
+.data-table thead th {
+  padding: 14px 12px;
+  text-align: left;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Table Body */
+.data-table tbody tr {
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+  background-color: #e0f2f1;
+  cursor: pointer;
+}
+
+.data-table tbody td {
+  padding: 12px 10px;
+  vertical-align: middle;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Buttons inside table */
+.btn-edit,
+.btn-delete {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0 6px;
+  transition: transform 0.2s ease;
+}
+
+.btn-edit:hover {
+  color: #2980b9;
+  transform: scale(1.2);
+}
+
+.btn-delete:hover {
+  color: #e74c3c;
+  transform: scale(1.2);
+}
+
+/* No data message */
+.no-data {
   text-align: center;
+  padding: 18px 0;
+  color: #999;
   font-style: italic;
-  color: #888;
+}
+
+/* Pagination bar */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  user-select: none;
+}
+
+.pagination-btn {
+  background-color: #117a65;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.pagination-btn:disabled {
+  background-color: #b0b9b8;
+  cursor: not-allowed;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #0e5e4a;
+}
+
+.pagination-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: #34495e;
+  user-select: none;
 }
