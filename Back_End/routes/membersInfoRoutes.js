@@ -13,8 +13,8 @@ const client      = twilio(accountSid, authToken);
 
 // Nodemailer setup
 const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST,
-  port:   Number(process.env.SMTP_PORT) || 587,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 587,
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
@@ -22,42 +22,50 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Check that member belongs to this iki_id
-async function checkOwnership(member_id, iki_id) {
-  const [rows] = await db.execute(
-    'SELECT 1 FROM members_info WHERE member_id = ? AND iki_id = ?',
-    [member_id, iki_id]
-  );
-  return rows.length > 0;
-}
-
-// Build location string for messages
+// Utility: build location string
 function buildLocationString(sector, cell, village) {
   const parts = [];
-  if (sector)  parts.push(`${sector}`);
-  if (cell)    parts.push(`${cell}`);
-  if (village) parts.push(`${village}`);
+  if (sector) parts.push(sector);
+  if (cell) parts.push(cell);
+  if (village) parts.push(village);
   return parts.length ? parts.join(', ') : '';
+}
+
+// Utility: format Rwandan phone numbers to E.164
+function formatPhoneToE164(phone) {
+  if (!phone) return '';
+  const trimmed = phone.trim();
+  if (trimmed.startsWith('+')) return trimmed;
+  if (trimmed.startsWith('07')) return '+250' + trimmed.slice(1);
+  return trimmed;
 }
 
 // Send SMS
 async function sendSms(phone, code, pass, iki_name, sector, cell, village) {
+  const formattedPhone = formatPhoneToE164(phone);
   const loc = buildLocationString(sector, cell, village);
   const msg = `Ikimina: ${iki_name}${loc ? ' (' + loc + ')' : ''}\n` +
               `Your Credentials:\nCode: ${code}\nPassword: ${pass}`;
-  return client.messages.create({
-    body: msg,
-    from: twilioPhone,
-    to: phone
-  });
+  try {
+    const result = await client.messages.create({
+      body: msg,
+      from: twilioPhone,
+      to: formattedPhone
+    });
+    console.log('✅ SMS sent to', formattedPhone, 'SID:', result.sid);
+    return result;
+  } catch (err) {
+    console.error('❌ SMS failed to', formattedPhone, '-', err.message);
+    throw err;
+  }
 }
 
 // Send Email
 async function sendEmail(email, code, pass, name, iki_name, sector, cell, village) {
   const loc = buildLocationString(sector, cell, village);
   const mailOptions = {
-    from:    `"Ikimina Management System" <${process.env.SMTP_USER}>`,
-    to:      email,
+    from: `"Ikimina Management System" <${process.env.SMTP_USER}>`,
+    to: email,
     subject: 'Your Member Access Credentials',
     html: `
       <p>Hello ${name},</p>
@@ -76,12 +84,20 @@ async function sendEmail(email, code, pass, name, iki_name, sector, cell, villag
   return transporter.sendMail(mailOptions);
 }
 
-// GET all members for an ikimina
+// Utility: validate if member belongs to this ikimina
+async function checkOwnership(member_id, iki_id) {
+  const [rows] = await db.execute(
+    'SELECT 1 FROM members_info WHERE member_id = ? AND iki_id = ?',
+    [member_id, iki_id]
+  );
+  return rows.length > 0;
+}
+
+// GET: Members list for an ikimina
 router.get('/select', async (req, res) => {
   const { iki_id } = req.query;
-  if (!iki_id) {
-    return res.status(400).json({ success: false, message: 'iki_id is required.' });
-  }
+  if (!iki_id) return res.status(400).json({ success: false, message: 'iki_id is required.' });
+
   try {
     const [rows] = await db.execute(`
       SELECT mi.member_id,
@@ -95,11 +111,12 @@ router.get('/select', async (req, res) => {
              ik.iki_name,
              gm.gm_names AS guardian_name
       FROM members_info mi
-      LEFT JOIN member_type_info   mt ON mi.member_type_id = mt.member_type_id
-      LEFT JOIN ikimina_info       ik ON mi.iki_id          = ik.iki_id
-      LEFT JOIN gudian_members     gm ON mi.gm_Nid          = gm.gm_Nid
+      LEFT JOIN member_type_info mt ON mi.member_type_id = mt.member_type_id
+      LEFT JOIN ikimina_info     ik ON mi.iki_id = ik.iki_id
+      LEFT JOIN gudian_members   gm ON mi.gm_Nid = gm.gm_Nid
       WHERE mi.iki_id = ?
     `, [iki_id]);
+
     res.json({ success: true, data: rows });
   } catch (err) {
     console.error(err);
@@ -107,40 +124,7 @@ router.get('/select', async (req, res) => {
   }
 });
 
-
-// GET all members for an ikimina
-router.get('/selectcodes', async (req, res) => {
-  const { iki_id } = req.query;
-  if (!iki_id) {
-    return res.status(400).json({ success: false, message: 'iki_id is required.' });
-  }
-  try {
-    const [rows] = await db.execute(`
-      SELECT mi.member_id,
-             mi.member_names,
-             mi.member_Nid,
-             mi.gm_Nid,
-             mi.member_phone_number,
-             mi.member_email,
-             mi.member_type_id,
-             mt.member_type,
-             ik.iki_name,
-             gm.gm_names AS guardian_name
-      FROM members_info mi
-      LEFT JOIN member_type_info   mt ON mi.member_type_id = mt.member_type_id
-      LEFT JOIN ikimina_info       ik ON mi.iki_id          = ik.iki_id
-      LEFT JOIN gudian_members     gm ON mi.gm_Nid          = gm.gm_Nid
-      WHERE mi.iki_id = ?
-    `, [iki_id]);
-    res.json({ success: true, data: rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Error fetching members.' });
-  }
-});
-
-
-// POST create new member
+// POST: Register new member
 router.post('/newMember', async (req, res) => {
   const {
     member_names, member_Nid, gm_Nid,
@@ -150,13 +134,11 @@ router.post('/newMember', async (req, res) => {
   } = req.body;
 
   if (!member_names || !(member_Nid || gm_Nid) ||
-      !member_phone_number || !member_type_id ||
-      !iki_id || !iki_name) {
+      !member_phone_number || !member_type_id || !iki_id || !iki_name) {
     return res.status(400).json({ success: false, message: 'Required fields missing.' });
   }
 
   try {
-    // ensure phone or NID not already in this ikimina
     const [exists] = await db.execute(
       `SELECT 1 FROM members_info
        WHERE iki_id = ?
@@ -174,7 +156,6 @@ router.post('/newMember', async (req, res) => {
     await conn.beginTransaction();
 
     try {
-      // insert member
       const [ins] = await conn.execute(
         `INSERT INTO members_info
          (member_names, member_Nid, gm_Nid, member_phone_number, member_email, member_type_id, iki_id)
@@ -191,8 +172,7 @@ router.post('/newMember', async (req, res) => {
       );
       const member_id = ins.insertId;
 
-      // generate code: prefix + next sequential 3 digits
-      const prefix = iki_id.toString().padStart(2,'0');
+      const prefix = iki_id.toString().padStart(2, '0');
       const [maxRow] = await conn.execute(
         `SELECT MAX(CAST(SUBSTRING(member_code, LENGTH(?)+1) AS UNSIGNED)) AS maxCode
          FROM member_access_info
@@ -200,10 +180,9 @@ router.post('/newMember', async (req, res) => {
         [prefix, prefix]
       );
       const nextNum = (maxRow[0].maxCode || 0) + 1;
-      const member_code = prefix + nextNum.toString().padStart(3,'0');
-      const member_pass = Math.floor(10000 + Math.random()*90000).toString();
+      const member_code = prefix + nextNum.toString().padStart(3, '0');
+      const member_pass = Math.floor(10000 + Math.random() * 90000).toString();
 
-      // store credentials
       await conn.execute(
         `INSERT INTO member_access_info (member_id, member_code, member_pass)
          VALUES (?, ?, ?)`,
@@ -212,29 +191,28 @@ router.post('/newMember', async (req, res) => {
 
       await conn.commit();
 
-      // send out notifications
       let smsSent = false, emailSent = false;
       try {
-        await sendSms(member_phone_number, member_code, member_pass,
-                      iki_name, sector, cell, village);
+        await sendSms(member_phone_number, member_code, member_pass, iki_name, sector, cell, village);
         smsSent = true;
-      } catch (e) { console.error('SMS error:', e); }
+      } catch (e) {
+        console.error('SMS error:', e.message);
+      }
 
       if (member_email) {
         try {
-          await sendEmail(member_email, member_code, member_pass,
-                          member_names, iki_name,
-                          sector, cell, village);
+          await sendEmail(member_email, member_code, member_pass, member_names, iki_name, sector, cell, village);
           emailSent = true;
-        } catch (e) { console.error('Email error:', e); }
+        } catch (e) {
+          console.error('Email error:', e.message);
+        }
       }
 
-      // build return message
       let msg = 'Member registered successfully. ';
-      if (smsSent && emailSent)       msg += 'Credentials sent via SMS & Email.';
-      else if (smsSent)               msg += 'Credentials sent via SMS.';
-      else if (emailSent)             msg += 'Credentials sent via Email.';
-      else                             msg += 'Failed to send credentials.';
+      if (smsSent && emailSent) msg += 'Credentials sent via SMS & Email.';
+      else if (smsSent) msg += 'Credentials sent via SMS.';
+      else if (emailSent) msg += 'Credentials sent via Email.';
+      else msg += 'Failed to send credentials.';
 
       return res.status(201).json({
         success: true,
@@ -242,7 +220,7 @@ router.post('/newMember', async (req, res) => {
         member_code,
         member_pass,
         sentTo: {
-          sms: smsSent ? member_phone_number : null,
+          sms: smsSent ? formatPhoneToE164(member_phone_number) : null,
           email: emailSent ? member_email : null,
           location: buildLocationString(sector, cell, village)
         }
@@ -262,7 +240,7 @@ router.post('/newMember', async (req, res) => {
   }
 });
 
-// PUT update member (with same phone/NID uniqueness)
+// PUT: Update member
 router.put('/:member_id', async (req, res) => {
   const { member_id } = req.params;
   const {
@@ -293,17 +271,17 @@ router.put('/:member_id', async (req, res) => {
       return res.status(409).json({ success: false, message: 'Phone or NID used by another.' });
     }
 
-    const finalGmNid     = member_Nid ? null : gm_Nid || null;
+    const finalGmNid = member_Nid ? null : gm_Nid || null;
     const finalMemberNid = member_Nid || null;
 
     const [upd] = await db.execute(
       `UPDATE members_info SET
-         member_names         = ?,
-         member_Nid           = ?,
-         gm_Nid               = ?,
-         member_phone_number  = ?,
-         member_email         = ?,
-         member_type_id       = ?
+         member_names = ?,
+         member_Nid = ?,
+         gm_Nid = ?,
+         member_phone_number = ?,
+         member_email = ?,
+         member_type_id = ?
        WHERE member_id = ? AND iki_id = ?`,
       [
         member_names,
@@ -327,10 +305,10 @@ router.put('/:member_id', async (req, res) => {
   }
 });
 
-// DELETE member
+// DELETE: Remove member
 router.delete('/:member_id', async (req, res) => {
   const { member_id } = req.params;
-  const { iki_id }    = req.body;
+  const { iki_id } = req.body;
   if (!iki_id) {
     return res.status(400).json({ success: false, message: 'iki_id is required.' });
   }
