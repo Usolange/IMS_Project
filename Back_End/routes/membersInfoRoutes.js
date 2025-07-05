@@ -93,6 +93,45 @@ async function checkOwnership(member_id, iki_id) {
   return rows.length > 0;
 }
 
+// GET members by Ikimina
+router.get('/selectByIkiId', async (req, res) => {
+  const { iki_id } = req.query;
+  if (!iki_id) {
+    return res.status(400).json({ success: false, message: 'iki_id is required' });
+  }
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT mi.member_id,
+              mi.member_names,
+              mi.member_Nid,
+              mi.gm_Nid,
+              gm.gm_names AS guardian_name,
+              mi.member_phone_number,
+              mi.member_email,
+              mi.member_type_id,
+              mt.member_type,
+              mai.member_code,
+              ik.iki_name
+       FROM members_info mi
+       LEFT JOIN member_type_info mt ON mi.member_type_id = mt.member_type_id
+       LEFT JOIN member_access_info mai ON mi.member_id = mai.member_id
+       LEFT JOIN ikimina_info ik ON mi.iki_id = ik.iki_id
+       LEFT JOIN gudian_members gm ON mi.gm_Nid = gm.gm_Nid
+       WHERE mi.iki_id = ?
+       ORDER BY mi.member_names`,
+      [iki_id]
+    );
+
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('Error fetching members:', err);
+    return res.status(500).json({ success: false, message: 'Server error while fetching members' });
+  }
+});
+
+
+
 // GET: Members list for an ikimina
 router.get('/select', async (req, res) => {
   const { iki_id } = req.query;

@@ -8,18 +8,9 @@ import '../../../CSS/MemberManagement.css';
 // Toast component
 function Toast({ message, type = 'info', onClose }) {
   return (
-    <div
-      className={`toast toast-${type}`}
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-    >
+    <div className={`toast toast-${type}`} role="alert" aria-live="assertive" aria-atomic="true">
       <span>{message}</span>
-      <button
-        onClick={onClose}
-        className="toast-close-btn"
-        aria-label="Close notification"
-      >
+      <button onClick={onClose} className="toast-close-btn" aria-label="Close notification">
         ×
       </button>
     </div>
@@ -44,7 +35,6 @@ export default function MemberManagement() {
   const [memberSearch, setMemberSearch] = useState('');
   const [gudianSearch, setGudianSearch] = useState('');
 
-  // Extract user and iki info
   const user = JSON.parse(localStorage.getItem('user'));
   const iki_id = user?.id;
   const iki_name = user?.name || '';
@@ -52,47 +42,36 @@ export default function MemberManagement() {
   const village = user?.village || '';
   const sector = user?.sector || '';
 
-  // Toast state and handlers
   const [toast, setToast] = useState(null);
-  const showToast = (message, type = 'info') => {
-    setToast({ message, type });
-  };
+  const showToast = (message, type = 'info') => setToast({ message, type });
   const closeToast = () => setToast(null);
 
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => {
-        closeToast();
-      }, 4000);
+      const timer = setTimeout(closeToast, 4000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
 
-  // Fetch members
   const fetchMembers = async () => {
     if (!iki_id) {
       setMembers([]);
       return;
     }
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/membersInfoRoutes/select?iki_id=${iki_id}`
-      );
+      const res = await axios.get(`http://localhost:5000/api/membersInfoRoutes/select?iki_id=${iki_id}`);
       setMembers(Array.isArray(res.data.data) ? res.data.data : []);
-    } catch (err) {
+    } catch {
       showToast('Failed to load members', 'error');
       setMembers([]);
     }
   };
 
-  // Fetch guardians
   const fetchGudians = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/gudianMembersRoutes/select?iki_id=${iki_id}`
-      );
+      const res = await axios.get(`http://localhost:5000/api/gudianMembersRoutes/select?iki_id=${iki_id}`);
       setGudians(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
+    } catch {
       showToast('Failed to load guardian members', 'error');
       setGudians([]);
     }
@@ -103,25 +82,19 @@ export default function MemberManagement() {
     fetchGudians();
   }, [iki_id]);
 
-  // Delete member
   const handleDelete = async (member_id) => {
     if (!window.confirm('Are you sure you want to delete this member?')) return;
     try {
-      await axios.delete(
-        `http://localhost:5000/api/membersInfoRoutes/${member_id}`,
-        { data: { iki_id } }
-      );
+      await axios.delete(`http://localhost:5000/api/membersInfoRoutes/${member_id}`, { data: { iki_id } });
       showToast('Member deleted successfully', 'success');
       fetchMembers();
-    } catch (err) {
+    } catch {
       showToast('Failed to delete member', 'error');
     }
   };
 
-  // Delete guardian with check
   const handleDeleteGudian = async (gm_id, gm_Nid) => {
     if (!window.confirm('Are you sure you want to delete this guardian member?')) return;
-
     try {
       const checkRes = await axios.get(
         `http://localhost:5000/api/gudianMembersRoutes/check-assigned/${gm_Nid}`
@@ -133,12 +106,11 @@ export default function MemberManagement() {
       await axios.delete(`http://localhost:5000/api/gudianMembers/${gm_id}`);
       showToast('Guardian member deleted successfully', 'success');
       fetchGudians();
-    } catch (err) {
+    } catch {
       showToast('Failed to delete guardian member', 'error');
     }
   };
 
-  // Edit member modal open
   const openEditModal = (member) => {
     setEditMember(member);
     setShowAddMember(true);
@@ -148,7 +120,6 @@ export default function MemberManagement() {
     setEditMember(null);
   };
 
-  // Edit guardian modal open
   const openEditGudianModal = (gudian) => {
     setEditGudian(gudian);
     setShowEditGudian(true);
@@ -158,27 +129,21 @@ export default function MemberManagement() {
     setEditGudian(null);
   };
 
-  // Pagination helper
   const paginate = (data, page, rowsPerPage) => {
     const start = (page - 1) * rowsPerPage;
     return data.slice(start, start + rowsPerPage);
   };
 
-  // Filter members and gudians by search
   const filteredMembers = Array.isArray(members)
     ? members.filter((m) =>
-      `${m.member_names} ${m.member_Nid} ${m.member_email}`
-        .toLowerCase()
-        .includes(memberSearch.toLowerCase())
-    )
+        `${m.member_names} ${m.member_Nid} ${m.member_email}`.toLowerCase().includes(memberSearch.toLowerCase())
+      )
     : [];
 
   const filteredGudians = Array.isArray(gudians)
     ? gudians.filter((g) =>
-      `${g.gm_names} ${g.gm_Nid} ${g.gm_phonenumber}`
-        .toLowerCase()
-        .includes(gudianSearch.toLowerCase())
-    )
+        `${g.gm_names} ${g.gm_Nid} ${g.gm_phonenumber}`.toLowerCase().includes(gudianSearch.toLowerCase())
+      )
     : [];
 
   const totalMemberPages = Math.max(1, Math.ceil(filteredMembers.length / memberRowsPerPage));
@@ -189,18 +154,10 @@ export default function MemberManagement() {
       <h2 className="page-title">👥 Member Management</h2>
 
       <div className="actions-bar">
-        <button onClick={() => setShowAddType(true)} className="action-btn">
-          🏷️ Add Member Type
-        </button>
-        <button onClick={() => setShowAddGudian(true)} className="action-btn">
-          👨‍👦 Add Guardian Member
-        </button>
-        <button onClick={() => setShowAddMember(true)} className="action-btn">
-          ➕ Add New Member
-        </button>
-        <a href="/ikiminaDashboard" className="btn-primary action-btn">
-          Back
-        </a>
+        <button onClick={() => setShowAddType(true)} className="action-btn">🏷️ Add Member Type</button>
+        <button onClick={() => setShowAddGudian(true)} className="action-btn">👨‍👦 Add Guardian Member</button>
+        <button onClick={() => setShowAddMember(true)} className="action-btn">➕ Add New Member</button>
+        <a href="/ikiminaDashboard" className="btn-primary action-btn">Back</a>
       </div>
 
       {/* Members Section */}
@@ -229,9 +186,7 @@ export default function MemberManagement() {
               }}
             >
               {[5, 10, 25, 50, 100].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
+                <option key={num} value={num}>{num}</option>
               ))}
             </select>
           </div>
@@ -241,7 +196,7 @@ export default function MemberManagement() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th>Number</th>
                 <th>Full Name</th>
                 <th>NID</th>
                 <th>Phone</th>
@@ -256,36 +211,22 @@ export default function MemberManagement() {
               {paginate(filteredMembers, memberPage, memberRowsPerPage).map((m, i) => (
                 <tr key={m.member_id}>
                   <td>{(memberPage - 1) * memberRowsPerPage + i + 1}</td>
-                  <td>{m.member_names}</td>
-                  <td>{m.member_Nid ? m.member_Nid : m.guardian_name}</td>
-                  <td>{m.member_phone_number}</td>
-                  <td>{m.member_email}</td>
-                  <td>{m.gm_Nid}</td>
-                  <td>{m.member_type || m.member_type_id}</td>
-                  <td>{m.iki_name || m.iki_id}</td>
+                  <td>{m.member_names || 'None'}</td>
+                  <td>{m.member_Nid || m.guardian_name || 'None'}</td>
+                  <td>{m.member_phone_number || 'None'}</td>
+                  <td>{m.member_email || 'None'}</td>
+                  <td>{m.gm_Nid || 'None'}</td>
+                  <td>{m.member_type || m.member_type_id || 'None'}</td>
+                  <td>{m.iki_name || m.iki_id || 'None'}</td>
                   <td>
-                    <button
-                      className="btn-edit"
-                      onClick={() => openEditModal(m)}
-                      title="Edit Member"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(m.member_id)}
-                      title="Delete Member"
-                    >
-                      🗑️
-                    </button>
+                    <button className="btn-edit" onClick={() => openEditModal(m)} title="Edit Member">✏️</button>
+                    <button className="btn-delete" onClick={() => handleDelete(m.member_id)} title="Delete Member">🗑️</button>
                   </td>
                 </tr>
               ))}
               {filteredMembers.length === 0 && (
                 <tr>
-                  <td colSpan="9" className="no-data">
-                    No matching members found.
-                  </td>
+                  <td colSpan="9" className="no-data">No matching members found.</td>
                 </tr>
               )}
             </tbody>
@@ -293,23 +234,9 @@ export default function MemberManagement() {
         </div>
 
         <div className="pagination-bar">
-          <button
-            disabled={memberPage === 1}
-            onClick={() => setMemberPage(memberPage - 1)}
-            className="pagination-btn"
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {memberPage} of {totalMemberPages}
-          </span>
-          <button
-            disabled={memberPage === totalMemberPages}
-            onClick={() => setMemberPage(memberPage + 1)}
-            className="pagination-btn"
-          >
-            Next
-          </button>
+          <button disabled={memberPage === 1} onClick={() => setMemberPage(memberPage - 1)} className="pagination-btn">Previous</button>
+          <span className="pagination-info">Page {memberPage} of {totalMemberPages}</span>
+          <button disabled={memberPage === totalMemberPages} onClick={() => setMemberPage(memberPage + 1)} className="pagination-btn">Next</button>
         </div>
       </section>
 
@@ -339,9 +266,7 @@ export default function MemberManagement() {
               }}
             >
               {[5, 10, 25, 50, 100].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
+                <option key={num} value={num}>{num}</option>
               ))}
             </select>
           </div>
@@ -351,7 +276,7 @@ export default function MemberManagement() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th>Number</th>
                 <th>Names</th>
                 <th>NID</th>
                 <th>Phone</th>
@@ -363,35 +288,19 @@ export default function MemberManagement() {
               {paginate(filteredGudians, gudianPage, gudianRowsPerPage).map((g, i) => (
                 <tr key={g.gm_id}>
                   <td>{(gudianPage - 1) * gudianRowsPerPage + i + 1}</td>
-                  <td>{g.gm_names}</td>
-                  <td>{g.gm_Nid}</td>
-                  <td>{g.gm_phonenumber}</td>
-                  <td>{g.iki_id}</td>
+                  <td>{g.gm_names || 'None'}</td>
+                  <td>{g.gm_Nid || 'None'}</td>
+                  <td>{g.gm_phonenumber || 'None'}</td>
+                  <td>{g.iki_id || 'None'}</td>
                   <td>
-                    <button
-                      className="btn-edit"
-                      onClick={() => openEditGudianModal(g)}
-                      title="Edit Guardian Member"
-                      aria-label={`Edit guardian member ${g.gm_names}`}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDeleteGudian(g.gm_id, g.gm_Nid)}
-                      title="Delete Guardian Member"
-                      aria-label={`Delete guardian member ${g.gm_names}`}
-                    >
-                      🗑️
-                    </button>
+                    <button className="btn-edit" onClick={() => openEditGudianModal(g)} title="Edit Guardian Member">✏️</button>
+                    <button className="btn-delete" onClick={() => handleDeleteGudian(g.gm_id, g.gm_Nid)} title="Delete Guardian Member">🗑️</button>
                   </td>
                 </tr>
               ))}
               {filteredGudians.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="no-data">
-                    No matching guardian members found.
-                  </td>
+                  <td colSpan="6" className="no-data">No matching guardian members found.</td>
                 </tr>
               )}
             </tbody>
@@ -399,23 +308,9 @@ export default function MemberManagement() {
         </div>
 
         <div className="pagination-bar">
-          <button
-            disabled={gudianPage === 1}
-            onClick={() => setGudianPage(gudianPage - 1)}
-            className="pagination-btn"
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {gudianPage} of {totalGudianPages}
-          </span>
-          <button
-            disabled={gudianPage === totalGudianPages}
-            onClick={() => setGudianPage(gudianPage + 1)}
-            className="pagination-btn"
-          >
-            Next
-          </button>
+          <button disabled={gudianPage === 1} onClick={() => setGudianPage(gudianPage - 1)} className="pagination-btn">Previous</button>
+          <span className="pagination-info">Page {gudianPage} of {totalGudianPages}</span>
+          <button disabled={gudianPage === totalGudianPages} onClick={() => setGudianPage(gudianPage + 1)} className="pagination-btn">Next</button>
         </div>
       </section>
 
@@ -434,7 +329,6 @@ export default function MemberManagement() {
         village={village}
         sector={sector}
       />
-
 
       <GudianMemberModal
         isOpen={showAddGudian}
@@ -468,7 +362,6 @@ export default function MemberManagement() {
         }}
       />
 
-      {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={closeToast} />}
     </div>
   );

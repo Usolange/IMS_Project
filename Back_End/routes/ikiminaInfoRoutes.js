@@ -83,6 +83,9 @@ router.post('/newIkimina', async (req, res) => {
 });
 
 
+
+
+
 // List all Ikimina_info created by a specific admin
 router.get('/select', async (req, res) => {
   const sad_id = req.query.sad_id;
@@ -104,6 +107,23 @@ router.get('/select', async (req, res) => {
   } catch (err) {
     console.error('Error fetching Ikimina by user:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+router.get('/getById', async (req, res) => {
+  const { iki_id } = req.query;
+  if (!iki_id) return res.status(400).json({ success: false, message: 'iki_id is required.' });
+
+  try {
+    const [rows] = await db.execute('SELECT iki_id, iki_name FROM ikimina_info WHERE iki_id = ?', [iki_id]);
+    if (rows.length === 0) {
+      return res.json({ success: false, message: 'Ikimina not found' });
+    }
+    res.json({ success: true, data: rows[0] });
+  } catch (error) {
+    console.error('Error fetching Ikimina:', error);
+    res.status(500).json({ success: false, message: 'Server error while fetching Ikimina.' });
   }
 });
 
