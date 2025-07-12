@@ -43,6 +43,8 @@ import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkimin
 
 
 import MemberDashboard from './Components/Users/Members/memberDashboard'
+import LoanManager from './Components/Users/Members/loanManagement/loanManager';
+
 import MeLayout from './Components/Users/Members/meLayout'
 
 
@@ -108,6 +110,8 @@ export default function App() {
         {/* Ikimina routes for 'member' role */}
       <Route element={<MeLayout />}>
         <Route path="/memberDashboard" element={<RoleProtectedRoute allowedRoles={['member']}><MemberDashboard /></RoleProtectedRoute>} />
+        <Route path="/loanManager" element={<RoleProtectedRoute allowedRoles={['member']}><LoanManager /></RoleProtectedRoute>} />
+
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 

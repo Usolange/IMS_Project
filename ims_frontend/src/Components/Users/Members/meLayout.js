@@ -67,7 +67,7 @@ useEffect(() => {
           <ul className="menu-list">
             <li><NavLink to="/member-dashboard" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaListAlt style={{ marginRight: '8px' }} />Dashboard</NavLink></li>
             <li><NavLink to="/my-savings" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaMoneyBill style={{ marginRight: '8px' }} />My Savings</NavLink></li>
-            <li><NavLink to="/my-loans" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaChartBar style={{ marginRight: '8px' }} />My Loans</NavLink></li>
+            <li><NavLink to="/loanManager" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaChartBar style={{ marginRight: '8px' }} />My Loans</NavLink></li>
             <li><NavLink to="/settings" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaCog style={{ marginRight: '8px' }} />Settings</NavLink></li>
           </ul>
         </nav>

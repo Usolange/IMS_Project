@@ -3,24 +3,30 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-// Get all categories for logged-in admin (using x-sad-id header)
-router.get('/selectCategories', async (req, res) => {
+// Middleware: log headers and check sad-id header
+router.use((req, res, next) => {
+  console.log('Incoming Headers:', req.headers);
   const sadId = req.headers['x-sad-id'];
-  if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
+  if (!sadId) {
+    return res.status(401).json({ message: 'Unauthorized: sadId missing' });
+  }
+  req.sadId = sadId;
+  next();
+});
 
+// GET all categories for logged-in admin
+router.get('/selectCategories', async (req, res) => {
   try {
     const [rows] = await db.execute(
-      `SELECT f.f_id, f.f_category, a.sad_names
+      `SELECT f.f_id, f.f_category
        FROM frequency_category_info f
-       JOIN supper_admin a ON f.sad_id = a.sad_id
        WHERE f.sad_id = ?`,
-      [sadId]
+      [req.sadId]
     );
 
     const categories = rows.map(row => ({
       f_id: row.f_id,
       f_category: row.f_category,
-      createdBy: row.sad_names,
     }));
 
     res.json(categories);
@@ -29,6 +35,7 @@ router.get('/selectCategories', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 // Get category type by f_id
 router.get('/type/:f_id', async (req, res) => {
