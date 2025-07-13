@@ -5,7 +5,6 @@ const db = require('./config/db');
 
 
 const loanPredictionRoutes = require('./routes/loanPredictionRoutes');
-
 const DailyTimeRoutes = require('./routes/dailyTimeRoutes');
 const frequencyCategoryRoutes = require('./routes/frequencyCategoryRoutes');
 const gudianMembersRoutes = require('./routes/gudianMembersRoutes');
@@ -18,6 +17,7 @@ const MonthlyTimeRoutes = require('./routes/monthlyTimeRoutes');
 const LocationManagerRoutes = require('./routes/LocationManagerRoutes');
 const memberTypeRoutes = require('./routes/memberTypeRoutes');
 const membersInfoRoutes = require('./routes/membersInfoRoutes');
+const penalityManagementRoutes = require('./routes/penalityManagementRoutes')
 
 dotenv.config();
 
@@ -46,7 +46,9 @@ app.use('/api/MonthlyTimeRoutes', MonthlyTimeRoutes);
 app.use('/api/memberTypeRoutes', memberTypeRoutes);
 app.use('/api/gudianMembersRoutes', gudianMembersRoutes);
 app.use('/api/membersInfoRoutes', membersInfoRoutes);
-app.use('/loan', loanPredictionRoutes);
+app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
+app.use('/api/penalityManagementRoutes', penalityManagementRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

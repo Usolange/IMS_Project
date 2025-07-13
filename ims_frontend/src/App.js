@@ -43,6 +43,7 @@ import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkimin
 
 
 import MemberDashboard from './Components/Users/Members/memberDashboard'
+import PenaltyManagement from './Components/Users/IkiminaManager/SavingManagement/PenaltyManagement';
 import LoanManager from './Components/Users/Members/loanManagement/loanManager';
 
 import MeLayout from './Components/Users/Members/meLayout'
@@ -102,6 +103,8 @@ export default function App() {
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
         <Route path="/MemberManager" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManager/></RoleProtectedRoute>} />
         <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
+        <Route path="/penaltyManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyManagement /></RoleProtectedRoute>} />
+
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
