@@ -7,8 +7,7 @@ export default function RegisterMemberModal({
   onClose,
   onSuccess,
   editMember,
-  iki_id,
-  iki_name,  // <-- Receive iki_name as prop
+  iki_id, // still needed for guardian/member routes
 }) {
   const [formData, setFormData] = useState({
     member_names: '',
@@ -28,39 +27,66 @@ export default function RegisterMemberModal({
   const [resendLoading, setResendLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [ikiminaData, setIkiminaData] = useState({
+    iki_id: '',
+    iki_name: '',
+    cell: '',
+    village: '',
+    sector: '',
+  });
+
   useEffect(() => {
     if (!isOpen) return;
 
-    setFormData(editMember ? {
-      member_names: editMember.member_names || '',
-      member_Nid: editMember.member_Nid || '',
-      gm_Nid: editMember.gm_Nid || '',
-      member_phone_number: editMember.member_phone_number || '',
-      member_email: editMember.member_email || '',
-      member_type_id: editMember.member_type_id || '',
-    } : {
-      member_names: '',
-      member_Nid: '',
-      gm_Nid: '',
-      member_phone_number: '',
-      member_email: '',
-      member_type_id: '',
-    });
+    // Load form defaults
+    setFormData(
+      editMember
+        ? {
+          member_names: editMember.member_names || '',
+          member_Nid: editMember.member_Nid || '',
+          gm_Nid: editMember.gm_Nid || '',
+          member_phone_number: editMember.member_phone_number || '',
+          member_email: editMember.member_email || '',
+          member_type_id: editMember.member_type_id || '',
+        }
+        : {
+          member_names: '',
+          member_Nid: '',
+          gm_Nid: '',
+          member_phone_number: '',
+          member_email: '',
+          member_type_id: '',
+        }
+    );
 
-    const fetchData = async () => {
+    // Load dropdowns
+    const fetchDropdowns = async () => {
       try {
-        const [gudiansRes, typesRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/gudianMembersRoutes/select', { params: { iki_id } }),
+        const [gudians, types] = await Promise.all([
+          axios.get('http://localhost:5000/api/gudianMembersRoutes/select', {
+            params: { iki_id },
+          }),
           axios.get('http://localhost:5000/api/memberTypeRoutes/select'),
         ]);
-        setGudianMembers(gudiansRes.data);
-        setMemberTypes(typesRes.data);
+        setGudianMembers(gudians.data);
+        setMemberTypes(types.data);
       } catch (err) {
-        console.error('Dropdown load error:', err);
+        console.error('Dropdown fetch failed:', err);
       }
     };
 
-    fetchData();
+    // Load Ikimina data from localStorage.user
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+    setIkiminaData({
+      iki_id: user.id || '',
+      iki_name: user.name || '',
+      cell: user.cell || '',
+      village: user.village || '',
+      sector: user.sector || '',
+
+    });
+
+    fetchDropdowns();
     setErrors({});
     setMessage('');
     setGenerated(null);
@@ -71,45 +97,34 @@ export default function RegisterMemberModal({
 
   const validate = () => {
     const errs = {};
-
     if (!formData.member_names.trim()) errs.member_names = 'Full Name is required.';
-
-    if (!formData.member_Nid.trim() && !formData.gm_Nid) {
-      errs.member_Nid = 'Either National ID or Guardian is required.';
-      errs.gm_Nid = 'Either Guardian or National ID is required.';
-    }
-
-    if (!formData.member_phone_number.trim()) {
-      errs.member_phone_number = 'Phone Number is required.';
-    } else if (!/^\d{10}$/.test(formData.member_phone_number.trim())) {
+    if (!formData.member_Nid.trim() && !formData.gm_Nid)
+      errs.member_Nid = errs.gm_Nid = 'Either National ID or Guardian is required.';
+    if (!/^\d{10}$/.test(formData.member_phone_number.trim()))
       errs.member_phone_number = 'Phone Number must be exactly 10 digits.';
-    }
-
     if (
       formData.member_email.trim() &&
       !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.member_email.trim())
-    ) {
+    )
       errs.member_email = 'Invalid email format.';
-    }
-
-    if (!formData.member_type_id) errs.member_type_id = 'Please select a Member Type.';
-
+    if (!formData.member_type_id)
+      errs.member_type_id = 'Please select a Member Type.';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
     setMessage('');
     setResendStatus('');
   };
 
   const downloadCredentials = (code, pass) => {
-    const blob = new Blob(
-      [`Member Access Info:\nCode: ${code}\nPassword: ${pass}`],
-      { type: 'text/plain;charset=utf-8' }
-    );
+    const blob = new Blob([`Member Access Info:\nCode: ${code}\nPassword: ${pass}`], {
+      type: 'text/plain;charset=utf-8',
+    });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `member_credentials_${code}.txt`;
@@ -128,37 +143,34 @@ export default function RegisterMemberModal({
     }
 
     setIsSubmitting(true);
+    const payload = {
+      ...formData,
+      iki_id: ikiminaData.iki_id,
+      iki_name: ikiminaData.iki_name,
+      cell: ikiminaData.cell,
+      village: ikiminaData.village,
+      sector: ikiminaData.sector,
+    };
+
     try {
       if (editMember) {
-        await axios.put(
-          `http://localhost:5000/api/membersInfoRoutes/${editMember.member_id}`,
-          { ...formData, iki_id }
-        );
+        await axios.put(`http://localhost:5000/api/membersInfoRoutes/${editMember.member_id}`, payload);
         setMessage('✅ Member updated successfully.');
-        if (onSuccess) onSuccess();
+        onSuccess?.();
         setTimeout(onClose, 1500);
       } else {
-        const res = await axios.post('http://localhost:5000/api/membersInfoRoutes/newMember', {
-          gm_Nid: formData.gm_Nid,
-          member_type_id: formData.member_type_id,
-          iki_id,
-          iki_name,  // <-- Add iki_name here
-          member_names: formData.member_names,
-          member_Nid: formData.member_Nid,
-          member_phone_number: formData.member_phone_number,
-          member_email: formData.member_email,
-        });
-
+        const res = await axios.post('http://localhost:5000/api/membersInfoRoutes/newMember', payload);
         setMessage(res.data.message || '✅ Member registered successfully.');
         setGenerated({
-          member_code: res.data.member_code,
-          member_pass: res.data.member_pass,
+          member_code: res.data.data?.member_code,
+          member_pass: res.data.data?.member_pass,
         });
-        downloadCredentials(res.data.member_code, res.data.member_pass);
-        if (onSuccess) onSuccess();
+        downloadCredentials(res.data.data?.member_code, res.data.data?.member_pass);
+
+        onSuccess?.();
       }
     } catch (err) {
-      console.error(err);
+      console.error('Submission failed:', err);
       setMessage(err.response?.data?.message || '❌ Operation failed.');
     } finally {
       setIsSubmitting(false);
@@ -175,8 +187,8 @@ export default function RegisterMemberModal({
       });
       setResendStatus('✅ SMS resent successfully.');
     } catch (err) {
+      console.error('Resend SMS failed:', err);
       setResendStatus('❌ Failed to resend SMS.');
-      console.error('Resend SMS error:', err);
     } finally {
       setResendLoading(false);
     }
@@ -194,12 +206,12 @@ export default function RegisterMemberModal({
         email: formData.member_email,
         phone: formData.member_phone_number,
         iki_id,
-        iki_name,
+        iki_name: ikiminaData.iki_name,
       });
       setResendStatus('✅ Email resent successfully.');
     } catch (err) {
+      console.error('Resend email failed:', err);
       setResendStatus('❌ Failed to resend Email.');
-      console.error('Resend Email error:', err);
     } finally {
       setResendLoading(false);
     }
@@ -211,6 +223,15 @@ export default function RegisterMemberModal({
     <div className="modal-overlay">
       <div className="modal-form">
         <h3>{editMember ? '✏️ Edit Member' : '➕ Register Member'}</h3>
+
+        {!editMember && (
+          <div className="location-info" style={{ marginBottom: '1rem' }}>
+            <p><strong>Ikimina Name:</strong> {ikiminaData.iki_name || 'Not set'}</p>
+            <p><strong>Cell:</strong> {ikiminaData.cell || 'Not set'}</p>
+            <p><strong>Village:</strong> {ikiminaData.village || 'Not set'}</p>
+            <p><strong>Sector:</strong> {ikiminaData.sector || 'Not set'}</p>
+          </div>
+        )}
 
         {message && <div className="form-msg">{message}</div>}
 
@@ -237,33 +258,16 @@ export default function RegisterMemberModal({
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          <input
-            type="text"
-            name="member_names"
-            placeholder="Full Name"
-            value={formData.member_names}
-            onChange={handleChange}
-          />
+          <input type="text" name="member_names" placeholder="Full Name" value={formData.member_names} onChange={handleChange} />
           {errors.member_names && <div className="error">{errors.member_names}</div>}
 
-          <input
-            type="text"
-            name="member_Nid"
-            placeholder="National ID"
-            value={formData.member_Nid}
-            onChange={handleChange}
-          />
+          <input type="text" name="member_Nid" placeholder="National ID" value={formData.member_Nid} onChange={handleChange} />
           <small>If National ID is empty, select Guardian.</small>
           {errors.member_Nid && <div className="error">{errors.member_Nid}</div>}
 
-          <select
-            name="gm_Nid"
-            value={formData.gm_Nid}
-            onChange={handleChange}
-            disabled={formData.member_Nid.trim() !== ''}
-          >
+          <select name="gm_Nid" value={formData.gm_Nid} onChange={handleChange} disabled={formData.member_Nid.trim() !== ''}>
             <option value="">Select Guardian</option>
-            {gudianMembers.map(gm => (
+            {gudianMembers.map((gm) => (
               <option key={gm.gm_id} value={gm.gm_Nid}>
                 {gm.gm_names} ({gm.gm_Nid})
               </option>
@@ -271,29 +275,13 @@ export default function RegisterMemberModal({
           </select>
           {errors.gm_Nid && <div className="error">{errors.gm_Nid}</div>}
 
-          <input
-            type="text"
-            name="member_phone_number"
-            placeholder="Phone Number"
-            value={formData.member_phone_number}
-            onChange={handleChange}
-          />
+          <input type="text" name="member_phone_number" placeholder="Phone Number" value={formData.member_phone_number} onChange={handleChange} />
           {errors.member_phone_number && <div className="error">{errors.member_phone_number}</div>}
 
-          <input
-            type="email"
-            name="member_email"
-            placeholder="Email (optional)"
-            value={formData.member_email}
-            onChange={handleChange}
-          />
+          <input type="email" name="member_email" placeholder="Email (optional)" value={formData.member_email} onChange={handleChange} />
           {errors.member_email && <div className="error">{errors.member_email}</div>}
 
-          <select
-            name="member_type_id"
-            value={formData.member_type_id}
-            onChange={handleChange}
-          >
+          <select name="member_type_id" value={formData.member_type_id} onChange={handleChange}>
             <option value="">Select Member Type</option>
             {memberTypes.map((type) => (
               <option key={type.member_type_id} value={type.member_type_id}>
@@ -307,7 +295,9 @@ export default function RegisterMemberModal({
             <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : editMember ? 'Update' : 'Register'}
             </button>
-            <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              Cancel
+            </button>
           </div>
         </form>
       </div>

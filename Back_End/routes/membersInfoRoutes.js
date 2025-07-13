@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Helper: Validate ownership
+// Helper: Validate ownership of member by iki_id
 async function checkOwnership(member_id, iki_id) {
   const [rows] = await db.execute(
     'SELECT 1 FROM members_info WHERE member_id = ? AND iki_id = ?',
@@ -31,7 +31,7 @@ async function checkOwnership(member_id, iki_id) {
   return rows.length > 0;
 }
 
-// Helper: Send SMS
+// Helper: Send SMS via Twilio
 async function sendSms(phone, code, pass) {
   return client.messages.create({
     body: `Your member credentials:\nCode: ${code}\nPassword: ${pass}`,
@@ -40,13 +40,12 @@ async function sendSms(phone, code, pass) {
   });
 }
 
-// Helper: Compose location string from body data
+// Helper: Compose location string
 function composeLocation({ cell, village, sector }) {
-  // Removed extra closing curly brace '}' here
   return `Cell: ${cell || 'N/A'}, Village: ${village || 'N/A'}, Sector: ${sector || 'N/A'}`;
 }
 
-// Helper: Send Email
+// Helper: Send Email via Nodemailer
 async function sendEmail(email, code, pass, name, iki_name, location) {
   const mailOptions = {
     from: `"Ikimina Management System" <${process.env.SMTP_USER}>`,
@@ -68,7 +67,7 @@ async function sendEmail(email, code, pass, name, iki_name, location) {
   return transporter.sendMail(mailOptions);
 }
 
-
+// GET all members for an iki_id
 router.get('/select', async (req, res) => {
   const { iki_id } = req.query;
 
@@ -100,14 +99,13 @@ router.get('/select', async (req, res) => {
       data: rows,
     });
   } catch (error) {
-    console.error('Error fetching members_info:', error.message, error.stack);
+    console.error('Error fetching members_info:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal Server Error while fetching members.',
     });
   }
 });
-
 
 // POST register new member
 router.post('/newMember', async (req, res) => {
@@ -125,30 +123,26 @@ router.post('/newMember', async (req, res) => {
     sector,
   } = req.body;
 
-  // Validate required fields
-  if (
-    !member_names ||
-    !(member_Nid || gm_Nid) ||
-    !member_phone_number ||
-    !member_type_id ||
-    !iki_id ||
-    !iki_name
-  ) {
+  const missingFields = [];
+  if (!member_names) missingFields.push('member_names');
+  if (!member_Nid && !gm_Nid) missingFields.push('member_Nid or gm_Nid');
+  if (!member_phone_number) missingFields.push('member_phone_number');
+  if (!member_type_id) missingFields.push('member_type_id');
+  if (!iki_id) missingFields.push('iki_id');
+  if (!iki_name) missingFields.push('iki_name');
+  if (!cell) missingFields.push('cell');
+  if (!village) missingFields.push('village');
+  if (!sector) missingFields.push('sector');
+
+  if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
-      message:
-        'Required fields are missing: member_names, NID or gm_Nid, phone, member_type_id, iki_id, iki_name.',
-    });
-  }
-  if (!cell || !village || !sector) {
-    return res.status(400).json({
-      success: false,
-      message: 'Complete location info (cell, village, sector) is required.',
+      message: `Required fields are missing: ${missingFields.join(', ')}.`,
     });
   }
 
   try {
-    // Check existing phone or NID for the same iki_id
+    // Check if phone or NID already registered in this iki_id
     const [exists] = await db.execute(
       'SELECT 1 FROM members_info WHERE (member_phone_number = ? OR member_Nid = ?) AND iki_id = ?',
       [member_phone_number, member_Nid, iki_id]
@@ -164,7 +158,7 @@ router.post('/newMember', async (req, res) => {
     await conn.beginTransaction();
 
     try {
-      // Insert member info
+      // Insert member info (location not saved here)
       const [result] = await conn.execute(
         `INSERT INTO members_info 
           (member_names, member_Nid, gm_Nid, member_phone_number, member_email, member_type_id, iki_id)
@@ -181,7 +175,29 @@ router.post('/newMember', async (req, res) => {
       );
 
       const member_id = result.insertId;
-      const member_code = iki_id.toString().padStart(2, '0') + member_id.toString().padStart(3, '0');
+
+      // Generate member_code with iki_id prefix + sequential suffix
+      const prefix = iki_id.toString().padStart(2, '0');
+
+      const [latestCodeRows] = await conn.execute(
+        `SELECT member_code FROM member_access_info
+         WHERE member_code LIKE CONCAT(?, '%')
+         ORDER BY member_code DESC LIMIT 1`,
+        [prefix]
+      );
+
+      let nextSuffix = 1;
+      if (latestCodeRows.length > 0) {
+        const lastCode = latestCodeRows[0].member_code;
+        const lastSuffix = parseInt(lastCode.slice(-3), 10);
+        if (!isNaN(lastSuffix)) {
+          nextSuffix = lastSuffix + 1;
+        }
+      }
+      const suffix = nextSuffix.toString().padStart(3, '0');
+      const member_code = prefix + suffix;
+
+      // Generate random 5-digit password
       const member_pass = Math.floor(10000 + Math.random() * 90000).toString();
 
       await conn.execute(
@@ -192,9 +208,10 @@ router.post('/newMember', async (req, res) => {
 
       await conn.commit();
 
-      // Compose location string
+      // Compose location string for messages
       const location = composeLocation({ cell, village, sector });
 
+      // Send SMS and Email notifications (do not block response)
       let smsSent = false;
       let emailSent = false;
 
@@ -225,7 +242,9 @@ router.post('/newMember', async (req, res) => {
         sendMessage += 'Failed to send credentials via SMS and Email.';
       }
 
-      res.status(201).json({
+
+
+      return res.status(201).json({
         success: true,
         message: sendMessage,
         data: {
@@ -235,20 +254,22 @@ router.post('/newMember', async (req, res) => {
           member_email,
         },
       });
+
+
     } catch (err) {
       await conn.rollback();
       console.error('Registration error:', err);
-      res.status(500).json({ success: false, message: 'Server error during member registration.' });
+      return res.status(500).json({ success: false, message: 'Server error during member registration.' });
     } finally {
       conn.release();
     }
   } catch (err) {
     console.error('Unexpected error:', err);
-    res.status(500).json({ success: false, message: 'Unexpected server error.' });
+    return res.status(500).json({ success: false, message: 'Unexpected server error.' });
   }
 });
 
-// POST resend email (requires email, phone, iki_id)
+// POST resend email
 router.post('/resend-email', async (req, res) => {
   const { email, phone, iki_id } = req.body;
 
@@ -267,9 +288,7 @@ router.post('/resend-email', async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'No member found with this email and phone in your Ikimina.' });
+      return res.status(404).json({ success: false, message: 'No member found with this email and phone in your Ikimina.' });
     }
 
     const { member_code, member_pass, member_names } = rows[0];
@@ -284,7 +303,7 @@ router.post('/resend-email', async (req, res) => {
   }
 });
 
-// POST resend SMS (requires phone, iki_id)
+// POST resend SMS
 router.post('/resend-sms', async (req, res) => {
   const { phone, iki_id } = req.body;
 

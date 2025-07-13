@@ -1,3 +1,4 @@
+// MemberManagement.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import RegisterMemberModal from './RegisterMemberModal';
@@ -19,7 +20,7 @@ export default function MemberManagement() {
   const [editMember, setEditMember] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const iki_id = user?.id;
+  const iki_id = user?.id || user?.iki_id;
 
   const fetchMembers = async () => {
     if (!iki_id) {
@@ -80,7 +81,7 @@ export default function MemberManagement() {
   };
 
   const exportToExcel = () => {
-    const cleanData = filteredMembers.map(({ member_id, ...rest }) => rest); // Exclude member_id
+    const cleanData = filteredMembers.map(({ member_id, ...rest }) => rest);
     const ws = XLSX.utils.json_to_sheet(cleanData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Members');
