@@ -1,0 +1,240 @@
+/* Container */
+.member-management {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #fefefe;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #2c3e50;
+  min-height: 100vh;
+}
+
+/* Title */
+.member-management h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #117a65;
+  user-select: none;
+}
+
+/* Action Buttons Container */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* Buttons */
+.action-buttons button,
+.action-buttons a.btn-primary {
+  background-color: #117a65;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.action-buttons button:hover,
+.action-buttons a.btn-primary:hover {
+  background-color: #0e5e4a;
+}
+
+.action-buttons a.btn-primary {
+  background-color: #2980b9;
+}
+
+.action-buttons a.btn-primary:hover {
+  background-color: #1f6391;
+}
+
+/* Search Input */
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 14px;
+  font-size: 15px;
+  border: 1.8px solid #b0b9b8;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #117a65;
+  outline: none;
+}
+
+/* Table Container */
+.table-container {
+  overflow-x: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.07);
+}
+
+/* Table */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  font-size: 14px;
+  background-color: #fff;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+/* Table Head */
+.styled-table thead tr {
+  background-color: #117a65;
+  color: #fff;
+  text-align: left;
+  user-select: none;
+}
+
+.styled-table thead th {
+  padding: 12px 15px;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.3);
+}
+
+.styled-table thead th:last-child {
+  border-right: none;
+}
+
+/* Table Body Rows */
+.styled-table tbody tr {
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.2s ease;
+  cursor: default;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #e0f2f1;
+}
+
+/* Table Body Cells */
+.styled-table tbody td {
+  padding: 12px 15px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  border-right: 1px solid #f0f0f0;
+}
+
+.styled-table tbody td:last-child {
+  border-right: none;
+}
+
+/* Placeholder for empty cells */
+.styled-table tbody td:empty::before {
+  content: '—';
+  color: #bbb;
+}
+
+/* Actions Buttons */
+.edit-btn,
+.delete-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0 5px;
+  transition: color 0.3s ease, transform 0.2s ease;
+  user-select: none;
+}
+
+.edit-btn:hover {
+  color: #2980b9;
+  transform: scale(1.2);
+}
+
+.delete-btn:hover {
+  color: #e74c3c;
+  transform: scale(1.2);
+}
+
+/* No Members Found Row */
+.styled-table tbody tr td[colspan] {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+  padding: 24px 0;
+  user-select: none;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  gap: 8px;
+  user-select: none;
+}
+
+.pagination button {
+  background-color: #117a65;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 36px;
+}
+
+.pagination button:hover {
+  background-color: #0e5e4a;
+}
+
+.pagination button.active {
+  background-color: #0b4f3c;
+  cursor: default;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    max-width: 100%;
+  }
+
+  .styled-table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 600px) {
+  .styled-table {
+    min-width: 600px;
+  }
+
+  .action-buttons button,
+  .action-buttons a.btn-primary {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+
+  .pagination button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

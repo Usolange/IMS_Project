@@ -41,8 +41,9 @@ async function sendSms(phone, code, pass) {
 }
 
 // Helper: Compose location string from body data
-function composeLocation({ cell, village, sector, district, province }) {
-  return `Cell: ${cell || 'N/A'}, Village: ${village || 'N/A'}, Sector: ${sector || 'N/A'}, District: ${district || 'N/A'}, Province: ${province || 'N/A'}`;
+function composeLocation({ cell, village, sector }) {
+  // Removed extra closing curly brace '}' here
+  return `Cell: ${cell || 'N/A'}, Village: ${village || 'N/A'}, Sector: ${sector || 'N/A'}`;
 }
 
 // Helper: Send Email
@@ -67,27 +68,46 @@ async function sendEmail(email, code, pass, name, iki_name, location) {
   return transporter.sendMail(mailOptions);
 }
 
-// GET all members for given iki_id (must pass iki_id in query)
+
 router.get('/select', async (req, res) => {
   const { iki_id } = req.query;
-  if (!iki_id) return res.status(400).json({ success: false, message: 'iki_id query parameter is required.' });
+
+  if (!iki_id) {
+    return res.status(400).json({
+      success: false,
+      message: 'iki_id query parameter is required.',
+    });
+  }
 
   try {
-    const [rows] = await db.execute(`
+    const [rows] = await db.execute(
+      `
       SELECT mi.member_id, mi.member_names, mi.member_Nid, mi.gm_Nid, mi.member_phone_number, 
              mi.member_email, mi.member_type_id, mi.iki_id,
-             mt.member_type, ik.iki_name
+             mt.member_type, ik.iki_name,
+             mai.member_code
       FROM members_info mi
       LEFT JOIN member_type_info mt ON mi.member_type_id = mt.member_type_id
       LEFT JOIN ikimina_info ik ON mi.iki_id = ik.iki_id
+      LEFT JOIN member_access_info mai ON mi.member_id = mai.member_id
       WHERE mi.iki_id = ?
-    `, [iki_id]);
-    res.json({ success: true, data: rows });
+      `,
+      [iki_id]
+    );
+
+    return res.json({
+      success: true,
+      data: rows,
+    });
   } catch (error) {
-    console.error('Error fetching members_info:', error);
-    res.status(500).json({ success: false, message: 'Internal Server Error while fetching members.' });
+    console.error('Error fetching members_info:', error.message, error.stack);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal Server Error while fetching members.',
+    });
   }
 });
+
 
 // POST register new member
 router.post('/newMember', async (req, res) => {
@@ -103,26 +123,41 @@ router.post('/newMember', async (req, res) => {
     cell,
     village,
     sector,
-    district,
-    province
   } = req.body;
 
-  // Validation of required fields including location and user identity
-  if (!member_names || !(member_Nid || gm_Nid) || !member_phone_number || !member_type_id || !iki_id || !iki_name) {
-    return res.status(400).json({ success: false, message: 'Required fields are missing: member_names, NID or gm_Nid, phone, member_type_id, iki_id, iki_name.' });
+  // Validate required fields
+  if (
+    !member_names ||
+    !(member_Nid || gm_Nid) ||
+    !member_phone_number ||
+    !member_type_id ||
+    !iki_id ||
+    !iki_name
+  ) {
+    return res.status(400).json({
+      success: false,
+      message:
+        'Required fields are missing: member_names, NID or gm_Nid, phone, member_type_id, iki_id, iki_name.',
+    });
   }
-  if (!cell || !village || !sector || !district || !province) {
-    return res.status(400).json({ success: false, message: 'Complete location info (cell, village, sector, district, province) is required.' });
+  if (!cell || !village || !sector) {
+    return res.status(400).json({
+      success: false,
+      message: 'Complete location info (cell, village, sector) is required.',
+    });
   }
 
   try {
-    // Check existing phone or email for the same iki_id
+    // Check existing phone or NID for the same iki_id
     const [exists] = await db.execute(
-      'SELECT 1 FROM members_info WHERE (member_phone_number = ? OR member_email = ?) AND iki_id = ?',
-      [member_phone_number, member_email, iki_id]
+      'SELECT 1 FROM members_info WHERE (member_phone_number = ? OR member_Nid = ?) AND iki_id = ?',
+      [member_phone_number, member_Nid, iki_id]
     );
     if (exists.length > 0) {
-      return res.status(409).json({ success: false, message: 'Phone or Email already registered in your Ikimina.' });
+      return res.status(409).json({
+        success: false,
+        message: 'Phone or National ID already registered in your Ikimina.',
+      });
     }
 
     const conn = await db.getConnection();
@@ -141,7 +176,7 @@ router.post('/newMember', async (req, res) => {
           member_phone_number,
           member_email || null,
           member_type_id,
-          iki_id
+          iki_id,
         ]
       );
 
@@ -158,7 +193,7 @@ router.post('/newMember', async (req, res) => {
       await conn.commit();
 
       // Compose location string
-      const location = composeLocation({ cell, village, sector, district, province });
+      const location = composeLocation({ cell, village, sector });
 
       let smsSent = false;
       let emailSent = false;
@@ -198,7 +233,7 @@ router.post('/newMember', async (req, res) => {
           member_pass,
           member_phone_number,
           member_email,
-        }
+        },
       });
     } catch (err) {
       await conn.rollback();
@@ -232,7 +267,9 @@ router.post('/resend-email', async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'No member found with this email and phone in your Ikimina.' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'No member found with this email and phone in your Ikimina.' });
     }
 
     const { member_code, member_pass, member_names } = rows[0];
@@ -251,7 +288,8 @@ router.post('/resend-email', async (req, res) => {
 router.post('/resend-sms', async (req, res) => {
   const { phone, iki_id } = req.body;
 
-  if (!phone || !iki_id) return res.status(400).json({ success: false, message: 'Phone number and iki_id are required.' });
+  if (!phone || !iki_id)
+    return res.status(400).json({ success: false, message: 'Phone number and iki_id are required.' });
 
   try {
     const [rows] = await db.execute(
@@ -290,7 +328,9 @@ router.put('/:member_id', async (req, res) => {
   } = req.body;
 
   if (!member_names || !member_type_id || !iki_id) {
-    return res.status(400).json({ success: false, message: 'Required fields missing: member_names, member_type_id, iki_id.' });
+    return res
+      .status(400)
+      .json({ success: false, message: 'Required fields missing: member_names, member_type_id, iki_id.' });
   }
 
   if (!(await checkOwnership(member_id, iki_id))) {
@@ -335,7 +375,10 @@ router.delete('/:member_id', async (req, res) => {
   }
 
   try {
-    const [result] = await db.execute('DELETE FROM members_info WHERE member_id = ? AND iki_id = ?', [member_id, iki_id]);
+    const [result] = await db.execute('DELETE FROM members_info WHERE member_id = ? AND iki_id = ?', [
+      member_id,
+      iki_id,
+    ]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Member not found or unauthorized.' });
     }

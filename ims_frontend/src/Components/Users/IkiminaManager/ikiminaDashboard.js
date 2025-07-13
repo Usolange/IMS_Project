@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import '../../CSS/adminDashboard.css';
 
 export default function IkiminaDashboard() {
   const [members, setMembers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -27,9 +29,7 @@ export default function IkiminaDashboard() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/membersInfoRoutes/selectByIkiId?iki_id=${iki_id}`
-      );
+      const res = await axios.get(`http://localhost:5000/api/membersInfoRoutes/select?iki_id=${iki_id}`);
 
       if (res.data.success) {
         setMembers(res.data.data);
@@ -46,11 +46,39 @@ export default function IkiminaDashboard() {
     setLoading(false);
   };
 
+  const filteredMembers = members.filter(
+    (m) =>
+      (m.member_names || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.member_Nid || '').includes(searchTerm) ||
+      (m.member_phone_number || '').includes(searchTerm)
+  );
+
+  const exportToExcel = () => {
+    const dataToExport = filteredMembers.map(({ member_id, ...rest }) => rest);
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Members');
+    XLSX.writeFile(wb, 'Ikimina_Members.xlsx');
+  };
+
   return (
     <div className="dashboard-container">
       <h2 className="dashboard-title">👥 Members in Your Ikimina</h2>
 
       {error && <div className="dashboard-error">{error}</div>}
+
+      <div className="dashboard-actions">
+        <input
+          type="text"
+          placeholder="🔍 Search by name, NID, or phone"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="dashboard-search"
+        />
+        <button className="dashboard-export-btn" onClick={exportToExcel}>
+          📥 Export to Excel
+        </button>
+      </div>
 
       {loading ? (
         <div className="dashboard-loading">Loading members...</div>
@@ -71,13 +99,13 @@ export default function IkiminaDashboard() {
               </tr>
             </thead>
             <tbody>
-              {members.length > 0 ? (
-                members.map((m, i) => (
+              {filteredMembers.length > 0 ? (
+                filteredMembers.map((m, i) => (
                   <tr key={m.member_id}>
                     <td>{i + 1}</td>
                     <td>{m.member_names}</td>
-                    <td>{m.member_Nid || m.guardian_name || '—'}</td>
-                    <td>{m.member_Nid ? 'None' : m.gm_Nid || '—'}</td>
+                    <td>{m.member_Nid || '—'}</td>
+                    <td>{m.gm_Nid || '—'}</td>
                     <td>{m.member_phone_number}</td>
                     <td>{m.member_email || '—'}</td>
                     <td>{m.member_type || 'Unknown'}</td>

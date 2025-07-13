@@ -128,7 +128,7 @@ export default function LocationSelector({ onSelect }) {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/locationManagerRoutes/create',
+        'http://localhost:5000/api/locationManagerRoutes/newLocation',
         {
           ikiminaName,
           f_id: selectedCategoryId,

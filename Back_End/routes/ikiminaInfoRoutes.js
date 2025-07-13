@@ -33,10 +33,11 @@ router.post('/newIkimina', async (req, res) => {
     });
 
     // Validate ikimina location belongs to this user
-    const [locationRows] = await db.query(
-      `SELECT ikimina_name FROM ikimina_locations WHERE ikimina_id = ? AND sad_id = ?`,
-      [iki_location, sad_id]
-    );
+   const [locationRows] = await db.query(
+  `SELECT ikimina_name FROM ikimina_locations WHERE id = ? AND sad_id = ?`,
+  [iki_location, sad_id]
+);
+
 
     console.log('Location validation rows:', locationRows);
 
@@ -55,12 +56,13 @@ router.post('/newIkimina', async (req, res) => {
       return res.status(409).json({ message: 'Email or Username already exists.' });
     }
 
-    // Insert new Ikimina_info record
+    // ✅ Insert new Ikimina_info record WITH default penalty fields
     const sql = `
       INSERT INTO Ikimina_info (
         iki_name, iki_email, iki_username, iki_password,
-        iki_location, f_id, dayOfEvent, timeOfEvent, numberOfEvents
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        iki_location, f_id, dayOfEvent, timeOfEvent, numberOfEvents,
+        penalty_time_delay, penalty_date_delay, saving_period_gap
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 60)
     `;
 
     await db.query(sql, [

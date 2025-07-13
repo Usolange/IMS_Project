@@ -187,7 +187,7 @@ export default function IkiminaInfoForm({ onClose }) {
 
       console.log('Submitting Ikimina creation payload:', payload);
 
-      await axios.post('http://localhost:5000/api/ikiminaInfoRoutes/create', payload, {
+      await axios.post('http://localhost:5000/api/ikiminaInfoRoutes/newIkimina', payload, {
         headers: { 'x-sad-id': sad_id },
       });
 

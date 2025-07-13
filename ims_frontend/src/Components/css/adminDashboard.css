@@ -17,6 +17,7 @@
   margin-bottom: 20px;
   color: #117a65;
 }
+
 /* Error message */
 .dashboard-error {
   color: #e74c3c;
@@ -31,6 +32,40 @@
   margin-bottom: 16px;
 }
 
+/* Actions container */
+.dashboard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  gap: 10px;
+}
+
+/* Search input */
+.dashboard-search {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-width: 250px;
+  font-size: 14px;
+}
+
+/* Export button */
+.dashboard-export-btn {
+  background-color: #2e86c1;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.dashboard-export-btn:hover {
+  background-color: #1b4f72;
+}
+
 /* Table Wrapper */
 .table-wrapper {
   overflow-x: auto;
@@ -42,7 +77,7 @@
 .dashboard-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 900px; /* allows horizontal scroll on smaller screens */
+  min-width: 900px; /* enables horizontal scroll */
   font-size: 14px;
   background-color: #fff;
 }

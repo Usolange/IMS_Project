@@ -55,7 +55,7 @@ export default function Layout() {
       <aside className={`sidebar ${isSidebarVisible ? '' : 'hidden'}`}>
         <nav className="sidebar-menu" aria-label="Sidebar">
           <ul className="menu-list">
-            <li><NavLink to="/MemberManager" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaUsers style={{ marginRight: '8px' }} />Member Management</NavLink></li>
+            <li><NavLink to="/MemberManagement" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaUsers style={{ marginRight: '8px' }} />Member Management</NavLink></li>
             <li><NavLink to="/report" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaChartBar style={{ marginRight: '8px' }} />Reports</NavLink></li>
             <li><NavLink to="/members" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaUsers style={{ marginRight: '8px' }} />Members</NavLink></li>
             <li><NavLink to="/savingManagement" className={({ isActive }) => isActive ? 'sidebar-itemikimina active' : 'sidebar-itemikimina'}><FaPiggyBank style={{ marginRight: '8px' }} />Savings</NavLink></li>

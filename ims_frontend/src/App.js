@@ -6,7 +6,7 @@ import ForgotPassword from './Components/Profile/ForgotPassword';
 import Profile from './Components/Profile/Profile';
 
 import GuestLayout from './Components/Users/Guests/files/GuestLayout';
-import MemberManagement from './Components/Users/Guests/files/MemberManagement';
+import MemberManagementGuest from './Components/Users/Guests/files/MemberManagement';
 import EventTimeScheduling from './Components/Users/Guests/files/EventTimeScheduling';
 import FraudDetection from './Components/Users/Guests/files/FraudDetection';
 import LoanManagement from './Components/Users/Guests/files/LoanManagement';
@@ -34,12 +34,11 @@ import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation
 
 import IkLayout from './Components/Users/IkiminaManager/ikLayout';
 import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
-import MemberManager from './Components/Users/IkiminaManager/MemberManagement/MemberManagement';
+import MemberManagement from './Components/Users/IkiminaManager/MemberManagement/MemberManagement';
 import RegisterMember from './Components/Users/IkiminaManager/MemberManagement/RegisterMemberModal';
 
 import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
-
 
 
 import MemberDashboard from './Components/Users/Members/memberDashboard'
@@ -57,7 +56,7 @@ export default function App() {
 
       {/* Guest layout wrapper */}
       <Route path="/guest" element={<GuestLayout />}>
-        <Route path="member-management" element={<MemberManagement />} />
+        <Route path="member-management" element={<MemberManagementGuest />} />
         <Route path="financial-management" element={<FinancialManagement />} />
         <Route path="fraud-detection" element={<FraudDetection />} />
         <Route path="reporting-analytics" element={<ReportingAnalytics />} />
@@ -101,7 +100,7 @@ export default function App() {
       {/* Ikimina routes for 'ikimina' role */}
       <Route element={<IkLayout />}>
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
-        <Route path="/MemberManager" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManager/></RoleProtectedRoute>} />
+        <Route path="/MemberManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagement/></RoleProtectedRoute>} />
         <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
         <Route path="/penaltyManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyManagement /></RoleProtectedRoute>} />
 
