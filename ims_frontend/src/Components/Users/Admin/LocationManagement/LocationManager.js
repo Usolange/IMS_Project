@@ -31,15 +31,16 @@ export default function LocationManager() {
     }
   }, []);
 
-  const fetchLocations = async (sad_id) => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/locationManagerRoutes/select?sad_id=${sad_id}`);
-      setLocations(res.data);
-    } catch (err) {
-      console.error(err);
-      showToast('error', 'Failed to load locations.');
-    }
-  };
+ const fetchLocations = async (sad_id) => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/locationManagerRoutes/select?sad_id=${sad_id}`);
+    setLocations(res.data);
+  } catch (err) {
+    console.error(err);
+    showToast('error', 'Failed to load locations.');
+  }
+};
+
 
   const fetchCategories = async (sad_id) => {
     try {

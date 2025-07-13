@@ -133,4 +133,86 @@ router.get('/schedule/:iki_id', async (req, res) => {
   }
 });
 
+
+// POST apply automatic penalties if members missed saving deadlines
+router.post('/apply-auto', authenticateIkimina, async (req, res) => {
+  const iki_id = req.iki_id;
+
+  try {
+    // 1. Get penalty config and frequency
+    const [[config]] = await db.query(
+      `SELECT f_id, saving_period_gap, penalty_date_delay, penalty_time_delay 
+       FROM ikimina_info WHERE iki_id = ?`,
+      [iki_id]
+    );
+    if (!config) return res.status(404).json({ success: false, message: 'Ikimina not found' });
+
+    const now = new Date();
+    const today = now.getDay(); // 0 = Sunday
+    const date = now.getDate();
+    const currentTime = now.toTimeString().slice(0, 5); // HH:mm
+
+    let scheduleQuery = '';
+    let scheduleCheck = '';
+
+    if (config.f_id === 1) {
+      scheduleQuery = `SELECT dtime_time AS time FROM ik_daily_time_info WHERE ikimina_id = ?`;
+      scheduleCheck = 'time';
+    } else if (config.f_id === 2) {
+      scheduleQuery = `SELECT weeklytime_day AS day, weeklytime_time AS time FROM ik_weekly_time_info WHERE ikimina_id = ?`;
+      scheduleCheck = 'day_time';
+    } else if (config.f_id === 3) {
+      scheduleQuery = `SELECT monthlytime_date AS date, monthlytime_time AS time FROM ik_monthly_time_info WHERE ikimina_id = ?`;
+      scheduleCheck = 'date_time';
+    }
+
+    const [schedule] = await db.query(scheduleQuery, [iki_id]);
+
+    if (schedule.length === 0) {
+      return res.status(400).json({ success: false, message: 'No schedule set for this Ikimina' });
+    }
+
+    const missed = schedule.some(sch => {
+      if (scheduleCheck === 'time') {
+        return currentTime > sch.time;
+      } else if (scheduleCheck === 'day_time') {
+        return today === sch.day && currentTime > sch.time;
+      } else if (scheduleCheck === 'date_time') {
+        return date === sch.date && currentTime > sch.time;
+      }
+    });
+
+    if (!missed) {
+      return res.json({ success: true, message: 'No missed saving deadlines today' });
+    }
+
+    // 2. Get all members in this Ikimina
+    const [members] = await db.query(
+      `SELECT member_id FROM members_info WHERE iki_id = ?`,
+      [iki_id]
+    );
+
+    if (members.length === 0) {
+      return res.status(404).json({ success: false, message: 'No members found' });
+    }
+
+    // 3. Apply penalty for all (example applies time penalty only)
+    const insertPromises = members.map(m =>
+      db.query(
+        `INSERT INTO penalties (member_id, iki_id, penalty_type, penalty_amount, reason)
+         VALUES (?, ?, 'time', ?, ?)`,
+        [m.member_id, iki_id, config.penalty_time_delay, 'Missed saving deadline']
+      )
+    );
+
+    await Promise.all(insertPromises);
+
+    res.json({ success: true, message: 'Penalties applied to all members who missed saving deadline' });
+  } catch (err) {
+    console.error('Error applying penalties:', err);
+    res.status(500).json({ success: false, message: 'Internal error while applying penalties' });
+  }
+});
+
+
 module.exports = router;

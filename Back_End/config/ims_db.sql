@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 24, 2025 at 03:31 PM
+-- Generation Time: Jul 13, 2025 at 05:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -64,7 +64,8 @@ CREATE TABLE `gudian_members` (
 --
 
 INSERT INTO `gudian_members` (`gm_id`, `gm_names`, `gm_Nid`, `gm_phonenumber`, `iki_id`) VALUES
-(1, 'HARERIMANA Alphonse', '11996680056500008', '0787439194', 2);
+(1, 'HARERIMANA Alphonse', '11996680056500008', '0787439194', 2),
+(2, 'Habimana elie', '11996680056500000', '0787439190', 5);
 
 -- --------------------------------------------------------
 
@@ -82,18 +83,24 @@ CREATE TABLE `ikimina_info` (
   `f_id` int(11) NOT NULL,
   `dayOfEvent` varchar(60) NOT NULL,
   `timeOfEvent` time NOT NULL,
-  `numberOfEvents` int(11) NOT NULL DEFAULT 1
+  `numberOfEvents` int(11) NOT NULL DEFAULT 1,
+  `penalty_time_delay` decimal(10,2) DEFAULT 0.00,
+  `penalty_date_delay` decimal(10,2) DEFAULT 0.00,
+  `saving_period_gap` decimal(4,2) DEFAULT 1.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `ikimina_info`
 --
 
-INSERT INTO `ikimina_info` (`iki_id`, `iki_name`, `iki_email`, `iki_username`, `iki_password`, `iki_location`, `f_id`, `dayOfEvent`, `timeOfEvent`, `numberOfEvents`) VALUES
-(1, 'Tuzamurane', 'tuzamurane@gmail.com', 'tuzamurane', '12345', 6, 4, 'Daily', '18:00:00', 1),
-(2, 'Umurava', 'umurava@gmail.com', 'umurava', '12345', 7, 5, 'Monday, Friday, Wednesday, Sunday', '19:00:00', 4),
-(4, 'Umurava', 'umu@gmai.com', 'uy', '12345', 4, 3, '01, 02, 03, 07, 12, 08, 15, 22, 24, 26', '19:08:00', 10),
-(5, 'Tuzamurane', 'tuzamurane123@gmail.com', 'tuzamurane123', '12345', 1, 1, 'Daily', '22:51:00', 1);
+INSERT INTO `ikimina_info` (`iki_id`, `iki_name`, `iki_email`, `iki_username`, `iki_password`, `iki_location`, `f_id`, `dayOfEvent`, `timeOfEvent`, `numberOfEvents`, `penalty_time_delay`, `penalty_date_delay`, `saving_period_gap`) VALUES
+(1, 'Tuzamurane', 'tuzamurane@gmail.com', 'tuzamurane', '12345', 6, 4, 'Daily', '18:00:00', 1, 0.00, 0.00, 1.00),
+(2, 'Umurava', 'umurava@gmail.com', 'umurava', '12345', 7, 5, 'Monday, Friday, Wednesday, Sunday', '19:00:00', 4, 0.00, 0.00, 1.00),
+(4, 'Umurava', 'umu@gmai.com', 'uy', '12345', 4, 3, '01, 02, 03, 07, 12, 08, 15, 22, 24, 26', '19:08:00', 10, 0.00, 0.00, 1.00),
+(5, 'Tuzamurane', 'tuzamurane123@gmail.com', 'tuzamurane123', '12345', 1, 1, 'Daily', '22:51:00', 1, 0.00, 0.00, 1.00),
+(7, 'NewDel', 'new@gmail.com', 'new', '12345', 9, 3, '01, 04, 10, 25, 29, 30, 07, 13, 16, 21', '01:00:00', 10, 0.00, 0.00, 60.00),
+(8, 'NEW Vission', 'vision@gmail.com', 'vision', '12345', 8, 6, '05, 01, 10, 15, 30, 25, 20', '20:00:00', 7, 0.00, 0.00, 60.00),
+(9, 'soso', 'sos@gmail.com', 'sos', '12345', 10, 4, 'Daily', '21:09:00', 1, 0.00, 0.00, 60.00);
 
 -- --------------------------------------------------------
 
@@ -126,7 +133,9 @@ INSERT INTO `ikimina_locations` (`id`, `ikimina_id`, `ikimina_name`, `province`,
 (6, 5, 'Tuzamurane', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 9, 4),
 (7, 6, 'Umurava', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Kivumu', 'Gitega', 9, 5),
 (8, 7, 'NEW Vission', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Mpushi', 'Kamashashi', 9, 6),
-(9, 8, 'NewDel', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Rubona', 'Rugenda Ii', 1, 3);
+(9, 8, 'NewDel', 'Iburasirazuba', 'Ngoma', 'Rukumberi', 'Rubona', 'Rugenda Ii', 1, 3),
+(10, 9, 'soso', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Buhoro', 'Busasamana', 9, 4),
+(11, 10, 'Ikij', 'Amajyepfo', 'Kamonyi', 'Musambira', 'Buhoro', 'Busasamana', 9, 4);
 
 -- --------------------------------------------------------
 
@@ -149,7 +158,8 @@ CREATE TABLE `ik_daily_time_info` (
 INSERT INTO `ik_daily_time_info` (`dtime_id`, `ikimina_name`, `dtime_time`, `f_id`, `ikimina_id`) VALUES
 (1, 'Tuzamurane', '22:51:00', 1, 1),
 (2, 'Umurava', '23:53:00', 1, 4),
-(3, 'Tuzamurane', '18:00:00', 4, 5);
+(3, 'Tuzamurane', '18:00:00', 4, 5),
+(4, 'soso', '21:09:00', 4, 9);
 
 -- --------------------------------------------------------
 
@@ -227,6 +237,32 @@ INSERT INTO `ik_weekly_time_info` (`weeklytime_id`, `ikimina_name`, `weeklytime_
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `loan_pridict_data`
+--
+
+CREATE TABLE `loan_pridict_data` (
+  `loanpredict_id` int(11) NOT NULL,
+  `maccess_id` int(11) NOT NULL,
+  `SavingTimesPerPeriod` int(11) NOT NULL,
+  `TotalSavingCycles` int(11) NOT NULL,
+  `CompletedSavingCycles` int(11) NOT NULL,
+  `UserSavingsMade` int(11) NOT NULL,
+  `TotalCurrentSaving` decimal(15,2) NOT NULL,
+  `IkiminaCreatedYear` int(11) NOT NULL,
+  `UserJoinedYear` int(11) NOT NULL,
+  `Age` int(11) NOT NULL,
+  `HasGuardian` tinyint(1) NOT NULL,
+  `IsEmployed` tinyint(1) NOT NULL,
+  `SavingFrequency` enum('daily','weekly','monthly') NOT NULL,
+  `RecentLoanPaymentStatus` enum('Excellent','Better','Good','Bad','Poor') NOT NULL,
+  `ModelChoice` enum('Random Forest','XGBoost','Linear Regression') NOT NULL,
+  `AllowedLoan` decimal(15,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `members_info`
 --
 
@@ -246,7 +282,10 @@ CREATE TABLE `members_info` (
 --
 
 INSERT INTO `members_info` (`member_id`, `member_names`, `member_Nid`, `gm_Nid`, `member_phone_number`, `member_email`, `member_type_id`, `iki_id`) VALUES
-(1, 'Soso UWINGABIRE', NULL, '11996680056500008', '0785310415', 'uwingabiresolange2000@gmail.com', 1, 2);
+(1, 'Elyse NSENGIMANA', '1234567890123456', NULL, '0785310419', 'elinsengimana@gmail.com', 1, 7),
+(2, 'Solange UWINGABIRE', '1234567890123459', NULL, '0785310415', 'uwingabiresolange2000@gmail.com', 2, 2),
+(3, 'Landry MPAYIMANA CYIZA', '1234567890123459', NULL, '0785310412', 'elinsengimana@gmail.com', 1, 5),
+(4, 'Elyse NSENGIMANA', NULL, '11996680056500008', '0781049197', 'elinsengimana@gmail.com', 1, 2);
 
 -- --------------------------------------------------------
 
@@ -266,7 +305,10 @@ CREATE TABLE `member_access_info` (
 --
 
 INSERT INTO `member_access_info` (`maccess_id`, `member_id`, `member_code`, `member_pass`) VALUES
-(1, 1, '02001', '14430');
+(1, 1, '07001', '54976'),
+(2, 2, '02001', '11394'),
+(3, 3, '05001', '91638'),
+(4, 4, '02002', '65992');
 
 -- --------------------------------------------------------
 
@@ -285,7 +327,42 @@ CREATE TABLE `member_type_info` (
 --
 
 INSERT INTO `member_type_info` (`member_type_id`, `member_type`, `type_desc`) VALUES
-(1, 'Presedent', 'umuyobozi mukuru');
+(1, 'Presedent', 'umuyobozi mukuru'),
+(2, 'Countable', NULL),
+(3, 'Secretaire', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `penalties`
+--
+
+CREATE TABLE `penalties` (
+  `penalty_id` int(11) NOT NULL,
+  `member_id` int(11) NOT NULL,
+  `iki_id` int(11) NOT NULL,
+  `penalty_type` enum('date','time') NOT NULL,
+  `penalty_amount` decimal(10,2) NOT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `savings_info`
+--
+
+CREATE TABLE `savings_info` (
+  `saving_id` int(11) NOT NULL,
+  `member_id` int(11) NOT NULL,
+  `iki_id` int(11) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `SavingDate` datetime DEFAULT current_timestamp(),
+  `IkiminaSavingDate` date NOT NULL,
+  `penalty_amount` decimal(10,2) DEFAULT 0.00,
+  `is_late` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -336,8 +413,8 @@ ALTER TABLE `gudian_members`
 ALTER TABLE `ikimina_info`
   ADD PRIMARY KEY (`iki_id`),
   ADD UNIQUE KEY `iki_username` (`iki_username`),
-  ADD KEY `iki_location` (`iki_location`),
-  ADD KEY `f_id` (`f_id`);
+  ADD KEY `f_id` (`f_id`),
+  ADD KEY `ikimina_info_ibfk_1` (`iki_location`);
 
 --
 -- Indexes for table `ikimina_locations`
@@ -373,14 +450,19 @@ ALTER TABLE `ik_weekly_time_info`
   ADD KEY `fk_weekly_ikimina` (`ikimina_id`);
 
 --
+-- Indexes for table `loan_pridict_data`
+--
+ALTER TABLE `loan_pridict_data`
+  ADD PRIMARY KEY (`loanpredict_id`),
+  ADD KEY `maccess_id` (`maccess_id`);
+
+--
 -- Indexes for table `members_info`
 --
 ALTER TABLE `members_info`
   ADD PRIMARY KEY (`member_id`),
-  ADD UNIQUE KEY `member_phone_number` (`member_phone_number`),
-  ADD KEY `gm_Nid` (`gm_Nid`),
-  ADD KEY `member_type_id` (`member_type_id`),
-  ADD KEY `iki_id` (`iki_id`);
+  ADD KEY `fk_members_iki` (`iki_id`),
+  ADD KEY `fk_members_type` (`member_type_id`);
 
 --
 -- Indexes for table `member_access_info`
@@ -388,7 +470,7 @@ ALTER TABLE `members_info`
 ALTER TABLE `member_access_info`
   ADD PRIMARY KEY (`maccess_id`),
   ADD UNIQUE KEY `member_code` (`member_code`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `idx_member_id` (`member_id`);
 
 --
 -- Indexes for table `member_type_info`
@@ -396,6 +478,22 @@ ALTER TABLE `member_access_info`
 ALTER TABLE `member_type_info`
   ADD PRIMARY KEY (`member_type_id`),
   ADD UNIQUE KEY `member_type` (`member_type`);
+
+--
+-- Indexes for table `penalties`
+--
+ALTER TABLE `penalties`
+  ADD PRIMARY KEY (`penalty_id`),
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `iki_id` (`iki_id`);
+
+--
+-- Indexes for table `savings_info`
+--
+ALTER TABLE `savings_info`
+  ADD PRIMARY KEY (`saving_id`),
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `iki_id` (`iki_id`);
 
 --
 -- Indexes for table `supper_admin`
@@ -419,25 +517,25 @@ ALTER TABLE `frequency_category_info`
 -- AUTO_INCREMENT for table `gudian_members`
 --
 ALTER TABLE `gudian_members`
-  MODIFY `gm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `gm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `ikimina_info`
 --
 ALTER TABLE `ikimina_info`
-  MODIFY `iki_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `iki_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `ikimina_locations`
 --
 ALTER TABLE `ikimina_locations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `ik_daily_time_info`
 --
 ALTER TABLE `ik_daily_time_info`
-  MODIFY `dtime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `dtime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `ik_monthly_time_info`
@@ -452,22 +550,40 @@ ALTER TABLE `ik_weekly_time_info`
   MODIFY `weeklytime_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `loan_pridict_data`
+--
+ALTER TABLE `loan_pridict_data`
+  MODIFY `loanpredict_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `members_info`
 --
 ALTER TABLE `members_info`
-  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `member_access_info`
 --
 ALTER TABLE `member_access_info`
-  MODIFY `maccess_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `maccess_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `member_type_info`
 --
 ALTER TABLE `member_type_info`
-  MODIFY `member_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `member_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `penalties`
+--
+ALTER TABLE `penalties`
+  MODIFY `penalty_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `savings_info`
+--
+ALTER TABLE `savings_info`
+  MODIFY `saving_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `supper_admin`
@@ -495,7 +611,7 @@ ALTER TABLE `gudian_members`
 -- Constraints for table `ikimina_info`
 --
 ALTER TABLE `ikimina_info`
-  ADD CONSTRAINT `ikimina_info_ibfk_1` FOREIGN KEY (`iki_location`) REFERENCES `ikimina_locations` (`ikimina_id`),
+  ADD CONSTRAINT `ikimina_info_ibfk_1` FOREIGN KEY (`iki_location`) REFERENCES `ikimina_locations` (`id`),
   ADD CONSTRAINT `ikimina_info_ibfk_2` FOREIGN KEY (`f_id`) REFERENCES `frequency_category_info` (`f_id`);
 
 --
@@ -527,9 +643,17 @@ ALTER TABLE `ik_weekly_time_info`
   ADD CONSTRAINT `ik_weekly_time_info_ibfk_1` FOREIGN KEY (`f_id`) REFERENCES `frequency_category_info` (`f_id`);
 
 --
+-- Constraints for table `loan_pridict_data`
+--
+ALTER TABLE `loan_pridict_data`
+  ADD CONSTRAINT `loan_pridict_data_ibfk_1` FOREIGN KEY (`maccess_id`) REFERENCES `member_access_info` (`maccess_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `members_info`
 --
 ALTER TABLE `members_info`
+  ADD CONSTRAINT `fk_members_iki` FOREIGN KEY (`iki_id`) REFERENCES `ikimina_info` (`iki_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_members_type` FOREIGN KEY (`member_type_id`) REFERENCES `member_type_info` (`member_type_id`) ON DELETE NO ACTION ON UPDATE CASCADE,
   ADD CONSTRAINT `members_info_ibfk_1` FOREIGN KEY (`gm_Nid`) REFERENCES `gudian_members` (`gm_Nid`),
   ADD CONSTRAINT `members_info_ibfk_2` FOREIGN KEY (`member_type_id`) REFERENCES `member_type_info` (`member_type_id`),
   ADD CONSTRAINT `members_info_ibfk_3` FOREIGN KEY (`iki_id`) REFERENCES `ikimina_info` (`iki_id`);
@@ -538,7 +662,21 @@ ALTER TABLE `members_info`
 -- Constraints for table `member_access_info`
 --
 ALTER TABLE `member_access_info`
-  ADD CONSTRAINT `member_access_info_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members_info` (`member_id`);
+  ADD CONSTRAINT `fk_member_access_member` FOREIGN KEY (`member_id`) REFERENCES `members_info` (`member_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `penalties`
+--
+ALTER TABLE `penalties`
+  ADD CONSTRAINT `penalties_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members_info` (`member_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `penalties_ibfk_2` FOREIGN KEY (`iki_id`) REFERENCES `ikimina_info` (`iki_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `savings_info`
+--
+ALTER TABLE `savings_info`
+  ADD CONSTRAINT `savings_info_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members_info` (`member_id`),
+  ADD CONSTRAINT `savings_info_ibfk_2` FOREIGN KEY (`iki_id`) REFERENCES `ikimina_info` (`iki_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

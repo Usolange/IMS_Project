@@ -20,11 +20,8 @@ export default function GuestLayout() {
       </main>
 
       {/* Footer */}
-      <footer className="guest-footer bg-gray-100 border-t py-4 text-center text-sm text-gray-600">
-        <footer className="guest-footer bg-gray-100 border-t py-4 text-center text-sm text-gray-600 w-full px-4">
-          © 2025 Ikimina Group. All rights reserved.
-        </footer>
-
+      <footer className="guest-footer">
+        © 2025 Ikimina Group. All rights reserved.
       </footer>
     </div>
   );

@@ -7,108 +7,32 @@ const db = require('../config/db');
 // ✅ LOGIN API (plain‑text)
 // ————————————————
 router.post('/login', async (req, res) => {
-  const { identifier, password } = req.body;
+  let { identifier, password } = req.body;
+
   if (!identifier || !password) {
     return res.status(400).json({ message: 'Identifier and password are required.' });
   }
 
+  identifier = identifier.trim();
+  password = password.trim();
+
   try {
-    // 1) Super‑Admin
-    const [adminRows] = await db.execute(
-      `SELECT sad_id, sad_names, sad_email, sad_username, sad_phone, sad_pass,sad_loc
-       FROM supper_admin
-       WHERE sad_email = ? OR sad_username = ? OR sad_phone = ?`,
-      [identifier, identifier, identifier]
-    );
-
-    if (adminRows.length) {
-      const admin = adminRows[0];
-      if (password === admin.sad_pass) {
-        const token = jwt.sign(
-          { userId: admin.sad_id, role: 'admin' },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' }
-        );
-        return res.json({
-          token,
-          user: {
-            id: admin.sad_id,
-            name: admin.sad_names,
-            email: admin.sad_email,
-            phone: admin.sad_phone,
-            username: admin.sad_username,
-            userLocation: admin.sad_loc,
-            role: 'admin'
-          }
-        });
-      }
-    }
-
-    // // 2) Member
-    // const [memberRows] = await db.execute(
-    //   `SELECT m_id, m_names, m_email, m_phone_number, m_type_id, iki_id, m_password
-    //    FROM members_info
-    //    WHERE m_email = ? OR m_phone_number = ?`,
-    //   [identifier, identifier]
-    // );
-    // if (memberRows.length) {
-    //   const m = memberRows[0];
-    //   if (password === m.m_password) {
-    //     const token = jwt.sign(
-    //       { userId: m.m_id, role: 'member' },
-    //       process.env.JWT_SECRET,
-    //       { expiresIn: '1h' }
-    //     );
-    //     return res.json({
-    //       token,
-    //       user: {
-    //         id: m.m_id,
-    //         name: m.m_names,
-    //         email: m.m_email,
-    //         phone: m.m_phone_number,
-    //         type_id: m.m_type_id,
-    //         iki_id: m.iki_id,
-    //         role: 'member'
-    //       }
-    //     });
-    //   }
-    // }
-
-
-    // 3) Ikimina
+    // ——— 1) Ikimina login
     const [ikRows] = await db.execute(
       `SELECT 
-     i.iki_id,
-     i.iki_name,
-     i.iki_email,
-     i.iki_username,
-     i.iki_password,
-     i.iki_location,
-     i.f_id,
-     i.dayOfEvent,
-     i.timeOfEvent,
-     i.numberOfEvents,
-     l.cell,
-     l.village,
-     l.sector,
-     l.district,
-     l.province
-   FROM ikimina_info i
-   LEFT JOIN ikimina_locations l ON i.iki_id = l.ikimina_id
-   WHERE LOWER(i.iki_email) = LOWER(?) OR LOWER(i.iki_username) = LOWER(?)`,
+         i.iki_id, i.iki_name, i.iki_email, i.iki_username, i.iki_password,
+         i.iki_location, i.f_id, i.dayOfEvent, i.timeOfEvent, i.numberOfEvents,
+         l.cell, l.village, l.sector, l.district, l.province
+       FROM ikimina_info i
+       LEFT JOIN ikimina_locations l ON i.iki_id = l.ikimina_id
+       WHERE LOWER(i.iki_email) = LOWER(?) OR LOWER(i.iki_username) = LOWER(?)`,
       [identifier, identifier]
     );
 
     if (ikRows.length) {
       const ik = ikRows[0];
-
       if (password === ik.iki_password) {
-        const token = jwt.sign(
-          { userId: ik.iki_id, role: 'ikimina' },
-          process.env.JWT_SECRET,
-          { expiresIn: '1h' }
-        );
-
+        const token = jwt.sign({ userId: ik.iki_id, role: 'ikimina' }, process.env.JWT_SECRET, { expiresIn: '1h' });
         return res.json({
           token,
           user: {
@@ -126,20 +50,95 @@ router.post('/login', async (req, res) => {
             sector: ik.sector,
             district: ik.district,
             province: ik.province,
-            role: 'ikimina'
+            role: 'ikimina',
           }
         });
       } else {
         return res.status(401).json({ message: 'Incorrect password.' });
       }
-    } else {
-      return res.status(404).json({ message: 'Ikimina user not found.' });
     }
 
+    // ——— 2) Super Admin login
+    const [adminRows] = await db.execute(
+      `SELECT sad_id, sad_names, sad_email, sad_username, sad_phone, sad_pass, sad_loc
+       FROM supper_admin
+       WHERE sad_email = ? OR sad_username = ? OR sad_phone = ?`,
+      [identifier, identifier, identifier]
+    );
+
+    if (adminRows.length) {
+      const admin = adminRows[0];
+      if (password === admin.sad_pass) {
+        const token = jwt.sign({ userId: admin.sad_id, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return res.json({
+          token,
+          user: {
+            id: admin.sad_id,
+            name: admin.sad_names,
+            email: admin.sad_email,
+            phone: admin.sad_phone,
+            username: admin.sad_username,
+            userLocation: admin.sad_loc,
+            role: 'admin',
+          },
+        });
+      } else {
+        return res.status(401).json({ message: 'Incorrect password.' });
+      }
+    }
+
+   // ——— 3) Member login (member_code + member_pass)
+const [accessRows] = await db.execute(
+  `SELECT 
+     m.member_id, 
+     m.member_names, 
+     m.member_email, 
+     m.member_phone_number, 
+     m.member_type_id, 
+     m.iki_id,
+     a.member_code,
+     i.iki_name
+   FROM members_info m
+   JOIN member_access_info a ON m.member_id = a.member_id
+   LEFT JOIN ikimina_info i ON m.iki_id = i.iki_id
+   WHERE a.member_code = ? AND a.member_pass = ?`,
+  [identifier, password]
+);
+
+if (accessRows.length) {
+  const m = accessRows[0];
+
+  const token = jwt.sign(
+    { userId: m.member_id, role: 'member' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+
+  return res.json({
+    token,
+    user: {
+      id: m.member_id,
+      name: m.member_names,
+      email: m.member_email,
+      phone: m.member_phone_number,
+      type_id: m.member_type_id,
+      iki_id: m.iki_id,
+      ikimina_name: m.iki_name || '',
+      member_code: m.member_code,
+      role: 'member',
+    },
+  });
+} else {
+  return res.status(401).json({ message: 'Invalid member code or password.' });
+}
+
+
+    // ——— No match found
+    return res.status(404).json({ message: 'User not found with provided credentials.' });
 
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error. Try again later.' });
+    return res.status(500).json({ message: 'Server error. Try again later.' });
   }
 });
 

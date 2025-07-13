@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaChartBar, FaMapMarkerAlt, FaClock, FaListAlt, FaUsers, FaUserFriends, FaMoneyBill, FaCog } from 'react-icons/fa';
-import { Menu, ChevronLeft, Search } from 'lucide-react';
+import { Menu, ChevronLeft } from 'lucide-react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { NavLink } from 'react-router-dom';
 import '../../CSS/Layout.css';
@@ -9,7 +9,6 @@ export default function Layout() {
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [userName, setUserName] = useState('');
   const [userLocation, setUserLocation] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const dropdownRef = useRef(null);
@@ -43,14 +42,6 @@ export default function Layout() {
       setShowToast(false);
       navigate('/');
     }, 2000);
-  };
-
-  const handleSearch = () => {
-    const trimmed = searchQuery.trim();
-    if (trimmed.length > 0) {
-      console.log('Searching for:', trimmed);
-      // Optionally add navigation or API search logic here
-    }
   };
 
   return (
@@ -125,28 +116,6 @@ export default function Layout() {
           <div className="navbar-titleadmin">Admin Sector: {userLocation}</div>
 
           <div className="navbar-links">
-            {/* Search Bar */}
-            <div className="searching" role="search">
-
-
-              <input
-                type="text"
-                placeholder="Search..."
-                className="search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                aria-label="Search input"
-              />
-              <button
-                type="button1"
-                className="search-icon"
-                onClick={handleSearch}
-                aria-label="Search button"
-              >
-                <Search size={18} />
-              </button>
-            </div>
 
             <div className="notification-icon" role="button" tabIndex={0}>
               🔔

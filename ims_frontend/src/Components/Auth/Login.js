@@ -41,15 +41,18 @@ export default function Login({ switchToRegister, onCancel }) {
     setErrors({});
 
     const cleanedFormData = {
-      identifier: formData.identifier.trim(),
-      password: formData.password.trim(),
-    };
+  identifier: formData.identifier.trim(),
+  password: formData.password.trim(),
+};
 
-    refs.identifier.current?.blur();
-    refs.password.current?.blur();
+console.log('Sending to backend:', cleanedFormData); // <-- ADD THIS
 
-    try {
-      const res = await axios.post('http://localhost:5000/api/userLoginRoutes/login', cleanedFormData);
+refs.identifier.current?.blur();
+refs.password.current?.blur();
+
+try {
+  const res = await axios.post('http://localhost:5000/api/userLoginRoutes/login', cleanedFormData);
+
       login(res.data.token, res.data.user);
 
       const user = res.data.user;

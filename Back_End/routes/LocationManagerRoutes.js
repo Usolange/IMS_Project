@@ -59,29 +59,8 @@ router.post('/newLocation', async (req, res) => {
 });
 
 
-// GET Ikimina location info by iki_id
-router.get('/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
-
-  try {
-    const [rows] = await db.execute(
-      'SELECT iki_name FROM ikimina_locations WHERE iki_id = ?',
-      [iki_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Ikimina not found' });
-    }
-
-    res.json({ iki_name: rows[0].iki_name });
-  } catch (error) {
-    console.error('Error fetching ikimina location:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
 router.get('/select', async (req, res) => {
-  const sad_id = req.query.sad_id; // Or from auth token/session
+  const sad_id = req.query.sad_id;
 
   if (!sad_id) {
     return res.status(400).json({ message: 'User ID required' });
@@ -107,6 +86,7 @@ router.get('/select', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 router.get('/selectAvailableIkimina', async (req, res) => {
   const sad_id = req.query.sad_id;

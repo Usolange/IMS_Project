@@ -1,22 +1,23 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import { Auth } from '../../Auth/Auth';
 import { FaFileExcel } from 'react-icons/fa';
+import { Auth } from '../../Auth/Auth';
 import '../../CSS/adminDashboard.css';
 
 export default function Dashboard() {
   const { user } = useContext(Auth);
-  const [ikiminas, setIkiminas] = useState([]);
+  const [allIkiminas, setAllIkiminas] = useState([]); // original data
+  const [ikiminas, setIkiminas] = useState([]); // filtered
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const debounceTimeout = useRef(null);
 
   const getSadId = () => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) return null;
     try {
-      const user = JSON.parse(storedUser);
-      return user?.sad_id || user?.id || null;
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      return storedUser?.sad_id || storedUser?.id || null;
     } catch {
       return null;
     }
@@ -31,17 +32,32 @@ export default function Dashboard() {
         return;
       }
       try {
-        const response = await axios.get(`http://localhost:5000/api/ikiminaInfoRoutes/select?sad_id=${sad_id}`);
-        setIkiminas(response.data);
-      } catch (err) {
+        const { data } = await axios.get(`http://localhost:5000/api/ikiminaInfoRoutes/select?sad_id=${sad_id}`);
+        setAllIkiminas(data);
+        setIkiminas(data);
+      } catch {
         setError('Failed to load Ikimina data.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchIkiminas();
   }, []);
+
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      if (!searchTerm.trim()) {
+        setIkiminas(allIkiminas);
+      } else {
+        const filtered = allIkiminas.filter(item =>
+          item.iki_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setIkiminas(filtered);
+      }
+    }, 300);
+    return () => clearTimeout(debounceTimeout.current);
+  }, [searchTerm, allIkiminas]);
 
   const handleExportToExcel = () => {
     const ws = XLSX.utils.json_to_sheet(ikiminas);
@@ -51,69 +67,75 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      
-      <div className="flex-1 p-6">
-        <p className="text-right text-sm text-gray-600 mb-4">
-          Welcome, <span className="font-semibold">{user?.name}</span> ({user?.role})
-        </p>
+    <div className="dashboard-container">
+      <p className="text-right text-sm text-gray-600 mb-4">
+        Welcome, <span className="font-semibold">{user?.name}</span> ({user?.role})
+      </p>
 
-        <h2 className="text-xl font-bold mb-2">Your Ikimina Accounts</h2>
+      <h2 className="dashboard-title">Your Ikimina Accounts</h2>
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : error ? (
-          <div className="error-message">{error}</div>
-        ) : (
-          <>
-            {ikiminas.length === 0 ? (
-              <p>No Ikimina data available.</p>
-            ) : (
-              <>
-                <div className="mb-3">
-                  <button className="btn-primary" onClick={handleExportToExcel}>
-                    <FaFileExcel /> Export to Excel
-                  </button>
-                </div>
+      {loading ? (
+        <p className="dashboard-loading">Loading Ikimina data...</p>
+      ) : error ? (
+        <p className="dashboard-error">{error}</p>
+      ) : (
+        <>
+          <div className="dashboard-actions">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              className="dashboard-search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button className="dashboard-export-btn" onClick={handleExportToExcel}>
+              <FaFileExcel style={{ marginRight: '8px' }} />
+              Export to Excel
+            </button>
+          </div>
 
-                <div className="table-scroll-container">
-                  <table className="ikimina-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Ikimina Name</th>
-                        <th>Email</th>
-                        <th>Username</th>
-                        <th>Location</th>
-                        <th>Day</th>
-                        <th>Time</th>
-                        <th>Events</th>
-                        <th>Category</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ikiminas.map((ikimina) => (
-                        <tr key={ikimina.iki_id}>
-                          <td>{ikimina.iki_id}</td>
-                          <td>{ikimina.iki_name}</td>
-                          <td>{ikimina.iki_email}</td>
-                          <td>{ikimina.iki_username}</td>
-                          <td>{`${ikimina.cell || ''}, ${ikimina.village || ''}`}</td>
-                          <td>{ikimina.dayOfEvent}</td>
-                          <td>{ikimina.timeOfEvent}</td>
-                          <td>{ikimina.numberOfEvents}</td>
-                          <td>{ikimina.category_name}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-           
-          </>
-        )}
-      </div>
+          <div className="table-wrapper">
+            <table className="dashboard-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Ikimina Name</th>
+                  <th>Email</th>
+                  <th>Username</th>
+                  <th>Location</th>
+                  <th>Day</th>
+                  <th>Time</th>
+                  <th>Events</th>
+                  <th>Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ikiminas.length === 0 ? (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', fontStyle: 'italic', color: '#888' }}>
+                      No Ikimina records available.
+                    </td>
+                  </tr>
+                ) : (
+                  ikiminas.map(iki => (
+                    <tr key={iki.iki_id}>
+                      <td>{iki.iki_id}</td>
+                      <td>{iki.iki_name}</td>
+                      <td>{iki.iki_email}</td>
+                      <td>{iki.iki_username}</td>
+                      <td>{`${iki.cell || ''}, ${iki.village || ''}`}</td>
+                      <td>{iki.dayOfEvent}</td>
+                      <td>{iki.timeOfEvent}</td>
+                      <td>{iki.numberOfEvents}</td>
+                      <td>{iki.category_name}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
