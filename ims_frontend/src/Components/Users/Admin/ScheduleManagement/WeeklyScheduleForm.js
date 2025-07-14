@@ -38,7 +38,8 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
   const handleIkiminaChange = (e) => {
     const selectedId = e.target.value;
     setSelectedIkiminaId(selectedId);
-    const selected = filteredIkiminaList.find(item => item.ikimina_id.toString() === selectedId);
+    const selected = filteredIkiminaList.find(item => String(item?.location_id) === selectedId);
+
     setSelectedIkiminaName(selected?.ikimina_name || '');
   };
 
@@ -64,7 +65,7 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
       await axios.post(
         'http://localhost:5000/api/weeklyTimeRoutes/newSchedule',
         {
-          ikimina_id: selectedIkiminaId,
+          location_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
           selected_days: selectedDays,
           wtime_time: time,
@@ -95,7 +96,7 @@ const WeeklyScheduleForm = ({ f_id, onClose }) => {
         >
           <option value="">-- Select Ikimina --</option>
           {filteredIkiminaList.map(item => (
-            <option key={item.ikimina_id} value={item.ikimina_id}>
+            <option key={item.location_id} value={item.location_id}>
               {item.ikimina_name} - Cell: {item.cell}
             </option>
           ))}

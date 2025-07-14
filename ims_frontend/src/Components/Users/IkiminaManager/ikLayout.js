@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, ChevronLeft } from 'lucide-react';
 import { Outlet, Link, useNavigate, NavLink } from 'react-router-dom';
-import { FaChartBar, FaUsers, FaMoneyBill, FaCog, FaPiggyBank, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUsers, FaMoneyBill, FaCog, FaPiggyBank, FaExclamationTriangle } from 'react-icons/fa';
 import '../../CSS/Layout.css';
 
 const links = [
   { to: '/MemberManagement', icon: FaUsers, label: 'Member Management' },
-  { to: '/report', icon: FaChartBar, label: 'Reports' },
-  { to: '/members', icon: FaUsers, label: 'Members' },
-  { to: '/savingManagement', icon: FaPiggyBank, label: 'Savings' },
+  { to: '/savingManagementPage', icon: FaPiggyBank, label: 'Savings' },
   { to: '/penaltyManagement', icon: FaExclamationTriangle, label: 'Penalty Management' },
   { to: '/loans', icon: FaMoneyBill, label: 'Loans' },
   { to: '/settings', icon: FaCog, label: 'Settings' },

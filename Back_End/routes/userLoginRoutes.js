@@ -19,13 +19,15 @@ router.post('/login', async (req, res) => {
   try {
     // ——— 1) Ikimina login
     const [ikRows] = await db.execute(
-      `SELECT 
-         i.iki_id, i.iki_name, i.iki_email, i.iki_username, i.iki_password,
-         i.iki_location, i.f_id, i.dayOfEvent, i.timeOfEvent, i.numberOfEvents,
-         l.cell, l.village, l.sector, l.district, l.province
-       FROM ikimina_info i
-       LEFT JOIN ikimina_locations l ON i.iki_id = l.ikimina_id
-       WHERE LOWER(i.iki_email) = LOWER(?) OR LOWER(i.iki_username) = LOWER(?)`,
+      `
+  SELECT 
+    i.iki_id, i.iki_name, i.iki_email, i.iki_username, i.iki_password,
+    i.iki_location, i.f_id, i.dayOfEvent, i.timeOfEvent, i.numberOfEvents,
+    l.cell, l.village, l.sector, l.district, l.province
+  FROM ikimina_info i
+  LEFT JOIN ikimina_locations l ON i.iki_location = l.location_id	
+  WHERE LOWER(i.iki_email) = LOWER(?) OR LOWER(i.iki_username) = LOWER(?)
+`,
       [identifier, identifier]
     );
 

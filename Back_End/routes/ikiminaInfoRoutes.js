@@ -34,7 +34,7 @@ router.post('/newIkimina', async (req, res) => {
 
     // Validate ikimina location belongs to this user
    const [locationRows] = await db.query(
-  `SELECT ikimina_name FROM ikimina_locations WHERE id = ? AND sad_id = ?`,
+  `SELECT ikimina_name FROM ikimina_locations WHERE location_id = ? AND sad_id = ?`,
   [iki_location, sad_id]
 );
 
@@ -96,7 +96,7 @@ router.get('/select', async (req, res) => {
     const [rows] = await db.query(`
     SELECT i.*, l.cell, l.village, 
     f.f_category AS category_name FROM Ikimina_info i 
-    JOIN ikimina_locations l ON i.iki_location = l.id 
+    JOIN ikimina_locations l ON i.iki_location = l.location_id	
     JOIN frequency_category_info f ON l.f_id = f.f_id 
     WHERE
        l.sad_id = ?
@@ -140,7 +140,7 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
     const [rows] = await db.query(
       `SELECT i.iki_id
        FROM Ikimina_info i
-       JOIN ikimina_locations l ON i.iki_location = l.ikimina_id
+       JOIN ikimina_locations l ON i.iki_location = l.location_id	
        WHERE i.iki_id = ? AND l.sad_id = ?`,
       [iki_id, sad_id]
     );
@@ -179,7 +179,7 @@ router.delete('/delete/:iki_id', authenticateSadId, async (req, res) => {
     const [rows] = await db.query(
       `SELECT i.iki_id
        FROM Ikimina_info i
-       JOIN ikimina_locations l ON i.iki_location = l.ikimina_id
+       JOIN ikimina_locations l ON i.iki_location = l.location_id
        WHERE i.iki_id = ? AND l.sad_id = ?`,
       [iki_id, sad_id]
     );

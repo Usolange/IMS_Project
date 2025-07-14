@@ -72,7 +72,7 @@ export default function MemberLayout() {
             </li>
             <li>
               <NavLink
-                to="/my-savings"
+                to="/memberSavingManager"
                 className={({ isActive }) =>
                   isActive ? 'nav-linkadmin active' : 'nav-linkadmin'
                 }

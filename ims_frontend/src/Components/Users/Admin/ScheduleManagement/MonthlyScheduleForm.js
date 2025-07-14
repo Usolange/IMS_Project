@@ -1,3 +1,4 @@
+// Updated MonthlyScheduleForm.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
@@ -33,23 +34,19 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
     fetchIkiminaList();
   }, []);
 
-  // Filter ikiminaList by f_id
+  // Filter by frequency category
   const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
 
-  // Prepare options for Ikimina dropdown
+  // Build select options (with location_id)
   const ikiminaOptions = filteredIkiminaList.map(item => ({
-    value: item.ikimina_id.toString(),
+    value: item.location_id.toString(),
     label: `${item.ikimina_name} - Cell: ${item.cell}`,
     ikimina_name: item.ikimina_name,
   }));
 
-  // Prepare options for days dropdown (1 to 31) with leading zeros
   const dayOptions = Array.from({ length: 31 }, (_, i) => {
-    const dayStr = (i + 1).toString().padStart(2, '0'); // '01', '02', ..., '31'
-    return {
-      value: dayStr,
-      label: dayStr,
-    };
+    const dayStr = (i + 1).toString().padStart(2, '0');
+    return { value: dayStr, label: dayStr };
   });
 
   const handleIkiminaChange = (selectedOption) => {
@@ -63,11 +60,7 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
   };
 
   const handleDaysChange = (selectedOptions) => {
-    if (selectedOptions) {
-      setSelectedDates(selectedOptions.map(opt => opt.value));
-    } else {
-      setSelectedDates([]);
-    }
+    setSelectedDates(selectedOptions ? selectedOptions.map(opt => opt.value) : []);
   };
 
   const handleSubmit = async (e) => {
@@ -83,7 +76,7 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
       await axios.post(
         'http://localhost:5000/api/monthlyTimeRoutes/newSchedule',
         {
-          ikimina_id: selectedIkiminaId,
+          location_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
           selected_dates: selectedDates,
           mtime_time: time,

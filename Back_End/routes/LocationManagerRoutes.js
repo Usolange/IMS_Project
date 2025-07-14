@@ -37,19 +37,13 @@ router.post('/newLocation', async (req, res) => {
     if (existing.length > 0) {
       return res.status(409).json({ message: 'Ikimina name already exists in this cell for this user.' });
     }
-
-    // Get new ikimina_id
-    const [maxIdResult] = await db.query('SELECT MAX(ikimina_id) AS maxId FROM ikimina_locations');
-    const newIkiminaId = (maxIdResult[0].maxId || 0) + 1;
-
-    // Insert with f_id
     const sql = `
       INSERT INTO ikimina_locations
-      (ikimina_id, ikimina_name, province, district, sector, cell, village, f_id, sad_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (ikimina_name, province, district, sector, cell, village, f_id, sad_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await db.query(sql, [newIkiminaId, ikiminaName, province, district, sector, cell, village, f_id, sad_id]);
+    await db.query(sql, [ikiminaName, province, district, sector, cell, village, f_id, sad_id]);
 
     res.status(201).json({ message: 'Ikimina location saved successfully.' });
   } catch (err) {
@@ -109,7 +103,7 @@ router.get('/selectAvailableIkimina', async (req, res) => {
       `SELECT * FROM ikimina_locations 
        WHERE sad_id = ? 
          AND LOWER(sector) = LOWER(?) 
-         AND id NOT IN (SELECT iki_location FROM ikimina_info)`,
+         AND location_id NOT IN (SELECT iki_location FROM ikimina_info)`,
       [sad_id, userSector]
     );
 
@@ -149,8 +143,8 @@ router.put('/update/:id', async (req, res) => {
     if (!userSector) return res.status(404).json({ message: 'User not found.' });
 
     const [locationRows] = await db.query(
-      'SELECT sector FROM ikimina_locations WHERE id = ? AND sad_id = ?',
-      [id, sad_id]
+      'SELECT sector FROM ikimina_locations WHERE location_id = ? AND sad_id = ?',
+      [location_id, sad_id]
     );
     if (locationRows.length === 0) {
       return res.status(404).json({ message: 'Ikimina location not found for this user.' });
@@ -163,8 +157,8 @@ router.put('/update/:id', async (req, res) => {
 
     const [duplicates] = await db.query(
       `SELECT id FROM ikimina_locations 
-       WHERE ikimina_name = ? AND cell = ? AND sad_id = ? AND id != ?`,
-      [ikiminaName.trim(), cell, sad_id, id]
+       WHERE ikimina_name = ? AND cell = ? AND sad_id = ? AND location_id != ?`,
+      [ikiminaName.trim(), cell, sad_id, location_id]
     );
     if (duplicates.length > 0) {
       return res.status(409).json({ message: 'Another Ikimina with this name already exists in the same cell.' });
@@ -173,8 +167,8 @@ router.put('/update/:id', async (req, res) => {
     await db.query(
       `UPDATE ikimina_locations
        SET ikimina_name = ?, province = ?, district = ?, sector = ?, cell = ?, village = ?, f_id = ?
-       WHERE id = ? AND sad_id = ?`,
-      [ikiminaName.trim(), province, district, sector, cell, village, f_id, id, sad_id]
+       WHERE location_id = ? AND sad_id = ?`,
+      [ikiminaName.trim(), province, district, sector, cell, village, f_id, location_id, sad_id]
     );
 
     res.json({ message: 'Ikimina location updated successfully' });
@@ -204,7 +198,7 @@ router.delete('/delete/:id', async (req, res) => {
     const userSector = userRows[0].sad_loc;
 
     // Check if location belongs to user and sector matches
-    const [locationRows] = await db.query('SELECT sector FROM ikimina_locations WHERE id = ? AND sad_id = ?', [id, sad_id]);
+    const [locationRows] = await db.query('SELECT sector FROM ikimina_locations WHERE location_id = ? AND sad_id = ?', [location_id, sad_id]);
     if (locationRows.length === 0) {
       return res.status(404).json({ message: 'Ikimina location not found for this user' });
     }
@@ -214,7 +208,7 @@ router.delete('/delete/:id', async (req, res) => {
     }
 
     // Delete
-    await db.query('DELETE FROM ikimina_locations WHERE id = ? AND sad_id = ?', [id, sad_id]);
+    await db.query('DELETE FROM ikimina_locations WHERE location_id = ? AND sad_id = ?', [location_id, sad_id]);
 
     res.json({ message: 'Ikimina location deleted successfully' });
   } catch (err) {

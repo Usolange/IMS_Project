@@ -17,7 +17,12 @@ const MonthlyTimeRoutes = require('./routes/monthlyTimeRoutes');
 const LocationManagerRoutes = require('./routes/LocationManagerRoutes');
 const memberTypeRoutes = require('./routes/memberTypeRoutes');
 const membersInfoRoutes = require('./routes/membersInfoRoutes');
-const penalityManagementRoutes = require('./routes/penalityManagementRoutes')
+
+
+const savingManagementRoutes = require('./routes/savingManagementRoutes');
+const slotsManagementRoutes = require('./routes/slotsManagementRoutes');
+const penalityManagementRoutes = require('./routes/penalityManagementRoutes');
+
 
 dotenv.config();
 
@@ -47,6 +52,10 @@ app.use('/api/memberTypeRoutes', memberTypeRoutes);
 app.use('/api/gudianMembersRoutes', gudianMembersRoutes);
 app.use('/api/membersInfoRoutes', membersInfoRoutes);
 app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
+
+
+app.use('/api/savingManagementRoutes', savingManagementRoutes);
+app.use('/api/slotsManagementRoutes', slotsManagementRoutes);
 app.use('/api/penalityManagementRoutes', penalityManagementRoutes);
 
 
