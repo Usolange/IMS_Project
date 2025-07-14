@@ -1,4 +1,5 @@
 require('dotenv').config();
+const axios = require('axios');
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -108,6 +109,9 @@ router.get('/select', async (req, res) => {
 });
 
 // POST register new member
+const dayjs = require('dayjs');
+
+
 router.post('/newMember', async (req, res) => {
   const {
     member_names,
@@ -158,7 +162,7 @@ router.post('/newMember', async (req, res) => {
     await conn.beginTransaction();
 
     try {
-      // Insert member info (location not saved here)
+      // Insert member info
       const [result] = await conn.execute(
         `INSERT INTO members_info 
           (member_names, member_Nid, gm_Nid, member_phone_number, member_email, member_type_id, iki_id)
@@ -205,6 +209,7 @@ router.post('/newMember', async (req, res) => {
          VALUES (?, ?, ?)`,
         [member_id, member_code, member_pass]
       );
+      
 
       await conn.commit();
 
@@ -242,8 +247,6 @@ router.post('/newMember', async (req, res) => {
         sendMessage += 'Failed to send credentials via SMS and Email.';
       }
 
-
-
       return res.status(201).json({
         success: true,
         message: sendMessage,
@@ -254,8 +257,6 @@ router.post('/newMember', async (req, res) => {
           member_email,
         },
       });
-
-
     } catch (err) {
       await conn.rollback();
       console.error('Registration error:', err);

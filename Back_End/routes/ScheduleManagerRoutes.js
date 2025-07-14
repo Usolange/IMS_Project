@@ -34,7 +34,7 @@ router.get('/allSchedules', async (req, res) => {
               'daily' AS scheduleType
        FROM ik_daily_time_info d
        JOIN frequency_category_info c ON d.f_id = c.f_id
-       JOIN ikimina_locations l ON d.ikimina_id = l.ikimina_id
+       JOIN ikimina_locations l ON d.location_id = l.location_id
        WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
       [userId, userSector]
     );
@@ -50,7 +50,7 @@ router.get('/allSchedules', async (req, res) => {
               'weekly' AS scheduleType
        FROM ik_weekly_time_info w
        JOIN frequency_category_info c ON w.f_id = c.f_id
-       JOIN ikimina_locations l ON w.ikimina_id = l.ikimina_id
+       JOIN ikimina_locations l ON w.location_id = l.location_id
        WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
       [userId, userSector]
     );
@@ -66,7 +66,7 @@ router.get('/allSchedules', async (req, res) => {
               'monthly' AS scheduleType
        FROM ik_monthly_time_info m
        JOIN frequency_category_info c ON m.f_id = c.f_id
-       JOIN ikimina_locations l ON m.ikimina_id = l.ikimina_id
+       JOIN ikimina_locations l ON m.location_id = l.location_id
        WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
       [userId, userSector]
     );
@@ -107,7 +107,7 @@ router.get('/eventTimes', async (req, res) => {
         sql = `
           SELECT d.dtime_id AS id, d.dtime_time AS time, l.ikimina_name, d.f_id
           FROM ik_daily_time_info d
-          JOIN ikimina_locations l ON d.ikimina_id = l.ikimina_id
+          JOIN ikimina_locations l ON d.location_id = l.location_id
           JOIN frequency_category_info c ON d.f_id = c.f_id
           WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];
@@ -120,7 +120,7 @@ router.get('/eventTimes', async (req, res) => {
                  TIME_FORMAT(w.weeklytime_time, '%H:%i:%s') AS time,
                  l.ikimina_name, w.f_id
           FROM ik_weekly_time_info w
-          JOIN ikimina_locations l ON w.ikimina_id = l.ikimina_id
+          JOIN ikimina_locations l ON w.location_id = l.location_id
           JOIN frequency_category_info c ON w.f_id = c.f_id
           WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];
@@ -133,7 +133,7 @@ router.get('/eventTimes', async (req, res) => {
                  TIME_FORMAT(m.monthlytime_time, '%H:%i:%s') AS time,
                  l.ikimina_name, m.f_id
           FROM ik_monthly_time_info m
-          JOIN ikimina_locations l ON m.ikimina_id = l.ikimina_id
+          JOIN ikimina_locations l ON m.location_id = l.location_id
           JOIN frequency_category_info c ON m.f_id = c.f_id
           WHERE l.ikimina_name = ? AND c.sad_id = ?`;
         params = [ikimina_name, sadId];

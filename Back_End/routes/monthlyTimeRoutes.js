@@ -3,15 +3,12 @@ const db = require('../config/db');
 
 const router = express.Router();
 
-/**
- * GET all monthly times created by the logged-in user
- */
 router.post('/newSchedule', async (req, res) => {
   const userId = req.headers['x-sad-id'];
-  const { ikimina_id, ikimina_name, selected_dates, mtime_time, f_id } = req.body;
+  const { location_id, ikimina_name, selected_dates, mtime_time, f_id } = req.body;
 
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-  if (!ikimina_id || !ikimina_name || !Array.isArray(selected_dates) || selected_dates.length === 0 || !mtime_time || !f_id) {
+  if (!location_id || !ikimina_name || !Array.isArray(selected_dates) || selected_dates.length === 0 || !mtime_time || !f_id) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -26,9 +23,9 @@ router.post('/newSchedule', async (req, res) => {
     }
 
     // Check if this ikimina already has any schedule in daily, weekly or monthly tables
-    const [dailyRows] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?', [ikimina_id]);
-    const [weeklyRows] = await db.execute('SELECT 1 FROM ik_weekly_time_info WHERE ikimina_id = ?', [ikimina_id]);
-    const [monthlyRows] = await db.execute('SELECT 1 FROM ik_monthly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    const [dailyRows] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE location_id = ?', [location_id]);
+    const [weeklyRows] = await db.execute('SELECT 1 FROM ik_weekly_time_info WHERE location_id = ?', [location_id]);
+    const [monthlyRows] = await db.execute('SELECT 1 FROM ik_monthly_time_info WHERE location_id = ?', [location_id]);
 
     if (dailyRows.length > 0 || weeklyRows.length > 0 || monthlyRows.length > 0) {
       return res.status(409).json({ message: 'This Ikimina already has a schedule.' });
@@ -46,9 +43,9 @@ router.post('/newSchedule', async (req, res) => {
     // Insert one row per selected date
     const insertPromises = selected_dates.map(date =>
       db.execute(
-        `INSERT INTO ik_monthly_time_info (ikimina_name, monthlytime_date, monthlytime_time, f_id, ikimina_id)
+        `INSERT INTO ik_monthly_time_info (ikimina_name, monthlytime_date, monthlytime_time, f_id, location_id)
          VALUES (?, ?, ?, ?, ?)`,
-        [ikimina_name.trim(), date.trim(), mtime_time, f_id, ikimina_id]
+        [ikimina_name.trim(), date.trim(), mtime_time, f_id, location_id]
       )
     );
     await Promise.all(insertPromises);
@@ -60,20 +57,13 @@ router.post('/newSchedule', async (req, res) => {
   }
 });
 
-
-/**
- * POST: Create new monthly schedule
- * - Checks ownership by sad_id
- * - Prevents duplicate ikimina_name for the same frequency category
- * - Validates ikimina_id uniqueness across all schedule tables (daily, weekly, monthly)
- */
 router.post('/newSchedule', async (req, res) => {
   const userId = req.headers['x-sad-id'];
-  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id } = req.body;
+  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, location_id } = req.body;
 
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !ikimina_id) {
-    return res.status(400).json({ message: 'Missing required fields: ikimina_name, monthlytime_day, monthlytime_time, f_id, or ikimina_id' });
+  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !location_id) {
+    return res.status(400).json({ message: 'Missing required fields: ikimina_name, monthlytime_day, monthlytime_time, f_id, or location_id' });
   }
 
   try {
@@ -86,10 +76,10 @@ router.post('/newSchedule', async (req, res) => {
       return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
     }
 
-    // Check if this ikimina_id already exists in daily, weekly, or monthly
-    const [daily] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?', [ikimina_id]);
-    const [weekly] = await db.execute('SELECT 1 FROM Ik_weekly_time_info WHERE ikimina_id = ?', [ikimina_id]);
-    const [monthly] = await db.execute('SELECT 1 FROM Ik_monthly_time_info WHERE ikimina_id = ?', [ikimina_id]);
+    // Check if this location_id already exists in daily, weekly, or monthly
+    const [daily] = await db.execute('SELECT 1 FROM ik_daily_time_info WHERE location_id = ?', [location_id]);
+    const [weekly] = await db.execute('SELECT 1 FROM Ik_weekly_time_info WHERE location_id = ?', [location_id]);
+    const [monthly] = await db.execute('SELECT 1 FROM Ik_monthly_time_info WHERE location_id = ?', [location_id]);
 
     if (daily.length > 0 || weekly.length > 0 || monthly.length > 0) {
       return res.status(409).json({
@@ -108,9 +98,9 @@ router.post('/newSchedule', async (req, res) => {
 
     // Insert monthly schedule
     await db.execute(
-      `INSERT INTO Ik_monthly_time_info (ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id)
+      `INSERT INTO Ik_monthly_time_info (ikimina_name, monthlytime_day, monthlytime_time, f_id, location_id)
        VALUES (?, ?, ?, ?, ?)`,
-      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, ikimina_id]
+      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, location_id]
     );
 
     res.status(201).json({ message: 'Monthly time added successfully.' });
@@ -120,19 +110,13 @@ router.post('/newSchedule', async (req, res) => {
   }
 });
 
-/**
- * PUT: Update existing monthly schedule
- * - Validates ownership
- * - Prevents duplicate ikimina_name in same category
- * - Validates ikimina_id uniqueness across all schedules (except current record)
- */
 router.put('/monthly/:id', async (req, res) => {
   const userId = req.headers['x-sad-id'];
   const { id } = req.params;
-  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, ikimina_id } = req.body;
+  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, location_id } = req.body;
 
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !ikimina_id) {
+  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !location_id) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -164,18 +148,18 @@ router.put('/monthly/:id', async (req, res) => {
       return res.status(409).json({ message: 'Ikimina name already used in this frequency category' });
     }
 
-    // Validate ikimina_id uniqueness across all schedules except current record
+    // Validate location_id uniqueness across all schedules except current record
     const [daily] = await db.execute(
-      'SELECT 1 FROM ik_daily_time_info WHERE ikimina_id = ?',
-      [ikimina_id]
+      'SELECT 1 FROM ik_daily_time_info WHERE location_id = ?',
+      [location_id]
     );
     const [weekly] = await db.execute(
-      'SELECT 1 FROM Ik_weekly_time_info WHERE ikimina_id = ?',
-      [ikimina_id]
+      'SELECT 1 FROM Ik_weekly_time_info WHERE location_id = ?',
+      [location_id]
     );
     const [monthly] = await db.execute(
-      'SELECT 1 FROM Ik_monthly_time_info WHERE ikimina_id = ? AND monthlytime_id != ?',
-      [ikimina_id, id]
+      'SELECT 1 FROM Ik_monthly_time_info WHERE location_id = ? AND monthlytime_id != ?',
+      [location_id, id]
     );
 
     if (daily.length > 0 || weekly.length > 0 || monthly.length > 0) {
@@ -187,9 +171,9 @@ router.put('/monthly/:id', async (req, res) => {
     // Update record
     await db.execute(
       `UPDATE Ik_monthly_time_info
-       SET ikimina_name = ?, monthlytime_day = ?, monthlytime_time = ?, f_id = ?, ikimina_id = ?
+       SET ikimina_name = ?, monthlytime_day = ?, monthlytime_time = ?, f_id = ?, location_id = ?
        WHERE monthlytime_id = ?`,
-      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, ikimina_id, id]
+      [ikimina_name.trim(), monthlytime_day.trim(), monthlytime_time, f_id, location_id, id]
     );
 
     res.status(200).json({ message: 'Monthly time updated successfully.' });

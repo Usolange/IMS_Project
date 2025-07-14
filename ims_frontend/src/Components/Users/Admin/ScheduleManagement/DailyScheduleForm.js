@@ -20,7 +20,7 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
           return;
         }
 
-        const response = await axios.get(`http://localhost:5000/api/LocationManagerRoutes/select?sad_id=${sad_id}`);
+        const response = await axios.get(`http://localhost:5000/api/locationManagerRoutes/select?sad_id=${sad_id}`);
         setIkiminaList(response.data);
       } catch (err) {
         console.error('Failed to load Ikimina list:', err);
@@ -31,14 +31,17 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
     fetchIkiminaList();
   }, []);
 
-  // Filter ikiminaList to only those that belong to the selected f_id
+  // Filter by frequency category
   const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
 
   const handleIkiminaChange = (e) => {
     const selectedId = e.target.value;
     setSelectedIkiminaId(selectedId);
 
-    const selected = filteredIkiminaList.find(item => item.ikimina_id.toString() === selectedId);
+    const selected = filteredIkiminaList.find(
+      item => String(item?.location_id) === selectedId 
+    );
+
     setSelectedIkiminaName(selected?.ikimina_name || '');
   };
 
@@ -54,7 +57,7 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
       await axios.post(
         'http://localhost:5000/api/dailyTimeRoutes/newSchedule',
         {
-          ikimina_id: selectedIkiminaId,
+          location_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
           dtime_time: time,
           f_id,
@@ -84,7 +87,7 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
         >
           <option value="">-- Select Ikimina --</option>
           {filteredIkiminaList.map((item) => (
-            <option key={item.ikimina_id} value={item.ikimina_id}>
+            <option key={item.location_id} value={item.location_id}>
               {item.ikimina_name} - Cell: {item.cell}
             </option>
           ))}
@@ -114,3 +117,4 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
 };
 
 export default DailyScheduleForm;
+

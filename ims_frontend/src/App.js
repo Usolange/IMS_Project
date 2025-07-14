@@ -42,7 +42,9 @@ import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkimin
 
 
 import MemberDashboard from './Components/Users/Members/memberDashboard'
-import PenaltyManagement from './Components/Users/IkiminaManager/SavingManagement/PenaltyManagement';
+import MemberSavingManager from './Components/Users/Members/SavingManagement/MemberSavingManager';
+import SavingManagementPage from './Components/Users/IkiminaManager/SavingManagement/SavingManagementPage';
+// import PenaltyManagement from './Components/Users/IkiminaManager/SavingManagement/PenaltyManagement';
 import LoanManager from './Components/Users/Members/loanManagement/loanManager';
 
 import MeLayout from './Components/Users/Members/meLayout'
@@ -99,10 +101,11 @@ export default function App() {
 
       {/* Ikimina routes for 'ikimina' role */}
       <Route element={<IkLayout />}>
-        <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard/></RoleProtectedRoute>} />
         <Route path="/MemberManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagement/></RoleProtectedRoute>} />
-        <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember /></RoleProtectedRoute>} />
-        <Route path="/penaltyManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyManagement /></RoleProtectedRoute>} />
+        <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember/></RoleProtectedRoute>} />
+        {/* <Route path="/penaltyManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyManagement/></RoleProtectedRoute>} /> */}
+        <Route path="/savingManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><SavingManagementPage/></RoleProtectedRoute>} />
 
         <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
@@ -112,6 +115,8 @@ export default function App() {
         {/* Ikimina routes for 'member' role */}
       <Route element={<MeLayout />}>
         <Route path="/memberDashboard" element={<RoleProtectedRoute allowedRoles={['member']}><MemberDashboard /></RoleProtectedRoute>} />
+        <Route path="/memberSavingManager" element={<RoleProtectedRoute allowedRoles={['member']}><MemberSavingManager /></RoleProtectedRoute>} />
+
         <Route path="/loanManager" element={<RoleProtectedRoute allowedRoles={['member']}><LoanManager /></RoleProtectedRoute>} />
 
         <Route path="/unauthorized" element={<Unauthorized />} />
