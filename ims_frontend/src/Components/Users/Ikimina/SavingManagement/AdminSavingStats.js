@@ -26,7 +26,7 @@ const AdminSavingStats = () => {
         <table className="w-full text-sm text-left">
           <thead>
             <tr className="bg-gray-200">
-              <th className="p-2">#</th>
+              <th className="p-2">Number</th>
               <th className="p-2">Member Name</th>
               <th className="p-2">Total Saved</th>
               <th className="p-2">Saving Times</th>
