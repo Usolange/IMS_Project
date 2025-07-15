@@ -20,9 +20,8 @@ import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
 import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 
-import Layout from './Components/Layout';
-import Dashboard from './Components/Dashboard';
-import Report from './Components/Users/IkiminaManager/Report';
+
+import Report from './Components/Users/Ikimina/Report';
 
 import AdLayout from './Components/Users/Admin/adLayout';
 import AdminDashboard from './Components/Users/Admin/AdminDashboard';
@@ -32,10 +31,10 @@ import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 
-import IkLayout from './Components/Users/IkiminaManager/ikLayout';
-import IkiminaDashboard from './Components/Users/IkiminaManager/ikiminaDashboard';
-import MemberManagement from './Components/Users/IkiminaManager/MemberManagement/MemberManagement';
-import RegisterMember from './Components/Users/IkiminaManager/MemberManagement/RegisterMemberModal';
+import IkLayout from './Components/Users/Ikimina/ikLayout';
+import IkiminaDashboard from './Components/Users/Ikimina/ikiminaDashboard';
+import MemberManagement from './Components/Users/Ikimina/MemberManagement/MemberManagement';
+import RegisterMember from './Components/Users/Ikimina/MemberManagement/RegisterMemberModal';
 
 import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
@@ -43,8 +42,8 @@ import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkimin
 
 import MemberDashboard from './Components/Users/Members/memberDashboard'
 import MemberSavingManager from './Components/Users/Members/SavingManagement/MemberSavingManager';
-import SavingManagementPage from './Components/Users/IkiminaManager/SavingManagement/SavingManagementPage';
-// import PenaltyManagement from './Components/Users/IkiminaManager/SavingManagement/PenaltyManagement';
+import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
+// import PenaltyManagement from './Components/Users/Ikimina/SavingManagement/PenaltyManagement';
 import LoanManager from './Components/Users/Members/loanManagement/loanManager';
 
 import MeLayout from './Components/Users/Members/meLayout'
@@ -76,11 +75,9 @@ export default function App() {
       <Route path="/logout" element={<Logout />} />
 
       {/* Authenticated layout */}
-      <Route element={<Layout />}>
-        <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Dashboard /></RoleProtectedRoute>} />
+      <Route element={<AdLayout />}>
         <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
         <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
-        <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Dashboard /></RoleProtectedRoute>} />
         <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
         <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
       </Route>

@@ -4,6 +4,7 @@ import SlotManager from './SlotManager';
 import AdminSavingStats from './AdminSavingStats';
 import SavingActivityLog from './SavingActivityLog';
 import PenaltiesOverview from './PenaltiesOverview';
+import RoundManagement from './RoundManagement'; // Import the new component
 
 const SavingManagementPage = () => {
   const [view, setView] = useState('rules');
@@ -20,8 +21,8 @@ const SavingManagementPage = () => {
     if (!ikiId) return <p>Loading user info...</p>;
 
     switch (view) {
-      case 'rules':
-        return <SavingRulesForm iki_id={ikiId} />;
+      case 'rounds':
+        return <RoundManagement iki_id={ikiId} />;
       case 'slots':
         return <SlotManager iki_id={ikiId} />;
       case 'stats':
@@ -30,8 +31,10 @@ const SavingManagementPage = () => {
         return <SavingActivityLog iki_id={ikiId} />;
       case 'penalties':
         return <PenaltiesOverview iki_id={ikiId} />;
+      case 'rules':
+        return <SavingRulesForm iki_id={ikiId} />;// Add the round management view
       default:
-        return <SavingRulesForm iki_id={ikiId} />;
+        return <RoundManagement iki_id={ikiId} />;
     }
   };
 
@@ -39,6 +42,12 @@ const SavingManagementPage = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-2xl font-bold mb-4 text-blue-800">Saving Management</h1>
       <div className="flex flex-wrap gap-4 mb-6">
+         <button
+          className={`px-4 py-2 rounded ${view === 'rounds' ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+          onClick={() => setView('rounds')}
+        >
+          Manage Rounds
+        </button>
         <button
           className={`px-4 py-2 rounded ${view === 'rules' ? 'bg-blue-600 text-white' : 'bg-white border'}`}
           onClick={() => setView('rules')}
@@ -69,6 +78,7 @@ const SavingManagementPage = () => {
         >
           Penalties Overview
         </button>
+       
       </div>
 
       {renderView()}

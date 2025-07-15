@@ -5,6 +5,16 @@ const dayjs = require('dayjs');
 const isSameOrBefore = require('dayjs/plugin/isSameOrBefore');
 dayjs.extend(isSameOrBefore);
 
+const dayMap = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
 // GET all slots for an Ikimina group
 router.get('/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
@@ -29,7 +39,7 @@ router.get('/metadata/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
     const [cycleRows] = await db.query(
-      `SELECT cycle_start, cycle_end, is_cycle_active 
+      `SELECT cycle_id, cycle_start, cycle_end, is_cycle_active 
        FROM saving_cycles 
        WHERE iki_id = ? 
        ORDER BY cycle_id DESC LIMIT 1`,
@@ -45,7 +55,11 @@ router.get('/metadata/:iki_id', async (req, res) => {
     const [slotCountRows] = await db.query(
       `SELECT COUNT(*) AS total_slots FROM ikimina_saving_slots 
        WHERE iki_id = ? AND slot_date BETWEEN ? AND ?`,
-      [iki_id, dayjs(cycle.cycle_start).format('YYYY-MM-DD'), dayjs(cycle.cycle_end).format('YYYY-MM-DD')]
+      [
+        iki_id,
+        dayjs(cycle.cycle_start).format('YYYY-MM-DD'),
+        dayjs(cycle.cycle_end).format('YYYY-MM-DD'),
+      ]
     );
 
     res.json({
@@ -102,23 +116,13 @@ router.post('/generate/:iki_id', async (req, res) => {
       }
 
     } else if (frequencyType === 'weekly') {
-      const dayMap = {
-        sunday: 0,
-        monday: 1,
-        tuesday: 2,
-        wednesday: 3,
-        thursday: 4,
-        friday: 5,
-        saturday: 6,
-      };
-
       const [entries] = await db.query('SELECT weeklytime_day, weeklytime_time FROM ik_weekly_time_info WHERE location_id = ?', [location_id]);
 
       let current = today;
       while (current.isSameOrBefore(cycleEnd)) {
         entries.forEach(e => {
           const targetDay = dayMap[e.weeklytime_day.toLowerCase()];
-          if (typeof targetDay !== 'number') return; // skip invalid
+          if (typeof targetDay !== 'number') return;
 
           let targetDate = current.day(targetDay);
           if (targetDate.isBefore(current, 'day')) {
@@ -129,7 +133,6 @@ router.post('/generate/:iki_id', async (req, res) => {
             slots.push([iki_id, targetDate.format('YYYY-MM-DD'), e.weeklytime_time, 'Weekly']);
           }
         });
-
         current = current.add(1, 'week');
       }
 
@@ -149,7 +152,6 @@ router.post('/generate/:iki_id', async (req, res) => {
             slots.push([iki_id, targetDate.format('YYYY-MM-DD'), e.monthlytime_time, 'Monthly']);
           }
         });
-
         current = current.add(1, 'month');
       }
 

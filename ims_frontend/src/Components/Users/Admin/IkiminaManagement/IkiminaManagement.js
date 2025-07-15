@@ -8,7 +8,7 @@ export default function IkiminaInfoForm({ onClose }) {
   const [freqCategories, setFreqCategories] = useState([]);
   const [selectedIkimina, setSelectedIkimina] = useState(null);
 
-  // Auto-filled from selected Ikimina
+  // Auto-filled
   const [ikiId, setIkiId] = useState('');
   const [ikiName, setIkiName] = useState('');
   const [ikiLocation, setIkiLocation] = useState('');
@@ -16,18 +16,18 @@ export default function IkiminaInfoForm({ onClose }) {
   const [dayOfEvent, setDayOfEvent] = useState('');
   const [timeOfEvent, setTimeOfEvent] = useState('');
   const [numberOfEvents, setNumberOfEvents] = useState('');
+  const [weeklySavingDays, setWeeklySavingDays] = useState([]);
+  const [monthlySavingDays, setMonthlySavingDays] = useState([]);
 
   // User input
   const [ikiEmail, setIkiEmail] = useState('');
   const [ikiUsername, setIkiUsername] = useState('');
   const [ikiPassword, setIkiPassword] = useState('');
 
-  // UI state
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Get logged-in admin sad_id from localStorage
   const getSadId = () => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) return null;
@@ -39,7 +39,6 @@ export default function IkiminaInfoForm({ onClose }) {
     }
   };
 
-  // Fetch ikimina locations and frequency categories
   useEffect(() => {
     const fetchData = async () => {
       const sad_id = getSadId();
@@ -66,20 +65,17 @@ export default function IkiminaInfoForm({ onClose }) {
     fetchData();
   }, []);
 
-  // Helper: get frequency category name from f_id
   const getCategoryName = (f_id) => {
     const cat = freqCategories.find((c) => c.f_id === f_id);
     return cat ? cat.f_category : '';
   };
 
-  // Map ikimina locations to options for react-select, use location_id as value
   const ikiminaOptions = ikiminaList.map((item) => ({
     value: item.location_id,
     label: `${item.ikimina_name} (Cell: ${item.cell}, Village: ${item.village}) - Category: ${getCategoryName(item.f_id)}`,
     data: item,
   }));
 
-  // When selected Ikimina changes, auto-fill fields & fetch schedule
   useEffect(() => {
     if (!selectedIkimina) {
       setIkiId('');
@@ -89,6 +85,8 @@ export default function IkiminaInfoForm({ onClose }) {
       setDayOfEvent('');
       setTimeOfEvent('');
       setNumberOfEvents('');
+      setWeeklySavingDays([]);
+      setMonthlySavingDays([]);
       return;
     }
 
@@ -96,16 +94,15 @@ export default function IkiminaInfoForm({ onClose }) {
     setIkiId(ikimina.location_id);
     setIkiName(ikimina.ikimina_name);
     setIkiLocation(`${ikimina.cell}, ${ikimina.village}`);
-    setCategoryOfEvent(getCategoryName(ikimina.f_id));
+    const categoryName = getCategoryName(ikimina.f_id);
+    setCategoryOfEvent(categoryName);
 
     const fetchSchedule = async () => {
       const sad_id = getSadId();
       if (!sad_id) return;
 
-      const frequency = getCategoryName(ikimina.f_id).toLowerCase();
+      const frequency = categoryName.toLowerCase();
       const ikiminaName = ikimina.ikimina_name;
-
-      console.log('Fetching schedule for:', { frequency, ikiminaName, sad_id });
 
       try {
         const res = await axios.get(`http://localhost:5000/api/ScheduleManagerRoutes/eventTimes`, {
@@ -113,48 +110,59 @@ export default function IkiminaInfoForm({ onClose }) {
           params: { frequency, ikimina_name: ikiminaName },
         });
 
-        console.log('Schedule data received:', res.data);
-
         if (res.data.length > 0) {
           if (frequency === 'daily') {
-            // For daily, backend returns dtime_time
             setDayOfEvent('Daily');
             setTimeOfEvent(res.data[0]?.time || res.data[0]?.dtime_time || 'N/A');
             setNumberOfEvents('1');
+            setWeeklySavingDays([]);
+            setMonthlySavingDays([]);
           } else if (frequency === 'weekly') {
-            // Weekly has weeklytime_day and weeklytime_time
             const allDays = res.data.map(ev => ev.day || ev.weeklytime_day).filter(Boolean);
             const allTimes = res.data.map(ev => ev.time || ev.weeklytime_time).filter(Boolean);
+
             const uniqueDays = [...new Set(allDays)];
             const uniqueTimes = [...new Set(allTimes)];
 
-            setDayOfEvent(uniqueDays.length ? uniqueDays.join(', ') : 'N/A');
-            setTimeOfEvent(uniqueTimes.length ? uniqueTimes.join(', ') : 'N/A');
+            setWeeklySavingDays(uniqueDays);
+            setMonthlySavingDays([]);
+
+            setDayOfEvent(uniqueDays.join(', ') || 'N/A');
+            setTimeOfEvent(uniqueTimes.join(', ') || 'N/A');
             setNumberOfEvents(String(uniqueDays.length));
           } else if (frequency === 'monthly') {
-            // Monthly has monthlytime_date and monthlytime_time
             const allDates = res.data.map(ev => ev.day || ev.monthlytime_date).filter(Boolean);
             const allTimes = res.data.map(ev => ev.time || ev.monthlytime_time).filter(Boolean);
+
             const uniqueDates = [...new Set(allDates)];
             const uniqueTimes = [...new Set(allTimes)];
 
-            setDayOfEvent(uniqueDates.length ? uniqueDates.join(', ') : 'N/A');
-            setTimeOfEvent(uniqueTimes.length ? uniqueTimes.join(', ') : 'N/A');
+            setMonthlySavingDays(uniqueDates);
+            setWeeklySavingDays([]);
+
+            setDayOfEvent(uniqueDates.join(', ') || 'N/A');
+            setTimeOfEvent(uniqueTimes.join(', ') || 'N/A');
             setNumberOfEvents(String(uniqueDates.length));
           } else {
             setDayOfEvent('N/A');
             setTimeOfEvent('N/A');
             setNumberOfEvents('0');
+            setWeeklySavingDays([]);
+            setMonthlySavingDays([]);
           }
         } else {
           setDayOfEvent('N/A');
           setTimeOfEvent('N/A');
           setNumberOfEvents('0');
+          setWeeklySavingDays([]);
+          setMonthlySavingDays([]);
         }
       } catch (err) {
         setDayOfEvent('N/A');
         setTimeOfEvent('N/A');
         setNumberOfEvents('0');
+        setWeeklySavingDays([]);
+        setMonthlySavingDays([]);
         console.error('Error fetching schedule:', err);
       }
     };
@@ -162,7 +170,6 @@ export default function IkiminaInfoForm({ onClose }) {
     fetchSchedule();
   }, [selectedIkimina, freqCategories]);
 
-  // Reset form fields
   const clearForm = () => {
     setSelectedIkimina(null);
     setIkiId('');
@@ -175,44 +182,44 @@ export default function IkiminaInfoForm({ onClose }) {
     setIkiUsername('');
     setIkiPassword('');
     setNumberOfEvents('');
+    setWeeklySavingDays([]);
+    setMonthlySavingDays([]);
     setSuccess(false);
     setError('');
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess(false);
     setError('');
 
-    if (!ikiName || !ikiEmail || !ikiUsername || !ikiPassword) {
+    if (!ikiName || !ikiEmail || !ikiUsername || !ikiPassword || !dayOfEvent || !timeOfEvent || !numberOfEvents) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    const sad_id = getSadId();
+    if (!sad_id) {
+      setError('User not logged in.');
       return;
     }
 
     setSaving(true);
     try {
-      const sad_id = getSadId();
-      if (!sad_id) {
-        setError('User not logged in.');
-        setSaving(false);
-        return;
-      }
-
       const payload = {
         iki_name: ikiName,
         iki_email: ikiEmail,
         iki_username: ikiUsername,
         iki_password: ikiPassword,
-        iki_location: ikiId, // location_id
+        iki_location: ikiId,
         dayOfEvent,
         timeOfEvent,
         f_id: selectedIkimina?.data?.f_id,
         numberOfEvents: Number(numberOfEvents),
         sad_id,
+        weekly_saving_days: weeklySavingDays,
+        monthly_saving_days: monthlySavingDays
       };
-
-      console.log('Submitting Ikimina creation payload:', payload);
 
       await axios.post('http://localhost:5000/api/ikiminaInfoRoutes/newIkimina', payload, {
         headers: { 'x-sad-id': sad_id },
@@ -252,6 +259,12 @@ export default function IkiminaInfoForm({ onClose }) {
 
       <label>Category of Event (Auto):</label>
       <input type="text" value={categoryOfEvent} readOnly className="readonly-input" />
+
+      <label>Weekly Saving Days (Auto):</label>
+      <input type="text" value={weeklySavingDays.join(', ')} readOnly className="readonly-input" />
+
+      <label>Monthly Saving Days (Auto):</label>
+      <input type="text" value={monthlySavingDays.join(', ')} readOnly className="readonly-input" />
 
       <label>Day of Event (Auto):</label>
       <input type="text" value={dayOfEvent} readOnly className="readonly-input" />

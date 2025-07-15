@@ -23,7 +23,7 @@ router.get('/selectRules/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
     const [rows] = await db.query(
-      `SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes
+      `SELECT saving_ratio, time_delay_penalty, date_delay_penalty, saving_time_limit
        FROM ikimina_saving_rules WHERE iki_id = ?`,
       [iki_id]
     );

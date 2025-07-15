@@ -66,7 +66,7 @@ export default function Layout() {
       </li>
       <li>
         <NavLink to="/LocationManager" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
-          <FaMapMarkerAlt />Manage Location
+          <FaMapMarkerAlt />Create new Group
         </NavLink>
       </li>
       <li>
