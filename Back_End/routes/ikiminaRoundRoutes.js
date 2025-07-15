@@ -140,7 +140,7 @@ router.post('/newRound', async (req, res) => {
     return res.status(400).json({ message: 'start_date and number_of_categories are required.' });
   }
   if (parseInt(iki_id_header) !== parseInt(iki_id)) {
-    return res.status(403).json({ message: 'Not authorized: iki_id does not match header.' });
+    return res.status(403).json({ message: 'Not authorized: ikimina does not match header.' });
   }
 
   try {
