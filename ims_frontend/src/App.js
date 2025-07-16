@@ -84,8 +84,7 @@ export default function App() {
       {/* Ikimina Layout */}
       <Route element={<IkLayout />}>
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
-        <Route path="/MemberManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>} />
-        <Route path="/MemberManagementPage/*" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>}>
+        <Route path="/MemberManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>}>
           <Route path="addNewMember" element={<MemberManagementPage />} />
           <Route path="addGuardianMember" element={<MemberManagementPage />} />
           <Route path="addMemberType" element={<MemberManagementPage />} />

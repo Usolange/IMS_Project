@@ -98,7 +98,7 @@ export default function Dashboard() {
             <table className="dashboard-table">
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>Number</th>
                   <th>Ikimina Name</th>
                   <th>Email</th>
                   <th>Username</th>
@@ -117,9 +117,9 @@ export default function Dashboard() {
                     </td>
                   </tr>
                 ) : (
-                  ikiminas.map(iki => (
+                  ikiminas.map((iki, index) => (
                     <tr key={iki.iki_id}>
-                      <td>{iki.iki_id}</td>
+                      <td>{index + 1}</td>
                       <td>{iki.iki_name}</td>
                       <td>{iki.iki_email}</td>
                       <td>{iki.iki_username}</td>

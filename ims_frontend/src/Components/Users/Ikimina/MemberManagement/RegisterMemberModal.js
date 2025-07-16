@@ -45,13 +45,15 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
       setIsSubmitting(false);
 
       const user = JSON.parse(localStorage.getItem('user')) || {};
+
       setIkiminaData({
-        iki_id: user.id || '',
+        iki_id: user.id || user.iki_id || '',
         iki_name: user.name || '',
         cell: user.cell || '',
         village: user.village || '',
         sector: user.sector || '',
       });
+
 
       try {
         const [gudianRes, typesRes] = await Promise.all([
@@ -77,14 +79,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
 
         setGudianMembers([]);
         setMemberTypes([]);
-        setFormData({
-          member_names: '',
-          member_Nid: '',
-          gm_Nid: '',
-          member_phone_number: '',
-          member_email: '',
-          member_type_id: '',
-        });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -130,57 +124,58 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
     link.href = URL.createObjectURL(blob);
     link.download = `member_credentials_${code}.txt`;
     link.click();
+    URL.revokeObjectURL(link.href);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('');
-    setResendStatus('');
-    setGenerated(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage('');
+  setResendStatus('');
+  setGenerated(null);
 
-    if (!validate()) {
-      setMessage('Please fix the errors below.');
-      return;
-    }
+  if (!validate()) {
+    setMessage('Please fix the errors below.');
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    const payload = {
-      ...formData,
-      iki_id: ikiminaData.iki_id,
-      iki_name: ikiminaData.iki_name,
-      cell: ikiminaData.cell,
-      village: ikiminaData.village,
-      sector: ikiminaData.sector,
-    };
+  const payload = {
+    ...formData,
+  };
 
- try {
-  const user = JSON.parse(localStorage.getItem('user'));
   const headers = {
-    'x-iki-id': user?.id || user?.iki_id,
-    'x-iki-name': user?.iki_name,
-    'x-cell': user?.cell,
-    'x-village': user?.village,
-    'x-sector': user?.sector,
+    'x-iki-id': ikiminaData.iki_id,
+    'x-iki-name': ikiminaData.iki_name,
+    'x-cell': ikiminaData.cell,
+    'x-village': ikiminaData.village,
+    'x-sector': ikiminaData.sector,
   };
 
-  const res = await axios.post(
-    'http://localhost:5000/api/membersInfoRoutes/newMember',
-    payload,
-    { headers }
-  );
+  console.log("Submitting payload:", payload);
+  console.log("Headers:", headers);
 
-  setMessage(res.data.message || '✅ Member registered successfully.');
-  setGenerated({
-    member_code: res.data.data?.member_code,
-    member_pass: res.data.data?.member_pass,
-  });
-  downloadCredentials(res.data.data?.member_code, res.data.data?.member_pass);
-  onSuccess?.();
-} catch (err) {
-  console.error('Submission failed:', err);
-  setMessage(err.response?.data?.message || '❌ Operation failed.');
-}
+  try {
+    const res = await axios.post(
+      'http://localhost:5000/api/membersInfoRoutes/newMember',
+      payload,
+      { headers }
+    );
+
+    setMessage(res.data.message || '✅ Member registered successfully.');
+    setGenerated({
+      member_code: res.data.data?.member_code,
+      member_pass: res.data.data?.member_pass,
+    });
+    downloadCredentials(res.data.data?.member_code, res.data.data?.member_pass);
+    onSuccess?.();
+  } catch (err) {
+    console.error('Submission failed:', err);
+    setMessage(err.response?.data?.message || '❌ Operation failed.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
 
   const handleResendSMS = async () => {
@@ -238,7 +233,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
         </div>
 
         {loading && <p>Loading...</p>}
-
         {message && <div className="form-msg">{message}</div>}
 
         {generated && (
@@ -257,7 +251,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
                   {resendLoading ? 'Sending Email...' : 'Resend Email'}
                 </button>
               )}
-
               <button
                 type="button"
                 onClick={() => downloadCredentials(generated.member_code, generated.member_pass)}
@@ -266,7 +259,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
                 Download Credentials
               </button>
             </div>
-
             {resendStatus && <p style={{ marginTop: '0.5rem' }}>{resendStatus}</p>}
           </div>
         )}
@@ -351,5 +343,4 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
       </div>
     </div>
   );
-}
 }

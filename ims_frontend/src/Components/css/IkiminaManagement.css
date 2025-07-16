@@ -1,122 +1,180 @@
-form {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  font-family: "Segoe UI", sans-serif;
-}
-
-form h2 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 24px;
-  font-size: 24px;
-}
-
-form label {
-  display: block;
-  font-weight: 600;
-  color: #34495e;
-  margin-top: 18px;
-  margin-bottom: 6px;
-  font-size: 15px;
-}
-
-form input[type="text"],
-form input[type="email"],
-form input[type="password"] {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: border 0.3s ease, box-shadow 0.3s ease;
-  background-color: #fefefe;
+.ikimina-info-form * {
   box-sizing: border-box;
 }
 
-form input[type="text"]:read-only {
-  background-color: #f3f3f3;
-  animation: autofillFade 0.4s ease-in-out;
+.ikimina-info-form {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgb(0 0 0 / 0.1);
+  border: 1px solid #e0e0e0;
 }
 
-@keyframes autofillFade {
-  from {
-    background-color: #e1f5fe;
-  }
-  to {
-    background-color: #f3f3f3;
-  }
-}
-
-form input::placeholder {
-  color: #aaa;
-  font-style: italic;
-}
-
-form button {
-  padding: 12px 20px;
-  font-size: 15px;
-  font-weight: bold;
-  color: #fff;
-  background-color: #00695c;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-form button:hover {
-  background-color: #004d40;
-}
-
-form button:disabled {
-  background-color: #b2dfdb;
-  cursor: not-allowed;
-}
-
-form .toast-success,
-form .toast-error {
-  margin-top: 16px;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 14px;
+/* Heading */
+.ikimina-info-form h2 {
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: #1e40af;
   text-align: center;
 }
 
-.toast-success {
-  background-color: #e0f2f1;
-  color: #00695c;
+/* Form Row */
+.ikimina-info-form .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0.8rem 0;
+  gap: 0.8rem 1.5rem;
 }
 
-.toast-error {
-  background-color: #ffebee;
-  color: #c62828;
+.ikimina-info-form .form-row label {
+  flex: 0 0 160px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 1rem;
+  min-width: 120px;
+  user-select: none;
 }
 
-@media screen and (max-width: 768px) {
-  form {
-    padding: 16px;
+.ikimina-info-form .form-row input,
+.ikimina-info-form .form-row .react-select__control {
+  flex: 1 1 300px;
+  min-width: 180px;
+  padding: 0.45rem 0.65rem;
+  font-size: 1rem;
+  border: 1.8px solid #d1d5db;
+  border-radius: 6px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.05);
+}
+
+.ikimina-info-form .form-row input:focus,
+.ikimina-info-form .form-row .react-select__control--is-focused {
+  border-color: #2563eb;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+  outline: none;
+  background-color: #f0f5ff;
+}
+
+/* Readonly */
+.ikimina-info-form .readonly-input {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+  user-select: none;
+}
+
+/* Button Row */
+.ikimina-info-form .button-row {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ikimina-info-form button[type="submit"] {
+  background-color: #2563eb;
+  border: none;
+  color: white;
+  padding: 0.65rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 160px;
+}
+
+.ikimina-info-form button[type="submit"]:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.ikimina-info-form button[type="submit"]:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.ikimina-info-form .btn-back-home {
+  background-color: #6b7280;
+  color: white;
+  text-decoration: none;
+  padding: 0.65rem 1.8rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 120px;
+  transition: background-color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ikimina-info-form .btn-back-home:hover {
+  background-color: #4b5563;
+}
+
+/* Toasts */
+.ikimina-info-form .toast-success,
+.ikimina-info-form .toast-error {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  user-select: none;
+  max-width: 100%;
+}
+
+.ikimina-info-form .toast-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1.5px solid #10b981;
+}
+
+.ikimina-info-form .toast-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1.5px solid #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .ikimina-info-form {
+    padding: 1.5rem;
   }
 
-  form h2 {
-    font-size: 20px;
+  .ikimina-info-form .form-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  form label {
-    font-size: 14px;
+  .ikimina-info-form .form-row label {
+    flex: none;
+    margin-bottom: 0.3rem;
+    min-width: auto;
   }
 
-  form input {
-    font-size: 14px;
-    padding: 10px 12px;
+  .ikimina-info-form .form-row input,
+  .ikimina-info-form .form-row .react-select__control {
+    flex: none;
+    min-width: 100%;
   }
 
-  form button {
-    width: 100%;
-    margin-bottom: 12px;
+  .ikimina-info-form .button-row {
+    justify-content: stretch;
+  }
+
+  .ikimina-info-form button[type="submit"],
+  .ikimina-info-form .btn-back-home {
+    min-width: 100%;
   }
 }

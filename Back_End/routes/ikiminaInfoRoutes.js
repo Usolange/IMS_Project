@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-
 // Create Ikimina_info
 router.post('/newIkimina', async (req, res) => {
   const {
@@ -12,46 +11,21 @@ router.post('/newIkimina', async (req, res) => {
   } = req.body;
 
   const requiredFields = [];
-  if (!iki_name) requiredFields.push('iki_name');
-  if (!iki_email) requiredFields.push('iki_email');
-  if (!iki_username) requiredFields.push('iki_username');
-  if (!iki_password) requiredFields.push('iki_password');
-  if (!f_id) requiredFields.push('f_id');
-  if (!iki_location) requiredFields.push('iki_location');
-  if (!dayOfEvent) requiredFields.push('dayOfEvent');
-  if (!timeOfEvent) requiredFields.push('timeOfEvent');
-  if (!numberOfEvents) requiredFields.push('numberOfEvents');
-  if (!sad_id) requiredFields.push('sad_id');
-
-  let freqCategory = '';
-  if (f_id === 1 || f_id === '1') freqCategory = 'daily';
-  else if (f_id === 2 || f_id === '2') freqCategory = 'weekly';
-  else if (f_id === 3 || f_id === '3') freqCategory = 'monthly';
+  if (!iki_name) requiredFields.push('Ikimina Name');
+  if (!iki_email) requiredFields.push('Ikimina Email');
+  if (!iki_username) requiredFields.push('Ikimina Username');
+  if (!iki_password) requiredFields.push('Ikimina Password');
+  if (!f_id) requiredFields.push('Frequency Category');
+  if (!iki_location) requiredFields.push('Ikimina Location');
+  if (!dayOfEvent) requiredFields.push('Day of Event');
+  if (!timeOfEvent) requiredFields.push('Time of Event');
+  if (!numberOfEvents) requiredFields.push('Number of Events');
+  if (!sad_id) requiredFields.push('Admin ID');
 
   if (requiredFields.length > 0) {
-    return res.status(400).json({ message: `Missing required fields: ${requiredFields.join(', ')}` });
-  }
-
-  // Validation to ensure at least one of weekly_saving_days or monthly_saving_days is provided
-  if (!weekly_saving_days && !monthly_saving_days) {
-    return res.status(400).json({ message: 'Either weekly saving days or monthly saving days must be provided.' });
-  }
-
-  let weeklySavingDaysJson = null;
-  let monthlySavingDaysJson = null;
-
-  if (freqCategory === 'weekly') {
-    if (!Array.isArray(weekly_saving_days) || weekly_saving_days.length === 0) {
-      return res.status(400).json({ message: 'Weekly saving days are required for weekly frequency.' });
-    }
-    weeklySavingDaysJson = JSON.stringify(weekly_saving_days);
-  }
-
-  if (freqCategory === 'monthly') {
-    if (!Array.isArray(monthly_saving_days) || monthly_saving_days.length === 0) {
-      return res.status(400).json({ message: 'Monthly saving days are required for monthly frequency.' });
-    }
-    monthlySavingDaysJson = JSON.stringify(monthly_saving_days);
+    return res.status(400).json({
+      message: `Missing required fields: ${requiredFields.join(', ')}`
+    });
   }
 
   try {
@@ -61,31 +35,62 @@ router.post('/newIkimina', async (req, res) => {
     );
 
     if (locationRows.length === 0) {
-      console.warn('Invalid Ikimina selection for user:', { iki_location, sad_id });
-      return res.status(403).json({ message: 'Invalid Ikimina selection for this user.' });
+      return res.status(403).json({ message: 'You are not authorized to assign this Ikimina location.' });
     }
 
-   const [existing] = await db.query(
-  `SELECT * FROM Ikimina_info 
-   WHERE iki_email = ? 
-      OR iki_username = ? 
-      OR iki_location = ?`,
-  [iki_email, iki_username, iki_location]
-);
+    const [catRows] = await db.query(
+      `SELECT f_category FROM frequency_category_info WHERE f_id = ? AND sad_id = ?`,
+      [f_id, sad_id]
+    );
 
-if (existing.length > 0) {
-  const duplicateFields = [];
-  existing.forEach(row => {
-    if (row.iki_email === iki_email) duplicateFields.push('email');
-    if (row.iki_username === iki_username) duplicateFields.push('username');
-    if (row.iki_location === iki_location) duplicateFields.push('location');
-  });
+    if (catRows.length === 0) {
+      return res.status(400).json({ message: 'The selected frequency category is invalid or not owned by you.' });
+    }
 
-  return res.status(409).json({
-    message: `Duplicate found: ${[...new Set(duplicateFields)].join(', ')} already in use.`
-  });
-}
+    const freqCategory = catRows[0].f_category?.trim().toLowerCase();
 
+    if (!['daily', 'weekly', 'monthly'].includes(freqCategory)) {
+      return res.status(400).json({ message: 'Frequency category must be Daily, Weekly, or Monthly.' });
+    }
+
+    const [existing] = await db.query(
+      `SELECT * FROM Ikimina_info 
+       WHERE iki_email = ? 
+         OR iki_username = ? 
+         OR iki_location = ?`,
+      [iki_email, iki_username, iki_location]
+    );
+
+    if (existing.length > 0) {
+      const duplicateFields = [];
+      existing.forEach(row => {
+        if (row.iki_email === iki_email) duplicateFields.push('Email');
+        if (row.iki_username === iki_username) duplicateFields.push('Username');
+        if (row.iki_location === iki_location) duplicateFields.push('Location');
+      });
+
+      return res.status(409).json({
+        message: `Duplicate found: ${[...new Set(duplicateFields)].join(', ')} already in use.`
+      });
+    }
+
+    let weeklySavingDaysJson = null;
+    let monthlySavingDaysJson = null;
+
+    if (freqCategory === 'daily') {
+      weeklySavingDaysJson = null;
+      monthlySavingDaysJson = null;
+    } else if (freqCategory === 'weekly') {
+      if (!Array.isArray(weekly_saving_days) || weekly_saving_days.length === 0) {
+        return res.status(400).json({ message: 'You must provide valid weekly saving days.' });
+      }
+      weeklySavingDaysJson = JSON.stringify(weekly_saving_days);
+    } else if (freqCategory === 'monthly') {
+      if (!Array.isArray(monthly_saving_days) || monthly_saving_days.length === 0) {
+        return res.status(400).json({ message: 'You must provide valid monthly saving days.' });
+      }
+      monthlySavingDaysJson = JSON.stringify(monthly_saving_days);
+    }
 
     const sql = `
       INSERT INTO Ikimina_info (
@@ -109,14 +114,15 @@ if (existing.length > 0) {
       monthlySavingDaysJson
     ]);
 
-    res.status(201).json({ message: 'Ikimina account created successfully.' });
+    res.status(201).json({ message: 'Ikimina was created successfully.' });
   } catch (err) {
-    console.error('Insert error:', err);
-    res.status(500).json({ message: 'Internal server error.' });
+    console.error('Database error while creating Ikimina:', err);
+    if (err?.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'One or more fields must be unique and already exist in the system.' });
+    }
+    res.status(500).json({ message: 'Something went wrong while saving Ikimina. Please try again.' });
   }
 });
-
-
 
 // List all Ikimina_info created by a specific admin
 router.get('/select', async (req, res) => {
@@ -140,16 +146,17 @@ router.get('/select', async (req, res) => {
   }
 });
 
+// Helper
 const authenticateSadId = (req, res, next) => {
   const sad_id = req.header('x-sad-id');
   if (!sad_id) {
-    return res.status(401).json({ message: 'Unauthorized: sad_id missing' });
+    return res.status(401).json({ message: 'Unauthorized: Admin ID (sad_id) is missing.' });
   }
   req.sad_id = sad_id;
   next();
 };
 
-// Update Ikimina_info
+// UPDATE Ikimina_info
 router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
   const iki_id = req.params.iki_id;
   const sad_id = req.sad_id;
@@ -164,30 +171,34 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
     monthly_saving_days
   } = req.body;
 
-  // Check if required fields are provided
-  if (!iki_name || !iki_email || !iki_username || !dayOfEvent || !timeOfEvent || !numberOfEvents) {
-    return res.status(400).json({ message: 'All fields are required' });
+  const missingFields = [];
+  if (!iki_name) missingFields.push('Ikimina Name');
+  if (!iki_email) missingFields.push('Ikimina Email');
+  if (!iki_username) missingFields.push('Ikimina Username');
+  if (!dayOfEvent) missingFields.push('Day of Event');
+  if (!timeOfEvent) missingFields.push('Time of Event');
+  if (!numberOfEvents) missingFields.push('Number of Events');
+
+  if (missingFields.length > 0) {
+    return res.status(400).json({ message: `Missing fields: ${missingFields.join(', ')}` });
   }
 
-  // Ensure that either weekly_saving_days or monthly_saving_days is provided
   if (!weekly_saving_days && !monthly_saving_days) {
     return res.status(400).json({ message: 'Either weekly saving days or monthly saving days must be provided.' });
   }
 
-  // Process weekly_saving_days and monthly_saving_days as JSON strings
   let weeklySavingDaysJson = null;
   let monthlySavingDaysJson = null;
 
-  if (weekly_saving_days && Array.isArray(weekly_saving_days) && weekly_saving_days.length > 0) {
+  if (Array.isArray(weekly_saving_days) && weekly_saving_days.length > 0) {
     weeklySavingDaysJson = JSON.stringify(weekly_saving_days);
   }
 
-  if (monthly_saving_days && Array.isArray(monthly_saving_days) && monthly_saving_days.length > 0) {
+  if (Array.isArray(monthly_saving_days) && monthly_saving_days.length > 0) {
     monthlySavingDaysJson = JSON.stringify(monthly_saving_days);
   }
 
   try {
-    // Check if Ikimina exists and belongs to the logged-in admin
     const [rows] = await db.query(
       `SELECT i.iki_id
        FROM Ikimina_info i
@@ -197,11 +208,10 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Ikimina not found or not authorized to update' });
+      return res.status(404).json({ message: 'Ikimina not found or not authorized to update.' });
     }
 
-    // Update Ikimina_info record
-    const [result] = await db.query(
+    await db.query(
       `UPDATE Ikimina_info SET
          iki_name = ?,
          iki_email = ?,
@@ -212,25 +222,32 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
          weekly_saving_days = ?,
          monthly_saving_days = ?
        WHERE iki_id = ?`,
-      [iki_name, iki_email, iki_username, dayOfEvent, timeOfEvent, numberOfEvents, 
-        weeklySavingDaysJson, monthlySavingDaysJson, iki_id]
+      [
+        iki_name,
+        iki_email,
+        iki_username,
+        dayOfEvent,
+        timeOfEvent,
+        numberOfEvents,
+        weeklySavingDaysJson,
+        monthlySavingDaysJson,
+        iki_id
+      ]
     );
 
-    // Respond with success
-    res.json({ message: 'Ikimina updated successfully' });
+    res.json({ message: 'Ikimina was updated successfully.' });
   } catch (err) {
     console.error('Error updating Ikimina:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Something went wrong during update. Please try again later.' });
   }
 });
 
-// Delete Ikimina_info
+// DELETE Ikimina_info
 router.delete('/delete/:iki_id', authenticateSadId, async (req, res) => {
   const iki_id = req.params.iki_id;
   const sad_id = req.sad_id;
 
   try {
-    // Confirm the ikimina belongs to logged-in user
     const [rows] = await db.query(
       `SELECT i.iki_id
        FROM Ikimina_info i
@@ -240,16 +257,15 @@ router.delete('/delete/:iki_id', authenticateSadId, async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Ikimina not found or not authorized to delete' });
+      return res.status(404).json({ message: 'Ikimina not found or not authorized to delete.' });
     }
 
-    // Proceed to delete
     await db.query('DELETE FROM Ikimina_info WHERE iki_id = ?', [iki_id]);
 
-    res.json({ message: 'Ikimina deleted successfully' });
+    res.json({ message: 'Ikimina was deleted successfully.' });
   } catch (err) {
     console.error('Error deleting Ikimina:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Something went wrong during deletion. Please try again later.' });
   }
 });
 

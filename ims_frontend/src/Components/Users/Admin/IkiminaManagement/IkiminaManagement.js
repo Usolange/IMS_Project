@@ -8,7 +8,6 @@ export default function IkiminaInfoForm({ onClose }) {
   const [freqCategories, setFreqCategories] = useState([]);
   const [selectedIkimina, setSelectedIkimina] = useState(null);
 
-  // Auto-filled
   const [ikiId, setIkiId] = useState('');
   const [ikiName, setIkiName] = useState('');
   const [ikiLocation, setIkiLocation] = useState('');
@@ -19,7 +18,6 @@ export default function IkiminaInfoForm({ onClose }) {
   const [weeklySavingDays, setWeeklySavingDays] = useState([]);
   const [monthlySavingDays, setMonthlySavingDays] = useState([]);
 
-  // User input
   const [ikiEmail, setIkiEmail] = useState('');
   const [ikiUsername, setIkiUsername] = useState('');
   const [ikiPassword, setIkiPassword] = useState('');
@@ -78,15 +76,7 @@ export default function IkiminaInfoForm({ onClose }) {
 
   useEffect(() => {
     if (!selectedIkimina) {
-      setIkiId('');
-      setIkiName('');
-      setIkiLocation('');
-      setCategoryOfEvent('');
-      setDayOfEvent('');
-      setTimeOfEvent('');
-      setNumberOfEvents('');
-      setWeeklySavingDays([]);
-      setMonthlySavingDays([]);
+      clearFormAutoFields();
       return;
     }
 
@@ -144,25 +134,13 @@ export default function IkiminaInfoForm({ onClose }) {
             setTimeOfEvent(uniqueTimes.join(', ') || 'N/A');
             setNumberOfEvents(String(uniqueDates.length));
           } else {
-            setDayOfEvent('N/A');
-            setTimeOfEvent('N/A');
-            setNumberOfEvents('0');
-            setWeeklySavingDays([]);
-            setMonthlySavingDays([]);
+            clearFormAutoFields();
           }
         } else {
-          setDayOfEvent('N/A');
-          setTimeOfEvent('N/A');
-          setNumberOfEvents('0');
-          setWeeklySavingDays([]);
-          setMonthlySavingDays([]);
+          clearFormAutoFields();
         }
       } catch (err) {
-        setDayOfEvent('N/A');
-        setTimeOfEvent('N/A');
-        setNumberOfEvents('0');
-        setWeeklySavingDays([]);
-        setMonthlySavingDays([]);
+        clearFormAutoFields();
         console.error('Error fetching schedule:', err);
       }
     };
@@ -170,22 +148,39 @@ export default function IkiminaInfoForm({ onClose }) {
     fetchSchedule();
   }, [selectedIkimina, freqCategories]);
 
-  const clearForm = () => {
-    setSelectedIkimina(null);
+  const clearFormAutoFields = () => {
     setIkiId('');
     setIkiName('');
     setIkiLocation('');
     setCategoryOfEvent('');
     setDayOfEvent('');
     setTimeOfEvent('');
-    setIkiEmail('');
-    setIkiUsername('');
-    setIkiPassword('');
     setNumberOfEvents('');
     setWeeklySavingDays([]);
     setMonthlySavingDays([]);
+  };
+
+  const clearForm = () => {
+    setSelectedIkimina(null);
+    clearFormAutoFields();
+    setIkiEmail('');
+    setIkiUsername('');
+    setIkiPassword('');
     setSuccess(false);
     setError('');
+  };
+
+  const validateForm = () => {
+    if (!selectedIkimina) return 'Please select an Ikimina location.';
+    if (!ikiEmail.trim()) return 'Ikimina Email is required.';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(ikiEmail)) return 'Please enter a valid email address.';
+    if (!ikiUsername.trim()) return 'Ikimina Username is required.';
+    if (ikiPassword.length < 5) return 'Password must be at least 5 characters.';
+    if (!dayOfEvent || dayOfEvent === 'N/A') return 'Day of Event information is missing.';
+    if (!timeOfEvent || timeOfEvent === 'N/A') return 'Time of Event information is missing.';
+    if (!numberOfEvents || numberOfEvents === '0') return 'Number of Events information is missing.';
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -193,8 +188,9 @@ export default function IkiminaInfoForm({ onClose }) {
     setSuccess(false);
     setError('');
 
-    if (!ikiName || !ikiEmail || !ikiUsername || !ikiPassword || !dayOfEvent || !timeOfEvent || !numberOfEvents) {
-      setError('Please fill in all required fields.');
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -218,7 +214,7 @@ export default function IkiminaInfoForm({ onClose }) {
         numberOfEvents: Number(numberOfEvents),
         sad_id,
         weekly_saving_days: weeklySavingDays,
-        monthly_saving_days: monthlySavingDays
+        monthly_saving_days: monthlySavingDays,
       };
 
       await axios.post('http://localhost:5000/api/ikiminaInfoRoutes/newIkimina', payload, {
@@ -237,76 +233,48 @@ export default function IkiminaInfoForm({ onClose }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={handleSubmit} noValidate className="ikimina-info-form">
       <h2>Create Ikimina Info</h2>
 
-      <label>Ikimina Name (Searchable):</label>
-      <Select
-        options={ikiminaOptions}
-        value={selectedIkimina}
-        onChange={setSelectedIkimina}
-        placeholder="Select Ikimina location..."
-        isClearable
-        isSearchable
-        classNamePrefix="react-select"
-      />
+      <div className="form-row">
+        <label>Ikimina Name (Searchable):</label>
+        <Select
+          options={ikiminaOptions}
+          value={selectedIkimina}
+          onChange={setSelectedIkimina}
+          placeholder="Select Ikimina location..."
+          isClearable
+          isSearchable
+          classNamePrefix="react-select"
+        />
+      </div>
 
-      <label>Ikimina ID (Auto):</label>
-      <input type="text" value={ikiId} readOnly className="readonly-input" />
+      <div className="form-row"><label>Ikimina ID (Auto):</label><input type="text" value={ikiId} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Ikimina Location (Auto):</label><input type="text" value={ikiLocation} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Category of Event (Auto):</label><input type="text" value={categoryOfEvent} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Weekly Saving Days (Auto):</label><input type="text" value={weeklySavingDays.join(', ')} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Monthly Saving Days (Auto):</label><input type="text" value={monthlySavingDays.join(', ')} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Day of Event (Auto):</label><input type="text" value={dayOfEvent} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Time of Event (Auto):</label><input type="text" value={timeOfEvent} readOnly className="readonly-input" /></div>
+      <div className="form-row"><label>Number of Events (Auto):</label><input type="text" value={numberOfEvents} readOnly className="readonly-input" /></div>
 
-      <label>Ikimina Location (Auto):</label>
-      <input type="text" value={ikiLocation} readOnly className="readonly-input" />
+      <div className="form-row">
+        <label>Ikimina Email:</label>
+        <input type="email" value={ikiEmail} onChange={(e) => setIkiEmail(e.target.value)} required placeholder="Enter Ikimina email" />
+      </div>
 
-      <label>Category of Event (Auto):</label>
-      <input type="text" value={categoryOfEvent} readOnly className="readonly-input" />
+      <div className="form-row">
+        <label>Ikimina Username:</label>
+        <input type="text" value={ikiUsername} onChange={(e) => setIkiUsername(e.target.value)} required placeholder="Enter Ikimina username" />
+      </div>
 
-      <label>Weekly Saving Days (Auto):</label>
-      <input type="text" value={weeklySavingDays.join(', ')} readOnly className="readonly-input" />
+      <div className="form-row">
+        <label>Ikimina Password:</label>
+        <input type="password" value={ikiPassword} onChange={(e) => setIkiPassword(e.target.value)} required minLength={5} placeholder="Enter password (min 5 characters)" />
+      </div>
 
-      <label>Monthly Saving Days (Auto):</label>
-      <input type="text" value={monthlySavingDays.join(', ')} readOnly className="readonly-input" />
-
-      <label>Day of Event (Auto):</label>
-      <input type="text" value={dayOfEvent} readOnly className="readonly-input" />
-
-      <label>Time of Event (Auto):</label>
-      <input type="text" value={timeOfEvent} readOnly className="readonly-input" />
-
-      <label>Number of Events (Auto):</label>
-      <input type="text" value={numberOfEvents} readOnly className="readonly-input" />
-
-      <label>Ikimina Email:</label>
-      <input
-        type="email"
-        value={ikiEmail}
-        onChange={(e) => setIkiEmail(e.target.value)}
-        required
-        placeholder="Enter Ikimina email"
-      />
-
-      <label>Ikimina Username:</label>
-      <input
-        type="text"
-        value={ikiUsername}
-        onChange={(e) => setIkiUsername(e.target.value)}
-        required
-        placeholder="Enter Ikimina username"
-      />
-
-      <label>Ikimina Password:</label>
-      <input
-        type="password"
-        value={ikiPassword}
-        onChange={(e) => setIkiPassword(e.target.value)}
-        required
-        minLength={5}
-        placeholder="Enter password (min 5 characters)"
-      />
-
-      <div style={{ marginTop: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Create Ikimina Info'}
-        </button>
+      <div className="button-row">
+        <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create Ikimina Info'}</button>
         <a href="/AllIkiminaPage" className="btn-back-home">Back</a>
       </div>
 

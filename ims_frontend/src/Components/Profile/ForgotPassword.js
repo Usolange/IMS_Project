@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../CSS/ForgotPassword.css'
+import '../CSS/ForgotPassword.css';
 
 export default function ForgotPassword({ onCancel, loading }) {
   const [email, setEmail] = useState('');
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await axios.post('http://localhost:5000/api/forgot-password', { email });
@@ -15,24 +15,24 @@ export default function ForgotPassword({ onCancel, loading }) {
     }
   };
 
-   return (
-    <form onSubmit={handleSubmit} className="form-container">
+  return (
+    <form onSubmit={handleSubmit} className="forgot-password-wrapper">
       <label className="form-label">Email</label>
       <input
         type="email"
         value={email}
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
         className="form-input"
         placeholder="Enter your email"
         required
-        onInvalid={e => {
+        onInvalid={(e) => {
           if (!e.target.value) {
             e.target.setCustomValidity('Email is required. Please enter your email.');
           } else {
             e.target.setCustomValidity('Please enter a valid email address.');
           }
         }}
-        onInput={e => e.target.setCustomValidity('')}
+        onInput={(e) => e.target.setCustomValidity('')}
       />
 
       <div className="buttons-container">

@@ -100,7 +100,7 @@ router.post('/newMember', async (req, res) => {
 
   const missingFields = [];
   if (!member_names) missingFields.push('member_names');
-  if (!member_Nid && !gm_Nid) missingFields.push('member_Nid or gm_Nid');
+  if (!member_Nid && !gm_Nid) missingFields.push('Either member_Nid or gm_Nid');
   if (!member_phone_number) missingFields.push('member_phone_number');
   if (!member_type_id) missingFields.push('member_type_id');
   if (!iki_id) missingFields.push('iki_id');
@@ -112,7 +112,7 @@ router.post('/newMember', async (req, res) => {
   if (missingFields.length > 0) {
     return res.status(400).json({
       success: false,
-      message: `Required fields are missing: ${missingFields.join(', ')}.`,
+      message: `Missing required fields: ${missingFields.join(', ')}.`,
     });
   }
 
@@ -202,7 +202,8 @@ router.post('/newMember', async (req, res) => {
 
       await conn.commit();
 
-      const location = composeLocation({ cell, village, sector });
+      // Compose location string
+      const location = [cell, village, sector].filter(Boolean).join(', ');
 
       let smsSent = false;
       let emailSent = false;
@@ -246,7 +247,7 @@ router.post('/newMember', async (req, res) => {
       });
     } catch (err) {
       await conn.rollback();
-      console.error('Registration error:', err);
+      console.error('Registration error (inner):', err);
       return res.status(500).json({ success: false, message: 'Server error during member registration.' });
     } finally {
       conn.release();
@@ -256,7 +257,6 @@ router.post('/newMember', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Unexpected server error.' });
   }
 });
-
 
 
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import EditUserForm from './EditUserForm';
-import '../CSS/EditUserForm.css';
+import '../CSS/Profile.css';
 
 export default function Profile() {
   const [user, setUser] = useState(null);

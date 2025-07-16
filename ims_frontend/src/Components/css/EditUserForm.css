@@ -1,156 +1,86 @@
-/* Container */
-.profile-container {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* Table styling */
-.profile-table {
-  width: 100%;
-  margin-top: 16px;
-  border-collapse: collapse;
-}
-
-.profile-table th {
-  text-align: left;
-  padding: 10px;
-  background-color: transparent; /* removed the grey background */
-  width: 35%;
-  font-weight: 600;
-}
-
-.profile-table td {
-  padding: 10px;
-  background-color: #fafafa;
-}
-
-/* Success message */
-.success-message {
-  color: green;
-  margin: 12px 0;
-  font-weight: 600;
-  text-align: center;
-}
-
-/* Shared button styles */
-button {
-  padding: 10px 18px;
-  font-size: 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-/* Primary action buttons */
-.edit-profile-btn,
-.save-btn {
-  background-color: #2b6cb0;
-  color: white;
-}
-
-.edit-profile-btn:hover,
-.save-btn:hover {
-  background-color: #244a86;
-}
-
-/* Cancel button */
-.cancel-btn {
-  background-color: #aaa;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background-color: #888;
-}
-
-/* Back button */
-.back-btn {
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #ccc;
-}
-
-.back-btn:hover {
-  background-color: #ddd;
-  color: #000;
-}
-
-/* Buttons group */
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-/* Modal content */
-.modal-content {
-  background-color: #fff;
-  padding: 24px;
-  border-radius: 10px;
-  width: 90%;
+/* Scoped wrapper to avoid global conflicts */
+.edit-user-form-wrapper {
   max-width: 500px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Edit user form */
-.edit-user-form {
-  display: flex;
-  flex-direction: column;
+.edit-user-form-wrapper h3 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
-.edit-user-form h3 {
-  margin-bottom: 20px;
-  text-align: center;
+.edit-user-form-wrapper label {
+  display: block;
+  margin-bottom: 1rem;
+  color: #444;
+  font-size: 0.95rem;
 }
 
-.edit-user-form label {
-  margin-bottom: 14px;
-  font-weight: 500;
-  display: flex;
-  flex-direction: column;
-}
-
-.edit-user-form input {
+.edit-user-form-wrapper input[type="text"],
+.edit-user-form-wrapper input[type="email"],
+.edit-user-form-wrapper input[type="tel"] {
   width: 100%;
-  padding: 10px;
-  margin-top: 6px;
+  padding: 0.5rem;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+  transition: border 0.2s ease-in-out;
 }
 
-.input-error {
-  border-color: red;
+.edit-user-form-wrapper input:focus {
+  outline: none;
+  border-color: #007bff;
 }
 
-.form-error {
-  color: red;
+.edit-user-form-wrapper .input-has-error {
+  border-color: #dc3545;
+  background-color: #fff5f5;
+}
+
+.edit-user-form-wrapper .form-error {
+  color: #dc3545;
   font-size: 0.85rem;
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 
-/* Form buttons inside modal */
-.form-buttons {
+.edit-user-form-wrapper .button-group {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.edit-user-form-wrapper .button-group button {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.edit-user-form-wrapper .button-group .save-btn {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.edit-user-form-wrapper .button-group .save-btn:hover {
+  background-color: #0056b3;
+}
+
+.edit-user-form-wrapper .button-group .cancel-btn {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.edit-user-form-wrapper .button-group .cancel-btn:hover {
+  background-color: #5a6268;
 }
