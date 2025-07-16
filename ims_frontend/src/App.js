@@ -20,9 +20,6 @@ import GuestOnlyRoute from './Components/Auth/GuestOnlyRoute';
 import RoleProtectedRoute from './Components/Auth/RoleProtectedRoute';
 import Unauthorized from './Components/Auth/Unauthorized';
 
-
-import Report from './Components/Users/Ikimina/Report';
-
 import AdLayout from './Components/Users/Admin/adLayout';
 import AdminDashboard from './Components/Users/Admin/AdminDashboard';
 import FrequencyCategoryManagement from './Components/Users/Admin/ScheduleManagement/FrequencyCategoryManagement';
@@ -30,32 +27,32 @@ import AvailableDailySchedules from './Components/Users/Admin/ScheduleManagement
 import TimeManager from './Components/Users/Admin/ScheduleManagement/TimeManager';
 import LocationManager from './Components/Users/Admin/LocationManagement/LocationManager';
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
-
-import IkLayout from './Components/Users/Ikimina/ikLayout';
-import IkiminaDashboard from './Components/Users/Ikimina/ikiminaDashboard';
-import MemberManagement from './Components/Users/Ikimina/MemberManagement/MemberManagement';
-import RegisterMember from './Components/Users/Ikimina/MemberManagement/RegisterMemberModal';
-
 import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
 
-
-import MemberDashboard from './Components/Users/Members/memberDashboard'
-import MemberSavingManager from './Components/Users/Members/SavingManagement/MemberSavingManager';
+import IkLayout from './Components/Users/Ikimina/ikLayout';
+import IkiminaDashboard from './Components/Users/Ikimina/ikiminaDashboard';
+import MemberManagementPage from './Components/Users/Ikimina/MemberManagement/MemberManagementPage';
+import SavingRulesForm from './Components/Users/Ikimina/SavingManagement/SavingRulesForm';
+import RoundManagement from './Components/Users/Ikimina/SavingManagement/RoundManagement';
+import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager';
+import AdminSavingStats from './Components/Users/Ikimina/SavingManagement/AdminSavingStats';
+import SavingActivityLog from './Components/Users/Ikimina/SavingManagement/SavingActivityLog';
+import PenaltiesOverview from './Components/Users/Ikimina/SavingManagement/PenaltiesOverview';
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
-// import PenaltyManagement from './Components/Users/Ikimina/SavingManagement/PenaltyManagement';
+
+import MeLayout from './Components/Users/Members/meLayout';
+import MemberDashboard from './Components/Users/Members/memberDashboard';
+import MemberSavingManager from './Components/Users/Members/SavingManagement/MemberSavingManager';
 import LoanManager from './Components/Users/Members/loanManagement/loanManager';
-
-import MeLayout from './Components/Users/Members/meLayout'
-
 
 export default function App() {
   return (
     <Routes>
-      {/* Public Home */}
+      {/* Public Route */}
       <Route path="/" element={<HomePage />} />
 
-      {/* Guest layout wrapper */}
+      {/* Guest Routes */}
       <Route path="/guest" element={<GuestLayout />}>
         <Route path="member-management" element={<MemberManagementGuest />} />
         <Route path="financial-management" element={<FinancialManagement />} />
@@ -66,24 +63,14 @@ export default function App() {
         <Route path="real-time-notifications" element={<RealTimeNotifications />} />
       </Route>
 
-      {/* Guest-only routes */}
       <Route path="/login" element={<GuestOnlyRoute><Login /></GuestOnlyRoute>} />
       <Route path="/register" element={<GuestOnlyRoute><Register /></GuestOnlyRoute>} />
       <Route path="/forgot-password" element={<GuestOnlyRoute><ForgotPassword /></GuestOnlyRoute>} />
-
-      {/* Logout */}
       <Route path="/logout" element={<Logout />} />
 
-      {/* Authenticated layout */}
+      {/* Admin Layout */}
       <Route element={<AdLayout />}>
         <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
-        <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
-        <Route path="/profile" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Profile /></RoleProtectedRoute>} />
-        <Route path="/report" element={<RoleProtectedRoute allowedRoles={['user', 'admin']}><Report /></RoleProtectedRoute>} />
-      </Route>
-
- {/* Admin routes */}
-      <Route element={<AdLayout />}> 
         <Route path="/adminDashboard" element={<RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute>} />
         <Route path="/FrequencyCategoryManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><FrequencyCategoryManagement /></RoleProtectedRoute>} />
         <Route path="/TimeManager" element={<RoleProtectedRoute allowedRoles={['admin']}><TimeManager /></RoleProtectedRoute>} />
@@ -92,39 +79,39 @@ export default function App() {
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
         <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
-        {/* <Route path="/members" element={<RoleProtectedRoute allowedRoles={['admin']}><Members /></RoleProtectedRoute>} /> */}
-        <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
-      {/* Ikimina routes for 'ikimina' role */}
+      {/* Ikimina Layout */}
       <Route element={<IkLayout />}>
-        <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard/></RoleProtectedRoute>} />
-        <Route path="/MemberManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagement/></RoleProtectedRoute>} />
-        <Route path="/RegisterMember" element={<RoleProtectedRoute allowedRoles={['ikimina']}><RegisterMember/></RoleProtectedRoute>} />
-        {/* <Route path="/penaltyManagement" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyManagement/></RoleProtectedRoute>} /> */}
-        <Route path="/savingManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><SavingManagementPage/></RoleProtectedRoute>} />
+        <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/MemberManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>} />
+        <Route path="/MemberManagementPage/*" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>}>
+          <Route path="addNewMember" element={<MemberManagementPage />} />
+          <Route path="addGuardianMember" element={<MemberManagementPage />} />
+          <Route path="addMemberType" element={<MemberManagementPage />} />
+        </Route>
 
-        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/savingManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><SavingManagementPage /></RoleProtectedRoute>}>
+          <Route path="rules" element={<SavingRulesForm />} />
+          <Route path="rounds" element={<RoundManagement />} />
+          <Route path="slots" element={<SlotManager />} />
+          <Route path="stats" element={<AdminSavingStats />} />
+          <Route path="activities" element={<SavingActivityLog />} />
+          <Route path="penalties" element={<PenaltiesOverview />} />
+        </Route>
       </Route>
 
-
-
-        {/* Ikimina routes for 'member' role */}
+      {/* Member Layout */}
       <Route element={<MeLayout />}>
         <Route path="/memberDashboard" element={<RoleProtectedRoute allowedRoles={['member']}><MemberDashboard /></RoleProtectedRoute>} />
         <Route path="/memberSavingManager" element={<RoleProtectedRoute allowedRoles={['member']}><MemberSavingManager /></RoleProtectedRoute>} />
-
         <Route path="/loanManager" element={<RoleProtectedRoute allowedRoles={['member']}><LoanManager /></RoleProtectedRoute>} />
-
-        <Route path="/unauthorized" element={<Unauthorized />} />
       </Route>
 
+      {/* Unauthorized */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
-
-
-
-
-      {/* Fallback route */}
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

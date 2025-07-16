@@ -65,14 +65,27 @@ router.post('/newIkimina', async (req, res) => {
       return res.status(403).json({ message: 'Invalid Ikimina selection for this user.' });
     }
 
-    const [existing] = await db.query(
-      `SELECT * FROM Ikimina_info WHERE iki_email = ? OR iki_username = ?`,
-      [iki_email, iki_username]
-    );
+   const [existing] = await db.query(
+  `SELECT * FROM Ikimina_info 
+   WHERE iki_email = ? 
+      OR iki_username = ? 
+      OR iki_location = ?`,
+  [iki_email, iki_username, iki_location]
+);
 
-    if (existing.length > 0) {
-      return res.status(409).json({ message: 'Email or Username already exists.' });
-    }
+if (existing.length > 0) {
+  const duplicateFields = [];
+  existing.forEach(row => {
+    if (row.iki_email === iki_email) duplicateFields.push('email');
+    if (row.iki_username === iki_username) duplicateFields.push('username');
+    if (row.iki_location === iki_location) duplicateFields.push('location');
+  });
+
+  return res.status(409).json({
+    message: `Duplicate found: ${[...new Set(duplicateFields)].join(', ')} already in use.`
+  });
+}
+
 
     const sql = `
       INSERT INTO Ikimina_info (
