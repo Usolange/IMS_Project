@@ -30,7 +30,16 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-sad-id', 'x-iki-id', 'Authorization'], // added x-iki-id and Authorization
+  allowedHeaders: [
+    'Content-Type',
+    'x-sad-id',
+    'x-iki-id',
+    'x-iki-name',
+    'x-cell',
+    'x-village',
+    'x-sector',
+    'Authorization',
+  ],
 }));
 
 app.use(express.json());

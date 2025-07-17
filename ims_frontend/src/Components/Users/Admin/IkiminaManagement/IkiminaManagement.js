@@ -22,6 +22,7 @@ export default function IkiminaInfoForm({ onClose }) {
   const [ikiUsername, setIkiUsername] = useState('');
   const [ikiPassword, setIkiPassword] = useState('');
 
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -44,6 +45,9 @@ export default function IkiminaInfoForm({ onClose }) {
         setError('User not logged in or session expired. Please login again.');
         return;
       }
+
+      setLoading(true);
+      setError('');
       try {
         const [ikiminaRes, freqRes] = await Promise.all([
           axios.get(`http://localhost:5000/api/locationManagerRoutes/selectAvailableIkimina?sad_id=${sad_id}`, {
@@ -58,6 +62,8 @@ export default function IkiminaInfoForm({ onClose }) {
       } catch (err) {
         setError('Failed to load data. Please try again later.');
         console.error(err.response || err.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -207,7 +213,7 @@ export default function IkiminaInfoForm({ onClose }) {
         iki_email: ikiEmail,
         iki_username: ikiUsername,
         iki_password: ikiPassword,
-        iki_location: ikiId,
+        location_id: ikiId,
         dayOfEvent,
         timeOfEvent,
         f_id: selectedIkimina?.data?.f_id,
@@ -236,6 +242,10 @@ export default function IkiminaInfoForm({ onClose }) {
     <form onSubmit={handleSubmit} noValidate className="ikimina-info-form">
       <h2>Create Ikimina Info</h2>
 
+      {loading && <div className="loading">Loading data...</div>}
+      {error && <div className="toast-error">{error}</div>}
+      {success && <div className="toast-success">Ikimina info created successfully!</div>}
+
       <div className="form-row">
         <label>Ikimina Name (Searchable):</label>
         <Select
@@ -246,40 +256,88 @@ export default function IkiminaInfoForm({ onClose }) {
           isClearable
           isSearchable
           classNamePrefix="react-select"
+          isDisabled={loading || saving}
         />
       </div>
 
-      <div className="form-row"><label>Ikimina ID (Auto):</label><input type="text" value={ikiId} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Ikimina Location (Auto):</label><input type="text" value={ikiLocation} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Category of Event (Auto):</label><input type="text" value={categoryOfEvent} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Weekly Saving Days (Auto):</label><input type="text" value={weeklySavingDays.join(', ')} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Monthly Saving Days (Auto):</label><input type="text" value={monthlySavingDays.join(', ')} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Day of Event (Auto):</label><input type="text" value={dayOfEvent} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Time of Event (Auto):</label><input type="text" value={timeOfEvent} readOnly className="readonly-input" /></div>
-      <div className="form-row"><label>Number of Events (Auto):</label><input type="text" value={numberOfEvents} readOnly className="readonly-input" /></div>
+      <div className="form-row">
+        <label>Ikimina ID (Auto):</label>
+        <input type="text" value={ikiId} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Ikimina Location (Auto):</label>
+        <input type="text" value={ikiLocation} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Category of Event (Auto):</label>
+        <input type="text" value={categoryOfEvent} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Weekly Saving Days (Auto):</label>
+        <input type="text" value={weeklySavingDays.join(', ')} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Monthly Saving Days (Auto):</label>
+        <input type="text" value={monthlySavingDays.join(', ')} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Day of Event (Auto):</label>
+        <input type="text" value={dayOfEvent} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Time of Event (Auto):</label>
+        <input type="text" value={timeOfEvent} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
+      <div className="form-row">
+        <label>Number of Events (Auto):</label>
+        <input type="text" value={numberOfEvents} readOnly className="readonly-input" disabled={loading || saving} />
+      </div>
 
       <div className="form-row">
         <label>Ikimina Email:</label>
-        <input type="email" value={ikiEmail} onChange={(e) => setIkiEmail(e.target.value)} required placeholder="Enter Ikimina email" />
+        <input
+          type="email"
+          value={ikiEmail}
+          onChange={(e) => setIkiEmail(e.target.value)}
+          required
+          placeholder="Enter Ikimina email"
+          disabled={loading || saving}
+        />
       </div>
 
       <div className="form-row">
         <label>Ikimina Username:</label>
-        <input type="text" value={ikiUsername} onChange={(e) => setIkiUsername(e.target.value)} required placeholder="Enter Ikimina username" />
+        <input
+          type="text"
+          value={ikiUsername}
+          onChange={(e) => setIkiUsername(e.target.value)}
+          required
+          placeholder="Enter Ikimina username"
+          disabled={loading || saving}
+        />
       </div>
 
       <div className="form-row">
         <label>Ikimina Password:</label>
-        <input type="password" value={ikiPassword} onChange={(e) => setIkiPassword(e.target.value)} required minLength={5} placeholder="Enter password (min 5 characters)" />
+        <input
+          type="password"
+          value={ikiPassword}
+          onChange={(e) => setIkiPassword(e.target.value)}
+          required
+          minLength={5}
+          placeholder="Enter password (min 5 characters)"
+          disabled={loading || saving}
+        />
       </div>
 
       <div className="button-row">
-        <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Create Ikimina Info'}</button>
-        <a href="/AllIkiminaPage" className="btn-back-home">Back</a>
+        <button type="submit" disabled={saving || loading}>
+          {saving ? 'Saving...' : 'Create Ikimina Info'}
+        </button>
+        <a href="/AllIkiminaPage" className="btn-back-home">
+          Back
+        </a>
       </div>
-
-      {success && <div className="toast-success">Ikimina info created successfully!</div>}
-      {error && <div className="toast-error">{error}</div>}
     </form>
   );
 }

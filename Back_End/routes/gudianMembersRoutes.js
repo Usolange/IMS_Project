@@ -1,22 +1,31 @@
 const express = require('express');
-const db = require('../config/db');
-
 const router = express.Router();
+const { sql, poolConnect, pool } = require('../config/db');
+
+// Helper function to run queries with inputs
+async function queryDB(query, inputs = {}) {
+  const request = pool.request();
+  for (const [key, value] of Object.entries(inputs)) {
+    request.input(key, value);
+  }
+  const result = await request.query(query);
+  return result;
+}
 
 // Get all Gudian members, optionally filtered by iki_id
 router.get('/select', async (req, res) => {
   try {
     const { iki_id } = req.query;
     let query = 'SELECT gm_id, gm_names, gm_Nid, gm_phonenumber, iki_id FROM gudian_members';
-    const params = [];
+    let inputs = {};
 
     if (iki_id) {
-      query += ' WHERE iki_id = ?';
-      params.push(iki_id);
+      query += ' WHERE iki_id = @iki_id';
+      inputs.iki_id = iki_id;
     }
 
-    const [rows] = await db.execute(query, params);
-    res.json(rows);
+    const result = await queryDB(query, inputs);
+    res.json(result.recordset);
   } catch (error) {
     console.error('Error fetching Gudian members:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -32,10 +41,13 @@ router.post('/newGudianMember', async (req, res) => {
   }
 
   try {
-    await db.execute(
-      'INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber, iki_id) VALUES (?, ?, ?, ?)',
-      [gm_names, gm_Nid, gm_phonenumber, iki_id]
-    );
+    const insertSql = `
+      INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber, iki_id) 
+      VALUES (@gm_names, @gm_Nid, @gm_phonenumber, @iki_id)
+    `;
+
+    await queryDB(insertSql, { gm_names, gm_Nid, gm_phonenumber, iki_id });
+
     res.status(201).json({ message: 'Gudian member added successfully.' });
   } catch (err) {
     console.error('Error adding Gudian member:', err);
@@ -53,12 +65,17 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
-    const [result] = await db.execute(
-      'UPDATE gudian_members SET gm_names = ?, gm_Nid = ?, gm_phonenumber = ? WHERE gm_id = ?',
-      [gm_names, gm_Nid, gm_phonenumber, id]
-    );
+    const updateSql = `
+      UPDATE gudian_members SET 
+        gm_names = @gm_names, 
+        gm_Nid = @gm_Nid, 
+        gm_phonenumber = @gm_phonenumber
+      WHERE gm_id = @id
+    `;
 
-    if (result.affectedRows === 0) {
+    const result = await queryDB(updateSql, { gm_names, gm_Nid, gm_phonenumber, id });
+
+    if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Gudian member not found.' });
     }
 
@@ -72,11 +89,15 @@ router.put('/:id', async (req, res) => {
 // Delete a Gudian member
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
+
   try {
-    const [result] = await db.execute('DELETE FROM gudian_members WHERE gm_id = ?', [id]);
-    if (result.affectedRows === 0) {
+    const deleteSql = 'DELETE FROM gudian_members WHERE gm_id = @id';
+    const result = await queryDB(deleteSql, { id });
+
+    if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Gudian member not found.' });
     }
+
     res.status(200).json({ message: 'Gudian member deleted successfully' });
   } catch (error) {
     console.error('Error deleting Gudian member:', error);

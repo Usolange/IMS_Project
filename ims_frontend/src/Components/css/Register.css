@@ -1,94 +1,137 @@
-/* Container & Typography */
-
-.form-container {
-  @apply max-w-md mx-auto p-6 bg-white dark:bg-gray-900 rounded-lg shadow-md;
+/* Container */
+.register-form {
+  max-width: 600px; /* increased width */
+  width: 90%; /* responsive */
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  font-family: system-ui, sans-serif;
+  box-sizing: border-box;
 }
 
-.form-title {
-  @apply text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100 text-center;
+/* Title */
+.register-form .form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  text-align: center;
+  color: #222;
 }
 
 /* Inputs */
-
-.form-input {
-  @apply w-full px-4 py-2 mb-2 border-2 border-gray-300 dark:border-gray-700 rounded-md
-    text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800
-    focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
-    transition-colors duration-200;
+.register-form .form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border: 1.5px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  color: #222;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.input-error {
-  @apply border-red-500 dark:border-red-400;
+.register-form .form-input:focus {
+  outline: none;
+  border-color: #2563eb; /* blue-600 */
+  box-shadow: 0 0 3px #2563eb;
 }
 
-.form-error {
-  @apply text-sm text-red-600 dark:text-red-400 mb-3;
+/* Error state */
+.register-form .error {
+  border-color: #dc2626; /* red-600 */
 }
 
-.form-success {
-  @apply text-center text-green-600 dark:text-green-400 my-4 font-medium;
+.register-form .form-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+  user-select: none;
 }
 
-/* Password Wrapper and toggle */
-
-.password-wrapper {
-  @apply relative mb-2;
+/* Buttons container */
+.register-form .form-button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
-.password-toggle {
-  @apply absolute right-3 top-1/2 transform -translate-y-1/2
-    text-gray-500 dark:text-gray-400
-    hover:text-blue-600 dark:hover:text-blue-400
-    focus:outline-none;
-  background: transparent;
-  border: none;
-  padding: 0;
+/* Buttons equal width */
+.register-form .form-button-register,
+.register-form .form-button-cancel {
+  flex: 1;
+  padding: 0.5rem 0;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 0.375rem;
   cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease;
+  text-align: center;
 }
 
-.password-toggle:focus {
-  @apply outline-none ring-2 ring-blue-500 dark:ring-blue-400 rounded;
+/* Register button */
+.register-form .form-button-register {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
 }
 
-.password-toggle .icon {
-  @apply w-5 h-5;
+.register-form .form-button-register:hover {
+  background-color: #1d4ed8; /* blue-700 */
 }
 
-/* Padding on password input to avoid overlap with toggle */
-.password-wrapper input.form-input {
-  padding-right: 2.5rem;
+/* Cancel button */
+.register-form .form-button-cancel {
+  background-color: #e5e7eb; /* gray-200 */
+  color: #374151; /* gray-700 */
 }
 
-/* Buttons */
-
-.form-button-group {
-  @apply flex justify-between mt-4;
+.register-form .form-button-cancel:hover {
+  background-color: #d1d5db; /* gray-300 */
 }
 
-.form-button-register {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md
-    focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
-    transition-colors duration-200;
+/* Status messages */
+.register-form .form-success {
+  margin-top: 1rem;
+  text-align: center;
+  color: #16a34a; /* green-600 */
+  font-weight: 600;
+  user-select: none;
 }
 
-.form-button-cancel {
-  @apply bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600
-    text-gray-800 dark:text-gray-200 font-semibold py-2 px-6 rounded-md
-    focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500
-    transition-colors duration-200;
+.register-form .form-error:not(.form-input) {
+  margin-top: 1rem;
+  text-align: center;
+  color: #dc2626; /* red-600 */
+  font-weight: 600;
+  user-select: none;
 }
 
 /* Switch text */
-
-.form-switch-text-register {
-  @apply mt-6 text-center text-gray-700 dark:text-gray-300 text-sm;
+.register-form .form-switch-text-register {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #444;
 }
 
-.form-link-register {
-  @apply text-blue-600 dark:text-blue-400 cursor-pointer underline;
+.register-form .form-link-register {
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
-.form-link-register:hover,
-.form-link-register:focus {
-  @apply text-blue-800 dark:text-blue-600 outline-none;
+.register-form .form-link-register:hover {
+  color: #1d4ed8;
+}
+
+/* Responsive tweaks for modal */
+@media (max-width: 640px) {
+  .register-form {
+    max-width: 90%;
+    padding: 1rem;
+  }
 }

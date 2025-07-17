@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
+const { pool, sql, poolConnect } = require('../config/db');
 const dayjs = require('dayjs');
 const isSameOrBefore = require('dayjs/plugin/isSameOrBefore');
 dayjs.extend(isSameOrBefore);
@@ -15,18 +15,31 @@ const dayMap = {
   saturday: 6,
 };
 
+// Helper to run query with parameters and return recordset
+async function runQuery(query, params = []) {
+  await poolConnect; // ensures pool is connected
+  const request = pool.request();
+  params.forEach(({ name, type, value }) => {
+    request.input(name, type, value);
+  });
+  const result = await request.query(query);
+  return result.recordset;
+}
+
 // GET all slots for an Ikimina group
 router.get('/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const [slots] = await db.query(
-      `SELECT s.slot_id, s.slot_date, s.slot_time, s.slot_status, f.f_category AS frequency_category
-       FROM ikimina_saving_slots s
-       JOIN frequency_category_info f ON s.frequency_category = f.f_category
-       WHERE s.iki_id = ?
-       ORDER BY s.slot_date, s.slot_time`,
-      [iki_id]
-    );
+    const query = `
+      SELECT s.slot_id, s.slot_date, s.slot_time, s.slot_status, f.f_category AS frequency_category
+      FROM ikimina_saving_slots s
+      JOIN frequency_category_info f ON s.frequency_category = f.f_category
+      WHERE s.iki_id = @iki_id
+      ORDER BY s.slot_date, s.slot_time
+    `;
+    const slots = await runQuery(query, [
+      { name: 'iki_id', type: sql.Int, value: iki_id }
+    ]);
     res.json(slots);
   } catch (err) {
     console.error('GET slots error:', err);
@@ -38,29 +51,27 @@ router.get('/:iki_id', async (req, res) => {
 router.get('/metadata/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const [cycleRows] = await db.query(
-      `SELECT cycle_id, cycle_start, cycle_end, is_cycle_active 
-       FROM saving_cycles 
-       WHERE iki_id = ? 
-       ORDER BY cycle_id DESC LIMIT 1`,
-      [iki_id]
-    );
-
-    if (cycleRows.length === 0) {
+    const cycleQuery = `
+      SELECT TOP 1 cycle_id, cycle_start, cycle_end, is_cycle_active
+      FROM saving_cycles
+      WHERE iki_id = @iki_id
+      ORDER BY cycle_id DESC
+    `;
+    const cycles = await runQuery(cycleQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
+    if (cycles.length === 0) {
       return res.json({ message: 'No saving cycle found', cycle: null });
     }
+    const cycle = cycles[0];
 
-    const cycle = cycleRows[0];
-
-    const [slotCountRows] = await db.query(
-      `SELECT COUNT(*) AS total_slots FROM ikimina_saving_slots 
-       WHERE iki_id = ? AND slot_date BETWEEN ? AND ?`,
-      [
-        iki_id,
-        dayjs(cycle.cycle_start).format('YYYY-MM-DD'),
-        dayjs(cycle.cycle_end).format('YYYY-MM-DD'),
-      ]
-    );
+    const slotCountQuery = `
+      SELECT COUNT(*) AS total_slots FROM ikimina_saving_slots
+      WHERE iki_id = @iki_id AND slot_date BETWEEN @start AND @end
+    `;
+    const slotCountRows = await runQuery(slotCountQuery, [
+      { name: 'iki_id', type: sql.Int, value: iki_id },
+      { name: 'start', type: sql.Date, value: dayjs(cycle.cycle_start).format('YYYY-MM-DD') },
+      { name: 'end', type: sql.Date, value: dayjs(cycle.cycle_end).format('YYYY-MM-DD') }
+    ]);
 
     res.json({
       cycle_start: cycle.cycle_start,
@@ -79,34 +90,38 @@ router.post('/generate/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
 
   try {
-    const [activeCycle] = await db.query(
-      'SELECT * FROM saving_cycles WHERE iki_id = ? AND is_cycle_active = 1',
-      [iki_id]
-    );
-    if (activeCycle.length > 0) {
+    const activeCycleQuery = `
+      SELECT * FROM saving_cycles WHERE iki_id = @iki_id AND is_cycle_active = 1
+    `;
+    const activeCycles = await runQuery(activeCycleQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
+    if (activeCycles.length > 0) {
       return res.status(400).json({ message: 'An active saving cycle already exists.' });
     }
 
-    const [ikiminaRows] = await db.query(
-      'SELECT iki_location AS location_id, f_id FROM ikimina_info WHERE iki_id = ?',
-      [iki_id]
-    );
+    const ikiminaQuery = `
+      SELECT iki_location AS location_id, f_id FROM ikimina_info WHERE iki_id = @iki_id
+    `;
+    const ikiminaRows = await runQuery(ikiminaQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
     if (ikiminaRows.length === 0) return res.status(404).json({ message: 'Ikimina not found' });
-
     const { location_id, f_id } = ikiminaRows[0];
 
-    const [category] = await db.query('SELECT f_category FROM frequency_category_info WHERE f_id = ?', [f_id]);
-    if (category.length === 0) return res.status(404).json({ message: 'Frequency category not found' });
+    const categoryQuery = `
+      SELECT f_category FROM frequency_category_info WHERE f_id = @f_id
+    `;
+    const categoryRows = await runQuery(categoryQuery, [{ name: 'f_id', type: sql.Int, value: f_id }]);
+    if (categoryRows.length === 0) return res.status(404).json({ message: 'Frequency category not found' });
 
-    const frequencyType = category[0].f_category.toLowerCase();
+    const frequencyType = categoryRows[0].f_category.toLowerCase();
 
     const today = dayjs();
     const cycleEnd = today.add(1, 'year');
     const slots = [];
 
     if (frequencyType === 'daily') {
-      const [times] = await db.query('SELECT dtime_time FROM ik_daily_time_info WHERE location_id = ?', [location_id]);
-
+      const timesQuery = `
+        SELECT dtime_time FROM ik_daily_time_info WHERE location_id = @location_id
+      `;
+      const times = await runQuery(timesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
       let current = today;
       while (current.isSameOrBefore(cycleEnd)) {
         times.forEach(t => {
@@ -114,10 +129,11 @@ router.post('/generate/:iki_id', async (req, res) => {
         });
         current = current.add(1, 'day');
       }
-
     } else if (frequencyType === 'weekly') {
-      const [entries] = await db.query('SELECT weeklytime_day, weeklytime_time FROM ik_weekly_time_info WHERE location_id = ?', [location_id]);
-
+      const entriesQuery = `
+        SELECT weeklytime_day, weeklytime_time FROM ik_weekly_time_info WHERE location_id = @location_id
+      `;
+      const entries = await runQuery(entriesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
       let current = today;
       while (current.isSameOrBefore(cycleEnd)) {
         entries.forEach(e => {
@@ -135,10 +151,11 @@ router.post('/generate/:iki_id', async (req, res) => {
         });
         current = current.add(1, 'week');
       }
-
     } else if (frequencyType === 'monthly') {
-      const [entries] = await db.query('SELECT monthlytime_date, monthlytime_time FROM ik_monthly_time_info WHERE location_id = ?', [location_id]);
-
+      const entriesQuery = `
+        SELECT monthlytime_date, monthlytime_time FROM ik_monthly_time_info WHERE location_id = @location_id
+      `;
+      const entries = await runQuery(entriesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
       let current = today;
       while (current.isSameOrBefore(cycleEnd)) {
         entries.forEach(e => {
@@ -154,27 +171,47 @@ router.post('/generate/:iki_id', async (req, res) => {
         });
         current = current.add(1, 'month');
       }
-
     } else {
       return res.status(400).json({ message: 'Unknown frequency category.' });
     }
 
     if (slots.length === 0) return res.status(400).json({ message: 'No valid slots generated' });
 
-    await db.query(
-      `INSERT IGNORE INTO ikimina_saving_slots (iki_id, slot_date, slot_time, frequency_category) VALUES ?`,
-      [slots]
-    );
+    // Bulk insert slots using TVP (Table Valued Parameter) is ideal in MSSQL, but
+    // for simplicity here we'll do individual inserts in a transaction.
 
-    const startDate = slots[0][1];
-    const endDate = slots[slots.length - 1][1];
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      const request = new sql.Request(transaction);
+      for (const slot of slots) {
+        request.input('iki_id', sql.Int, slot[0]);
+        request.input('slot_date', sql.Date, slot[1]);
+        request.input('slot_time', sql.VarChar, slot[2]);
+        request.input('frequency_category', sql.VarChar, slot[3]);
+        await request.query(`
+          INSERT INTO ikimina_saving_slots (iki_id, slot_date, slot_time, frequency_category)
+          VALUES (@iki_id, @slot_date, @slot_time, @frequency_category)
+        `);
+        request.parameters = {}; // reset inputs for next loop
+      }
 
-    await db.query(
-      `INSERT INTO saving_cycles (iki_id, cycle_start, cycle_end, is_cycle_active) VALUES (?, ?, ?, 1)`,
-      [iki_id, startDate, endDate]
-    );
+      const startDate = slots[0][1];
+      const endDate = slots[slots.length - 1][1];
 
-    res.json({ success: true, slotsGenerated: slots.length });
+      await transaction.request()
+        .input('iki_id', sql.Int, iki_id)
+        .input('cycle_start', sql.Date, startDate)
+        .input('cycle_end', sql.Date, endDate)
+        .query(`INSERT INTO saving_cycles (iki_id, cycle_start, cycle_end, is_cycle_active) VALUES (@iki_id, @cycle_start, @cycle_end, 1)`);
+
+      await transaction.commit();
+      res.json({ success: true, slotsGenerated: slots.length });
+    } catch (err) {
+      await transaction.rollback();
+      console.error('Error inserting slots and cycle:', err);
+      res.status(500).json({ success: false, message: 'Failed to generate saving slots' });
+    }
 
   } catch (err) {
     console.error('POST generate slots error:', err);
@@ -186,10 +223,11 @@ router.post('/generate/:iki_id', async (req, res) => {
 router.put('/reset/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const [[activeCycle]] = await db.query(
-      'SELECT * FROM saving_cycles WHERE iki_id = ? AND is_cycle_active = 1 ORDER BY cycle_id DESC LIMIT 1',
-      [iki_id]
-    );
+    const cycleQuery = `
+      SELECT TOP 1 * FROM saving_cycles WHERE iki_id = @iki_id AND is_cycle_active = 1 ORDER BY cycle_id DESC
+    `;
+    const activeCycles = await runQuery(cycleQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
+    const activeCycle = activeCycles[0];
 
     if (!activeCycle) {
       return res.status(400).json({ message: 'No active saving cycle to reset.' });
@@ -201,11 +239,24 @@ router.put('/reset/:iki_id', async (req, res) => {
       return res.status(403).json({ message: 'Cannot reset. Saving cycle is still active.' });
     }
 
-    await db.query('UPDATE saving_cycles SET is_cycle_active = 0 WHERE cycle_id = ?', [activeCycle.cycle_id]);
-    await db.query('DELETE FROM ikimina_saving_slots WHERE iki_id = ?', [iki_id]);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      await transaction.request()
+        .input('cycle_id', sql.Int, activeCycle.cycle_id)
+        .query('UPDATE saving_cycles SET is_cycle_active = 0 WHERE cycle_id = @cycle_id');
 
-    res.json({ message: 'Saving cycle reset successfully.' });
+      await transaction.request()
+        .input('iki_id', sql.Int, iki_id)
+        .query('DELETE FROM ikimina_saving_slots WHERE iki_id = @iki_id');
 
+      await transaction.commit();
+      res.json({ message: 'Saving cycle reset successfully.' });
+    } catch (err) {
+      await transaction.rollback();
+      console.error('PUT reset slots error:', err);
+      res.status(500).json({ message: 'Failed to reset saving cycle' });
+    }
   } catch (err) {
     console.error('PUT reset slots error:', err);
     res.status(500).json({ message: 'Failed to reset saving cycle' });

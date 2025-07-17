@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import ScheduleManager from './ScheduleManager'; // updated import
 import '../../../CSS/TimeManager.css';
 
-
 export default function TimeManager() {
   const [frequencies, setFrequencies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -15,24 +14,7 @@ export default function TimeManager() {
   const navigate = useNavigate();
   const [ikiminaList, setIkiminaList] = useState([]);
 
-  useEffect(() => {
-    const sadId = localStorage.getItem('user');
-    if (sadId) {
-      fetchFrequencies(sadId);
-      fetchIkinimaNames(sadId); // New function
-    }
-  }, [sadId]);
-
-  const fetchIkinimaNames = async (id) => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/ikimina/select?sad_id=${id}`);
-      setIkiminaList(res.data);
-    } catch (err) {
-      console.error('Failed to fetch Ikimina names', err);
-    }
-  };
-
-
+  // On mount, parse user and set sadId as number
   useEffect(() => {
     const rawUser = localStorage.getItem('user');
     if (!rawUser) {
@@ -42,24 +24,27 @@ export default function TimeManager() {
     }
     try {
       const user = JSON.parse(rawUser);
-      if (!user?.id) {
+      if (!user?.id || isNaN(Number(user.id))) {
         localStorage.clear();
         navigate('/');
         return;
       }
-      setSadId(user.id);
+      setSadId(Number(user.id));
     } catch {
       localStorage.clear();
       navigate('/');
     }
   }, [navigate]);
 
+  // When sadId is set, fetch frequencies and ikimina names
   useEffect(() => {
     if (sadId) {
       fetchFrequencies(sadId);
+      fetchIkinimaNames(sadId);
     }
   }, [sadId]);
 
+  // Autofocus input on mount
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -82,13 +67,12 @@ export default function TimeManager() {
     }
   };
 
-  const openModalForEdit = (id, category) => {
-    alert(`Edit clicked for ID: ${id}, Category: ${category}`);
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      alert(`Delete clicked for ID: ${id}`);
+  const fetchIkinimaNames = async (id) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/ikimina/select?sad_id=${id}`);
+      setIkiminaList(res.data);
+    } catch (err) {
+      console.error('Failed to fetch Ikimina names', err);
     }
   };
 
@@ -102,7 +86,6 @@ export default function TimeManager() {
 
   return (
     <div className="container">
-
       <div className="header-actions">
         <button
           className="action-button"
@@ -110,7 +93,6 @@ export default function TimeManager() {
         >
           Back to Dashboard
         </button>
-      
 
         <button
           className="action-button primary"
@@ -127,21 +109,18 @@ export default function TimeManager() {
         <>
           <h1 className="page-title">Registered Frequency Categories</h1>
 
-
           <table className="table">
-
             <thead>
               <tr>
                 <th>Category ID</th>
                 <th>Category</th>
-
                 <th style={{ textAlign: 'center' }}>Schedule</th>
               </tr>
             </thead>
             <tbody>
               {frequencies.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center' }}>
+                  <td colSpan="3" style={{ textAlign: 'center' }}>
                     No categories found
                   </td>
                 </tr>
@@ -150,8 +129,6 @@ export default function TimeManager() {
                   <tr key={f.f_id} className="table-row">
                     <td>{index + 1}</td>
                     <td>{f.f_category}</td>
-
-
                     <td style={{ textAlign: 'center' }}>
                       <button
                         className="action-button"
@@ -180,16 +157,14 @@ export default function TimeManager() {
                 </button>
               </div>
 
-
               <ScheduleManager
                 category={selectedCategory}
                 sadId={sadId}
-                ikiminaList={ikiminaList} // Pass list as a prop
+                ikiminaList={ikiminaList}
                 onClose={closeScheduleForm}
               />
             </div>
           )}
-
         </>
       )}
     </div>

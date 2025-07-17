@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import '../../../CSS/DailyScheduleForm.css'
 
 const DailyScheduleForm = ({ f_id, onClose }) => {
   const [ikiminaList, setIkiminaList] = useState([]);
+  const [loadingList, setLoadingList] = useState(false);
   const [selectedIkiminaId, setSelectedIkiminaId] = useState('');
   const [selectedIkiminaName, setSelectedIkiminaName] = useState('');
   const [time, setTime] = useState('');
@@ -11,6 +13,7 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
   useEffect(() => {
     const fetchIkiminaList = async () => {
       try {
+        setLoadingList(true);
         const storedUser = localStorage.getItem('user');
         const user = JSON.parse(storedUser);
         const sad_id = user?.id;
@@ -25,21 +28,23 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
       } catch (err) {
         console.error('Failed to load Ikimina list:', err);
         alert('Failed to fetch Ikimina list');
+      } finally {
+        setLoadingList(false);
       }
     };
 
     fetchIkiminaList();
   }, []);
 
-  // Filter by frequency category
-  const filteredIkiminaList = ikiminaList.filter(item => item.f_id === f_id);
+  // Filter Ikimina by frequency category id
+  const filteredIkiminaList = ikiminaList.filter(item => Number(item.f_id) === Number(f_id));
 
   const handleIkiminaChange = (e) => {
     const selectedId = e.target.value;
     setSelectedIkiminaId(selectedId);
 
     const selected = filteredIkiminaList.find(
-      item => String(item?.location_id) === selectedId 
+      item => String(item?.location_id) === selectedId
     );
 
     setSelectedIkiminaName(selected?.ikimina_name || '');
@@ -47,8 +52,10 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!selectedIkiminaId || !selectedIkiminaName || !time) {
-      return alert('All fields are required');
+      alert('All fields are required');
+      return;
     }
 
     setSaving(true);
@@ -77,35 +84,51 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="schedule-form">
+    <form onSubmit={handleSubmit} className="schedule-form" aria-label="Daily Schedule Form">
       <div className="form-group">
-        <label>Ikimina:</label>
-        <select
-          value={selectedIkiminaId}
-          onChange={handleIkiminaChange}
-          required
-        >
-          <option value="">-- Select Ikimina --</option>
-          {filteredIkiminaList.map((item) => (
-            <option key={item.location_id} value={item.location_id}>
-              {item.ikimina_name} - Cell: {item.cell}
-            </option>
-          ))}
-        </select>
+        <label htmlFor="ikimina-select">Ikimina:</label>
+        {loadingList ? (
+          <p>Loading Ikimina list...</p>
+        ) : filteredIkiminaList.length === 0 ? (
+          <p>No Ikimina available for this category.</p>
+        ) : (
+          <select
+            id="ikimina-select"
+            value={selectedIkiminaId}
+            onChange={handleIkiminaChange}
+            aria-required="true"
+            required
+          >
+            <option value="">-- Select Ikimina --</option>
+            {filteredIkiminaList.map((item) => (
+              <option key={item.location_id} value={item.location_id}>
+                {item.ikimina_name} - Cell: {item.cell}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="form-group">
-        <label>Time:</label>
+        <label htmlFor="time-input">Time:</label>
         <input
+          id="time-input"
           type="time"
           value={time}
           onChange={(e) => setTime(e.target.value)}
+          aria-required="true"
           required
+          disabled={loadingList || filteredIkiminaList.length === 0}
         />
       </div>
 
       <div className="form-buttons">
-        <button type="submit" disabled={saving || !selectedIkiminaId || !time}>
+        <button
+          type="submit"
+          disabled={
+            saving || loadingList || !selectedIkiminaId || !time || filteredIkiminaList.length === 0
+          }
+        >
           {saving ? 'Saving...' : 'Save Schedule'}
         </button>
         <button type="button" onClick={onClose} disabled={saving}>
@@ -117,4 +140,3 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
 };
 
 export default DailyScheduleForm;
-

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../CSS/Register.css';
+import '../CSS/Register.css';  // Make sure this CSS file has the styles I gave you
 
 export default function Register({ switchToLogin, onCancel }) {
   const [form, setForm] = useState({
@@ -63,7 +63,7 @@ export default function Register({ switchToLogin, onCancel }) {
     if (!validateForm()) return;
 
     try {
-      const res = await axios.post('http://localhost:5000/api/supperAdmin/register', {
+      const res = await axios.post('http://localhost:5000/api/supperAdminRoutes/newSupperUser', {
         name: form.name,
         email: form.email,
         username: form.username,
@@ -84,7 +84,11 @@ export default function Register({ switchToLogin, onCancel }) {
       });
 
       setTimeout(() => {
-        switchToLogin ? switchToLogin() : navigate('/');
+        if (switchToLogin) {
+          switchToLogin();
+        } else {
+          navigate('/');
+        }
       }, 2000);
 
     } catch (err) {
@@ -94,7 +98,7 @@ export default function Register({ switchToLogin, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="form-container">
+    <form onSubmit={handleSubmit} className="register-form">
       <h2 className="form-title">Register Super Admin</h2>
 
       <input

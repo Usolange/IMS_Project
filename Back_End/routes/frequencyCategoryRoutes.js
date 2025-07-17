@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../config/db');
+const { sql, pool, poolConnect } = require('../config/db');
 
 const router = express.Router();
 
@@ -9,15 +9,17 @@ router.get('/selectCategories', async (req, res) => {
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
   try {
-    const [rows] = await db.execute(
-      `SELECT f.f_id, f.f_category, a.sad_names
-       FROM frequency_category_info f
-       JOIN supper_admin a ON f.sad_id = a.sad_id
-       WHERE f.sad_id = ?`,
-      [sadId]
-    );
+    await poolConnect;
+    const request = pool.request();
+    request.input('sadId', sql.Int, sadId);
+    const result = await request.query(`
+      SELECT f.f_id, f.f_category, a.sad_names
+      FROM frequency_category_info f
+      JOIN supper_admin a ON f.sad_id = a.sad_id
+      WHERE f.sad_id = @sadId
+    `);
 
-    const categories = rows.map(row => ({
+    const categories = result.recordset.map(row => ({
       f_id: row.f_id,
       f_category: row.f_category,
       createdBy: row.sad_names,
@@ -37,16 +39,20 @@ router.get('/type/:f_id', async (req, res) => {
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
   try {
-    const [rows] = await db.execute(
-      'SELECT f_category FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
-      [f_id, sadId]
-    );
+    await poolConnect;
+    const request = pool.request();
+    request.input('f_id', sql.Int, f_id);
+    request.input('sadId', sql.Int, sadId);
+    const result = await request.query(`
+      SELECT f_category FROM frequency_category_info 
+      WHERE f_id = @f_id AND sad_id = @sadId
+    `);
 
-    if (rows.length === 0) {
+    if (result.recordset.length === 0) {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    const category = rows[0].f_category.toLowerCase();
+    const category = result.recordset[0].f_category.toLowerCase();
 
     if (!['daily', 'weekly', 'monthly'].includes(category)) {
       return res.status(400).json({ message: 'Invalid category type' });
@@ -70,21 +76,34 @@ router.post('/newCategory', async (req, res) => {
   }
 
   try {
-    const [existing] = await db.execute(
-      'SELECT * FROM frequency_category_info WHERE LOWER(f_category) = LOWER(?) AND sad_id = ?',
-      [categoryName, sadId]
-    );
+    await poolConnect;
 
-    if (existing.length > 0) {
+    // Check if category already exists (case-insensitive)
+    const checkReq = pool.request();
+    checkReq.input('categoryName', sql.NVarChar, categoryName);
+    checkReq.input('sadId', sql.Int, sadId);
+    const checkRes = await checkReq.query(`
+      SELECT * FROM frequency_category_info 
+      WHERE LOWER(f_category) = LOWER(@categoryName) AND sad_id = @sadId
+    `);
+
+    if (checkRes.recordset.length > 0) {
       return res.status(409).json({ message: 'Category already exists' });
     }
 
-    const [result] = await db.execute(
-      'INSERT INTO frequency_category_info (f_category, sad_id) VALUES (?, ?)',
-      [categoryName, sadId]
-    );
+    // Insert new category
+    const insertReq = pool.request();
+    insertReq.input('categoryName', sql.NVarChar, categoryName);
+    insertReq.input('sadId', sql.Int, sadId);
+    const insertRes = await insertReq.query(`
+      INSERT INTO frequency_category_info (f_category, sad_id) 
+      VALUES (@categoryName, @sadId);
+      SELECT SCOPE_IDENTITY() AS insertedId;
+    `);
 
-    res.status(201).json({ id: result.insertId, categoryName, createdBy: sadId });
+    const insertedId = insertRes.recordset[0].insertedId;
+
+    res.status(201).json({ id: insertedId, categoryName, createdBy: sadId });
   } catch (error) {
     console.error('Error adding category:', error);
     res.status(500).json({ message: 'Error saving category' });
@@ -100,19 +119,27 @@ router.put('/:id', async (req, res) => {
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
   try {
-    const [rows] = await db.execute(
-      'SELECT * FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
-      [id, sadId]
-    );
+    await poolConnect;
+    const selectReq = pool.request();
+    selectReq.input('id', sql.Int, id);
+    selectReq.input('sadId', sql.Int, sadId);
+    const selectRes = await selectReq.query(`
+      SELECT * FROM frequency_category_info WHERE f_id = @id AND sad_id = @sadId
+    `);
 
-    if (rows.length === 0) {
+    if (selectRes.recordset.length === 0) {
       return res.status(403).json({ message: 'Unauthorized or category not found' });
     }
 
-    await db.execute(
-      'UPDATE frequency_category_info SET f_category = ? WHERE f_id = ? AND sad_id = ?',
-      [categoryName, id, sadId]
-    );
+    const updateReq = pool.request();
+    updateReq.input('categoryName', sql.NVarChar, categoryName);
+    updateReq.input('id', sql.Int, id);
+    updateReq.input('sadId', sql.Int, sadId);
+    await updateReq.query(`
+      UPDATE frequency_category_info 
+      SET f_category = @categoryName 
+      WHERE f_id = @id AND sad_id = @sadId
+    `);
 
     res.status(200).json({ id, categoryName, createdBy: sadId });
   } catch (error) {
@@ -129,19 +156,24 @@ router.delete('/:id', async (req, res) => {
   if (!sadId) return res.status(401).json({ message: 'Unauthorized: sadId missing' });
 
   try {
-    const [rows] = await db.execute(
-      'SELECT * FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
-      [id, sadId]
-    );
+    await poolConnect;
+    const selectReq = pool.request();
+    selectReq.input('id', sql.Int, id);
+    selectReq.input('sadId', sql.Int, sadId);
+    const selectRes = await selectReq.query(`
+      SELECT * FROM frequency_category_info WHERE f_id = @id AND sad_id = @sadId
+    `);
 
-    if (rows.length === 0) {
+    if (selectRes.recordset.length === 0) {
       return res.status(403).json({ message: 'Unauthorized or category not found' });
     }
 
-    await db.execute(
-      'DELETE FROM frequency_category_info WHERE f_id = ? AND sad_id = ?',
-      [id, sadId]
-    );
+    const deleteReq = pool.request();
+    deleteReq.input('id', sql.Int, id);
+    deleteReq.input('sadId', sql.Int, sadId);
+    await deleteReq.query(`
+      DELETE FROM frequency_category_info WHERE f_id = @id AND sad_id = @sadId
+    `);
 
     res.status(200).json({ message: 'Category deleted successfully' });
   } catch (error) {

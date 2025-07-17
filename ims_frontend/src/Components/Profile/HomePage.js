@@ -61,7 +61,7 @@ export default function HomePage() {
   const additionalModules = ["Mobile Access", "Notification System", "API Integration"];
 
   return (
-    <div className="home-container">
+    <div className="home-page">
       <ScrollToHash />
 
       {/* ---------- HEADER ---------- */}

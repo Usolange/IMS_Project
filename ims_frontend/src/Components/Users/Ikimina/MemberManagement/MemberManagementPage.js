@@ -16,14 +16,14 @@ export default function MemberManagementPage() {
   const pageSize = 5;
 
   const [editMember, setEditMember] = useState(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [confirmDeleteMember, setConfirmDeleteMember] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
   const iki_id = user?.iki_id || user?.id;
 
-  // Fetch members on mount
+  // Fetch members on mount and when refreshed
   useEffect(() => {
     fetchMembers();
   }, []);
@@ -62,20 +62,22 @@ export default function MemberManagementPage() {
   const paginated = filteredMembers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const totalPages = Math.ceil(filteredMembers.length / pageSize);
 
-  // Edit button handler
+// Edit button handler
   const handleEdit = (member) => {
-    setEditMember(member);
-    navigate('/MemberManagementPage/editMember');
+    setEditMember(member); // This alone is enough to open the modal
   };
+
 
   // Delete member handler
   const handleDelete = async (member_id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/membersInfoRoutes/${member_id}`, {
-        data: { iki_id },
+      await axios.delete(`http://localhost:5000/api/membersInfoRoutes/delete/${member_id}`, {
+        headers: {
+          'x-iki-id': iki_id,
+        },
       });
       fetchMembers();
-      setConfirmDeleteId(null);
+      setConfirmDeleteMember(null);
     } catch (err) {
       console.error('Failed to delete member:', err);
     }
@@ -85,7 +87,7 @@ export default function MemberManagementPage() {
   const closeModal = () => {
     navigate('/MemberManagementPage');
     setEditMember(null);
-    setConfirmDeleteId(null);
+    setConfirmDeleteMember(null);
   };
 
   return (
@@ -130,7 +132,7 @@ export default function MemberManagementPage() {
                       ✏️ Update
                     </button>{' '}
                     <button
-                      onClick={() => setConfirmDeleteId(m.member_id)}
+                      onClick={() => setConfirmDeleteMember(m)}
                       className="action-button delete"
                       title="Delete this member"
                     >
@@ -170,7 +172,7 @@ export default function MemberManagementPage() {
         />
       )}
 
-      {location.pathname === '/MemberManagementPage/editMember' && editMember && (
+     {editMember && (
         <EditMemberModal
           isOpen={true}
           onClose={closeModal}
@@ -179,6 +181,8 @@ export default function MemberManagementPage() {
           iki_id={iki_id}
         />
       )}
+
+     
 
       {location.pathname === '/MemberManagementPage/addGuardianMember' && (
         <GudianMemberModal isOpen={true} onClose={closeModal} onSuccess={fetchMembers} />
@@ -189,13 +193,15 @@ export default function MemberManagementPage() {
       )}
 
       {/* Delete confirmation modal */}
-      {confirmDeleteId && (
+      {confirmDeleteMember && (
         <div className="modal-overlay">
           <div className="modal-form">
-            <h4>Are you sure you want to delete this member?</h4>
+            <h4>
+              Are you sure you want to delete <strong>{confirmDeleteMember.member_names}</strong>?
+            </h4>
             <div className="modal-btns">
-              <button onClick={() => handleDelete(confirmDeleteId)}>Yes, Delete</button>
-              <button className="cancel-btn" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+              <button onClick={() => handleDelete(confirmDeleteMember.member_id)}>Yes, Delete</button>
+              <button className="cancel-btn" onClick={() => setConfirmDeleteMember(null)}>Cancel</button>
             </div>
           </div>
         </div>

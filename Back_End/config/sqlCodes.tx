@@ -1,0 +1,198 @@
+DROP TABLE IF EXISTS member_saving_activities;
+DROP TABLE IF EXISTS ikimina_saving_slots;
+DROP TABLE IF EXISTS ikimina_saving_rules;
+DROP TABLE IF EXISTS member_access_info;
+DROP TABLE IF EXISTS members_info;
+DROP TABLE IF EXISTS gudian_members;
+DROP TABLE IF EXISTS member_type_info;
+DROP TABLE IF EXISTS ikimina_rounds;
+DROP TABLE IF EXISTS ikimina_info;
+DROP TABLE IF EXISTS ikimina_locations;
+DROP TABLE IF EXISTS ik_monthly_time_info;
+DROP TABLE IF EXISTS ik_weekly_time_info;
+DROP TABLE IF EXISTS ik_daily_time_info;
+DROP TABLE IF EXISTS frequency_category_info;
+DROP TABLE IF EXISTS supper_admin;
+
+-- 1. Supper_admin
+CREATE TABLE supper_admin (
+  sad_id INT IDENTITY(1,1) PRIMARY KEY,
+  sad_names VARCHAR(100) NOT NULL, 
+  sad_email VARCHAR(100) NOT NULL,
+  sad_username VARCHAR(50) NOT NULL,
+  sad_phone VARCHAR(12) NOT NULL,           
+  sad_loc VARCHAR(20) NOT NULL,
+  sad_pass VARCHAR(30) NOT NULL
+);
+
+-- 2. Frequency_category_info
+CREATE TABLE frequency_category_info (
+  f_id INT IDENTITY(1,1) PRIMARY KEY,
+  f_category VARCHAR(10) NOT NULL,
+  sad_id INT NOT NULL,
+  FOREIGN KEY (sad_id) REFERENCES supper_admin(sad_id) ON DELETE CASCADE
+);
+-- 3. Ikimina_locations
+CREATE TABLE ikimina_locations (
+  location_id INT IDENTITY(1,1) PRIMARY KEY,
+  ikimina_name VARCHAR(255) NOT NULL,
+  province VARCHAR(255) NOT NULL,
+  district VARCHAR(255) NOT NULL,
+  sector VARCHAR(255) NOT NULL,
+  cell VARCHAR(255) NOT NULL,
+  village VARCHAR(255) NOT NULL,
+  sad_id INT NOT NULL,
+  f_id INT NOT NULL,
+  FOREIGN KEY (sad_id) REFERENCES supper_admin(sad_id) ON DELETE CASCADE,
+  FOREIGN KEY (f_id) REFERENCES frequency_category_info(f_id) ON DELETE NO ACTION
+);
+
+-- 4. Ik_daily_time_info
+CREATE TABLE ik_daily_time_info (
+  dtime_id INT IDENTITY(1,1) PRIMARY KEY,
+  ikimina_name VARCHAR(50) NOT NULL,
+  dtime_time TIME NOT NULL,
+  f_id INT NOT NULL,
+  location_id INT NOT NULL,
+  FOREIGN KEY (f_id) REFERENCES frequency_category_info(f_id) ON DELETE NO ACTION,
+  FOREIGN KEY (location_id) REFERENCES ikimina_locations(location_id) ON DELETE NO ACTION
+
+);
+
+-- 5. Ik_weekly_time_info
+CREATE TABLE ik_weekly_time_info (
+  weeklytime_id INT IDENTITY(1,1) PRIMARY KEY,
+  ikimina_name VARCHAR(100) NOT NULL,
+  weeklytime_day VARCHAR(70) NOT NULL,   
+  weeklytime_time TIME NOT NULL,
+  f_id INT NOT NULL,
+  location_id INT NOT NULL,
+  FOREIGN KEY (f_id) REFERENCES frequency_category_info(f_id) ON DELETE NO ACTION,
+  FOREIGN KEY (location_id) REFERENCES ikimina_locations(location_id) ON DELETE NO ACTION
+
+);
+
+-- 6. Ik_monthly_time_info
+CREATE TABLE ik_monthly_time_info (
+  monthlytime_id INT IDENTITY(1,1) PRIMARY KEY,
+  ikimina_name VARCHAR(50) NOT NULL,
+  monthlytime_date INT NOT NULL CHECK (monthlytime_date BETWEEN 1 AND 31),
+  monthlytime_time TIME NOT NULL,
+  f_id INT NOT NULL,
+  location_id INT NOT NULL,
+  FOREIGN KEY (f_id) REFERENCES frequency_category_info(f_id) ON DELETE NO ACTION,
+  FOREIGN KEY (location_id) REFERENCES ikimina_locations(location_id) ON DELETE NO ACTION
+
+);
+
+-- 7. Member_type_info
+CREATE TABLE member_type_info (
+  member_type_id INT IDENTITY(1,1) PRIMARY KEY,
+  member_type VARCHAR(50) NOT NULL,
+  type_desc VARCHAR(MAX) NULL
+);
+
+-- 8. Gudian_members
+CREATE TABLE gudian_members (
+  gm_id INT IDENTITY(1,1) PRIMARY KEY,
+  gm_names VARCHAR(100) NOT NULL,
+  gm_Nid VARCHAR(16) NOT NULL UNIQUE,
+  gm_phonenumber VARCHAR(12) NOT NULL,
+  iki_id INT NOT NULL,
+  FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE
+);
+
+-- 9. Ikimina_info
+CREATE TABLE ikimina_info (
+  iki_id INT IDENTITY(1,1) PRIMARY KEY,
+  iki_name VARCHAR(50) NOT NULL,
+  iki_email VARCHAR(100) NOT NULL,
+  iki_username VARCHAR(50) NOT NULL,
+  iki_password VARCHAR(30) NOT NULL,
+  location_id INT NOT NULL,
+  f_id INT NOT NULL,
+  dayOfEvent VARCHAR(50) NULL,
+  timeOfEvent TIME NULL,
+  numberOfEvents INT NULL,
+  weeklySavingDaysJson VARCHAR(MAX) NULL,
+  monthlySavingDaysJson VARCHAR(MAX) NULL,
+  created_at DATETIME DEFAULT GETDATE(),
+  m_status VARCHAR(50) NULL,
+  FOREIGN KEY (location_id) REFERENCES ikimina_locations(location_id) ON DELETE CASCADE,
+  FOREIGN KEY (f_id) REFERENCES frequency_category_info(f_id) ON DELETE NO ACTION
+);
+
+-- 10. Ikimina_rounds
+CREATE TABLE dbo.ikimina_rounds (
+    round_id INT IDENTITY(1,1) PRIMARY KEY, 
+    iki_id INT NOT NULL,               
+    round_number INT NOT NULL,
+    round_year INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    round_status VARCHAR(50) NOT NULL,
+    number_of_categories INT NOT NULL
+    FOREIGN KEY (iki_id) REFERENCES Ikimina_info(iki_id) ON DELETE CASCADE,
+);
+
+
+-- 11. Members_info
+CREATE TABLE members_info (
+  member_id INT IDENTITY(1,1) PRIMARY KEY,
+  member_names VARCHAR(100) NOT NULL,
+  member_Nid VARCHAR(16) NULL,
+  gm_Nid VARCHAR(50) NULL,
+  member_phone_number VARCHAR(12) NOT NULL UNIQUE,
+  member_email VARCHAR(100) NULL,
+  member_type_id INT NOT NULL,
+  iki_id INT NOT NULL,
+  FOREIGN KEY (member_type_id) REFERENCES member_type_info(member_type_id),
+  FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE
+);
+
+-- 12. Member_access_info
+CREATE TABLE member_access_info (
+  maccess_id INT IDENTITY(1,1) PRIMARY KEY,
+  member_id INT NOT NULL,
+  member_code CHAR(5) NOT NULL UNIQUE,
+  member_pass CHAR(5) NOT NULL,
+  FOREIGN KEY (member_id) REFERENCES members_info(member_id) ON DELETE CASCADE
+);
+
+-- 13. Ikimina_saving_rules
+CREATE TABLE ikimina_saving_rules (
+  rule_id INT IDENTITY(1,1) PRIMARY KEY,
+  iki_id INT NOT NULL,
+  saving_ratio DECIMAL(10,2) DEFAULT 0,
+  time_delay_penalty DECIMAL(10,2) DEFAULT 0,
+  date_delay_penalty DECIMAL(10,2) DEFAULT 0,
+  time_limit_minutes INT DEFAULT 0,
+  created_at DATETIME DEFAULT GETDATE(),
+  FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE
+);
+
+-- 14. Ikimina_saving_slots
+CREATE TABLE ikimina_saving_slots (
+  slot_id INT IDENTITY(1,1) PRIMARY KEY,
+  iki_id INT NOT NULL,
+  slot_date DATE NOT NULL,
+  slot_time TIME NOT NULL,
+  frequency_category VARCHAR(10) NOT NULL,      -- e.g., Daily, Weekly, Monthly
+  slot_status VARCHAR(10) NOT NULL DEFAULT 'future', -- future, current, missed, saved
+  created_at DATETIME DEFAULT GETDATE(),
+  CONSTRAINT UQ_IkiminaSlot UNIQUE (iki_id, slot_date, slot_time),
+  FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE
+);
+
+-- 15. Member_saving_activities
+CREATE TABLE member_saving_activities (
+  save_id INT IDENTITY(1,1) PRIMARY KEY,
+  member_id INT NOT NULL,
+  slot_id INT NOT NULL,
+  saved_amount DECIMAL(10,2) NOT NULL,
+  saved_at DATETIME DEFAULT GETDATE(),
+  penalty_applied DECIMAL(10,2) DEFAULT 0,
+  is_late BIT DEFAULT 0,
+  FOREIGN KEY (member_id) REFERENCES members_info(member_id) ON DELETE CASCADE,
+  FOREIGN KEY (slot_id) REFERENCES ikimina_saving_slots(slot_id) ON DELETE NO ACTION
+);

@@ -1,13 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
+const { pool, sql, poolConnect } = require('../config/db');
 
+async function runQuery(query, params = []) {
+  await poolConnect;
+  const request = pool.request();
+  params.forEach(({ name, type, value }) => request.input(name, type, value));
+  const result = await request.query(query);
+  return result.recordset;
+}
 
 // GET /ikiminaInfo/:iki_id
 router.get('/ikiminaInfo/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const [rows] = await db.query('SELECT iki_name FROM ikimina_info WHERE iki_id = ?', [iki_id]);
+    const rows = await runQuery(
+      'SELECT iki_name FROM ikimina_info WHERE iki_id = @iki_id',
+      [{ name: 'iki_id', type: sql.Int, value: iki_id }]
+    );
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Ikimina not found' });
     }
@@ -22,10 +32,10 @@ router.get('/ikiminaInfo/:iki_id', async (req, res) => {
 router.get('/selectRules/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const [rows] = await db.query(
-      `SELECT saving_ratio, time_delay_penalty, date_delay_penalty, saving_time_limit
-       FROM ikimina_saving_rules WHERE iki_id = ?`,
-      [iki_id]
+    const rows = await runQuery(
+      `SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes
+       FROM ikimina_saving_rules WHERE iki_id = @iki_id`,
+      [{ name: 'iki_id', type: sql.Int, value: iki_id }]
     );
     if (rows.length === 0) {
       return res.status(404).json({ message: 'No rules set yet.' });
@@ -40,12 +50,7 @@ router.get('/selectRules/:iki_id', async (req, res) => {
 // PUT to update or insert rules
 router.put('/newRules/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
-  const {
-    saving_ratio,
-    time_delay_penalty,
-    date_delay_penalty,
-    time_limit_minutes,
-  } = req.body;
+  const { saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes } = req.body;
 
   if (
     saving_ratio === undefined ||
@@ -57,11 +62,9 @@ router.put('/newRules/:iki_id', async (req, res) => {
   }
 
   try {
-    // Check if saving cycle is active
-    // Assuming you have a 'saving_cycles' table or a flag in rules table
-    const [cycleStatusRows] = await db.query(
-      'SELECT is_cycle_active FROM saving_cycles WHERE iki_id = ? ORDER BY cycle_start DESC LIMIT 1',
-      [iki_id]
+    const cycleStatusRows = await runQuery(
+      `SELECT TOP 1 is_cycle_active FROM saving_cycles WHERE iki_id = @iki_id ORDER BY cycle_start DESC`,
+      [{ name: 'iki_id', type: sql.Int, value: iki_id }]
     );
 
     if (cycleStatusRows.length > 0 && cycleStatusRows[0].is_cycle_active) {
@@ -70,21 +73,33 @@ router.put('/newRules/:iki_id', async (req, res) => {
       });
     }
 
-    const [existing] = await db.query(
-      'SELECT * FROM ikimina_saving_rules WHERE iki_id = ?',
-      [iki_id]
+    const existing = await runQuery(
+      `SELECT * FROM ikimina_saving_rules WHERE iki_id = @iki_id`,
+      [{ name: 'iki_id', type: sql.Int, value: iki_id }]
     );
 
     if (existing.length > 0) {
-      await db.query(
-        `UPDATE ikimina_saving_rules SET saving_ratio = ?, time_delay_penalty = ?, date_delay_penalty = ?, time_limit_minutes = ? WHERE iki_id = ?`,
-        [saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes, iki_id]
+      await runQuery(
+        `UPDATE ikimina_saving_rules SET saving_ratio = @saving_ratio, time_delay_penalty = @time_delay_penalty, date_delay_penalty = @date_delay_penalty, time_limit_minutes = @time_limit_minutes WHERE iki_id = @iki_id`,
+        [
+          { name: 'saving_ratio', type: sql.Int, value: saving_ratio },
+          { name: 'time_delay_penalty', type: sql.Decimal(18, 2), value: time_delay_penalty },
+          { name: 'date_delay_penalty', type: sql.Decimal(18, 2), value: date_delay_penalty },
+          { name: 'time_limit_minutes', type: sql.Int, value: time_limit_minutes },
+          { name: 'iki_id', type: sql.Int, value: iki_id },
+        ]
       );
     } else {
-      await db.query(
+      await runQuery(
         `INSERT INTO ikimina_saving_rules (iki_id, saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes)
-         VALUES (?, ?, ?, ?, ?)`,
-        [iki_id, saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes]
+         VALUES (@iki_id, @saving_ratio, @time_delay_penalty, @date_delay_penalty, @time_limit_minutes)`,
+        [
+          { name: 'iki_id', type: sql.Int, value: iki_id },
+          { name: 'saving_ratio', type: sql.Int, value: saving_ratio },
+          { name: 'time_delay_penalty', type: sql.Decimal(18, 2), value: time_delay_penalty },
+          { name: 'date_delay_penalty', type: sql.Decimal(18, 2), value: date_delay_penalty },
+          { name: 'time_limit_minutes', type: sql.Int, value: time_limit_minutes },
+        ]
       );
     }
 
@@ -94,6 +109,5 @@ router.put('/newRules/:iki_id', async (req, res) => {
     res.status(500).json({ message: 'Failed to save rules' });
   }
 });
-
 
 module.exports = router;

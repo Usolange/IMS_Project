@@ -1,6 +1,16 @@
 const express = require('express');
-const db = require('../config/db');
 const router = express.Router();
+const { pool, sql, poolConnect } = require('../config/db');
+
+async function runQuery(query, params = []) {
+  await poolConnect;
+  const request = pool.request();
+  params.forEach(({ name, type, value }) => {
+    request.input(name, type, value);
+  });
+  const result = await request.query(query);
+  return result.recordset;
+}
 
 // GET all schedules (daily, weekly, monthly) for logged-in user (sad_id)
 router.get('/allSchedules', async (req, res) => {
@@ -12,10 +22,8 @@ router.get('/allSchedules', async (req, res) => {
 
   try {
     // Get user's sector location (sad_loc)
-    const [userRows] = await db.execute(
-      `SELECT sad_loc FROM supper_admin WHERE sad_id = ?`,
-      [userId]
-    );
+    const userQuery = `SELECT sad_loc FROM supper_admin WHERE sad_id = @userId`;
+    const userRows = await runQuery(userQuery, [{ name: 'userId', type: sql.Int, value: userId }]);
 
     if (userRows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -23,67 +31,80 @@ router.get('/allSchedules', async (req, res) => {
 
     const userSector = userRows[0].sad_loc.toLowerCase();
 
+    // MSSQL syntax for TIME_FORMAT equivalent: FORMAT(timecol, 'HH:mm:ss')
     // DAILY schedules
-    const [dailyRows] = await db.execute(
-      `SELECT d.dtime_id AS id,
-              l.ikimina_name,
-              CONCAT('Every day at ', TIME_FORMAT(d.dtime_time, '%H:%i:%s')) AS schedule,
-              l.cell,
-              l.village,
-              d.f_id,
-              'daily' AS scheduleType
-       FROM ik_daily_time_info d
-       JOIN frequency_category_info c ON d.f_id = c.f_id
-       JOIN ikimina_locations l ON d.location_id = l.location_id
-       WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
-      [userId, userSector]
-    );
+    const dailyQuery = `
+     SELECT d.dtime_id AS id,
+       l.ikimina_name,
+       'Every day at ' + CONVERT(VARCHAR(8), d.dtime_time, 108) AS schedule,
+       l.cell,
+       l.village,
+       d.f_id,
+       'daily' AS scheduleType
+FROM ik_daily_time_info d
+JOIN frequency_category_info c ON d.f_id = c.f_id
+JOIN ikimina_locations l ON d.location_id = l.location_id
+WHERE c.sad_id = @userId AND LOWER(l.sector) = @userSector
+
+    `;
+    const dailyRows = await runQuery(dailyQuery, [
+      { name: 'userId', type: sql.Int, value: userId },
+      { name: 'userSector', type: sql.VarChar, value: userSector }
+    ]);
 
     // WEEKLY schedules
-    const [weeklyRows] = await db.execute(
-      `SELECT w.weeklytime_id AS id,
-              l.ikimina_name,
-              CONCAT('Every ', w.weeklytime_day, ' at ', TIME_FORMAT(w.weeklytime_time, '%H:%i:%s')) AS schedule,
-              l.cell,
-              l.village,
-              w.f_id,
-              'weekly' AS scheduleType
-       FROM ik_weekly_time_info w
-       JOIN frequency_category_info c ON w.f_id = c.f_id
-       JOIN ikimina_locations l ON w.location_id = l.location_id
-       WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
-      [userId, userSector]
-    );
+    const weeklyQuery = `
+     SELECT w.weeklytime_id AS id,
+       l.ikimina_name,
+       'Every ' + w.weeklytime_day + ' at ' + CONVERT(VARCHAR(8), w.weeklytime_time, 108) AS schedule,
+       l.cell,
+       l.village,
+       w.f_id,
+       'weekly' AS scheduleType
+FROM ik_weekly_time_info w
+JOIN frequency_category_info c ON w.f_id = c.f_id
+JOIN ikimina_locations l ON w.location_id = l.location_id
+WHERE c.sad_id = @userId AND LOWER(l.sector) = @userSector
+
+    `;
+    const weeklyRows = await runQuery(weeklyQuery, [
+      { name: 'userId', type: sql.Int, value: userId },
+      { name: 'userSector', type: sql.VarChar, value: userSector }
+    ]);
 
     // MONTHLY schedules
-    const [monthlyRows] = await db.execute(
-      `SELECT m.monthlytime_id AS id,
-              l.ikimina_name,
-              CONCAT('Every ', CAST(m.monthlytime_date AS CHAR), ' at ', TIME_FORMAT(m.monthlytime_time, '%H:%i:%s')) AS schedule,
-              l.cell,
-              l.village,
-              m.f_id,
-              'monthly' AS scheduleType
-       FROM ik_monthly_time_info m
-       JOIN frequency_category_info c ON m.f_id = c.f_id
-       JOIN ikimina_locations l ON m.location_id = l.location_id
-       WHERE c.sad_id = ? AND LOWER(l.sector) = ?`,
-      [userId, userSector]
-    );
+    const monthlyQuery = `
+      SELECT m.monthlytime_id AS id,
+       l.ikimina_name,
+       'Every ' + CAST(m.monthlytime_date AS VARCHAR) + ' at ' + CONVERT(VARCHAR(8), m.monthlytime_time, 108) AS schedule,
+       l.cell,
+       l.village,
+       m.f_id,
+       'monthly' AS scheduleType
+FROM ik_monthly_time_info m
+JOIN frequency_category_info c ON m.f_id = c.f_id
+JOIN ikimina_locations l ON m.location_id = l.location_id
+WHERE c.sad_id = @userId AND LOWER(l.sector) = @userSector
+
+    `;
+    const monthlyRows = await runQuery(monthlyQuery, [
+      { name: 'userId', type: sql.Int, value: userId },
+      { name: 'userSector', type: sql.VarChar, value: userSector }
+    ]);
 
     const allSchedules = [...dailyRows, ...weeklyRows, ...monthlyRows].sort((a, b) =>
       a.ikimina_name.localeCompare(b.ikimina_name)
     );
 
-    console.log('All schedules:', allSchedules); // debug log
+    console.log('All schedules:', allSchedules);
 
     res.json(allSchedules);
+
   } catch (error) {
     console.error('Error fetching schedules:', error.stack || error.message);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 // GET event times by frequency and ikimina_name
 router.get('/eventTimes', async (req, res) => {
@@ -99,51 +120,56 @@ router.get('/eventTimes', async (req, res) => {
   }
 
   try {
-    let sql = '';
-    let params = [];
-
+    let sqlQuery = '';
+    let params = [
+      { name: 'ikimina_name', type: sql.VarChar, value: ikimina_name },
+      { name: 'sadId', type: sql.Int, value: sadId }
+    ];
     switch (frequency.toLowerCase()) {
       case 'daily':
-        sql = `
-          SELECT d.dtime_id AS id, d.dtime_time AS time, l.ikimina_name, d.f_id
-          FROM ik_daily_time_info d
-          JOIN ikimina_locations l ON d.location_id = l.location_id
-          JOIN frequency_category_info c ON d.f_id = c.f_id
-          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
-        params = [ikimina_name, sadId];
+        sqlQuery = `
+      SELECT d.dtime_id AS id,
+             CONVERT(varchar, d.dtime_time, 108) AS time,
+             l.ikimina_name, d.f_id
+      FROM ik_daily_time_info d
+      JOIN ikimina_locations l ON d.location_id = l.location_id
+      JOIN frequency_category_info c ON d.f_id = c.f_id
+      WHERE l.ikimina_name = @ikimina_name AND c.sad_id = @sadId
+    `;
         break;
 
       case 'weekly':
-        sql = `
-          SELECT w.weeklytime_id AS id,
-                 w.weeklytime_day AS day,
-                 TIME_FORMAT(w.weeklytime_time, '%H:%i:%s') AS time,
-                 l.ikimina_name, w.f_id
-          FROM ik_weekly_time_info w
-          JOIN ikimina_locations l ON w.location_id = l.location_id
-          JOIN frequency_category_info c ON w.f_id = c.f_id
-          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
-        params = [ikimina_name, sadId];
+        sqlQuery = `
+      SELECT w.weeklytime_id AS id,
+             w.weeklytime_day AS day,
+             CONVERT(varchar, w.weeklytime_time, 108) AS time,
+             l.ikimina_name, w.f_id
+      FROM ik_weekly_time_info w
+      JOIN ikimina_locations l ON w.location_id = l.location_id
+      JOIN frequency_category_info c ON w.f_id = c.f_id
+      WHERE l.ikimina_name = @ikimina_name AND c.sad_id = @sadId
+    `;
         break;
 
       case 'monthly':
-        sql = `
-          SELECT m.monthlytime_id AS id,
-                 m.monthlytime_date AS day,
-                 TIME_FORMAT(m.monthlytime_time, '%H:%i:%s') AS time,
-                 l.ikimina_name, m.f_id
-          FROM ik_monthly_time_info m
-          JOIN ikimina_locations l ON m.location_id = l.location_id
-          JOIN frequency_category_info c ON m.f_id = c.f_id
-          WHERE l.ikimina_name = ? AND c.sad_id = ?`;
-        params = [ikimina_name, sadId];
+        sqlQuery = `
+      SELECT m.monthlytime_id AS id,
+             m.monthlytime_date AS day,
+             CONVERT(varchar, m.monthlytime_time, 108) AS time,
+             l.ikimina_name, m.f_id
+      FROM ik_monthly_time_info m
+      JOIN ikimina_locations l ON m.location_id = l.location_id
+      JOIN frequency_category_info c ON m.f_id = c.f_id
+      WHERE l.ikimina_name = @ikimina_name AND c.sad_id = @sadId
+    `;
         break;
 
       default:
         return res.status(400).json({ message: 'Invalid frequency type' });
     }
 
-    const [rows] = await db.execute(sql, params);
+
+    const rows = await runQuery(sqlQuery, params);
 
     const response = rows.map(r => ({
       id: r.id,
@@ -160,6 +186,5 @@ router.get('/eventTimes', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 module.exports = router;

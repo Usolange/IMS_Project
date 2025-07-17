@@ -69,9 +69,7 @@ const AvailableSchedules = () => {
           sch.scheduleType?.toLowerCase().includes(lowerSearch);
         return matchesType && matchesSearch;
       })
-      .sort((a, b) => {
-        return (order[a.scheduleType] || 99) - (order[b.scheduleType] || 99);
-      });
+      .sort((a, b) => (order[a.scheduleType] || 99) - (order[b.scheduleType] || 99));
   }, [schedules, filterType, searchTerm]);
 
   const totalPages = Math.ceil(filteredSortedSchedules.length / itemsPerPage);

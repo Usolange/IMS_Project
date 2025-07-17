@@ -71,7 +71,7 @@ export default function CategoryManagement() {
       });
       setFrequencies(res.data);
       setMessage('');
-    } catch (error) {
+    } catch {
       setMessage('Error fetching categories');
     } finally {
       setLoading(false);
@@ -127,7 +127,7 @@ export default function CategoryManagement() {
       }
       fetchFrequencies(sadId);
       closeModal();
-    } catch (error) {
+    } catch {
       setMessage('❌ Error saving category');
     } finally {
       setLoading(false);
@@ -144,7 +144,7 @@ export default function CategoryManagement() {
       });
       setMessage('🗑️ Category deleted');
       fetchFrequencies(sadId);
-    } catch (error) {
+    } catch {
       setMessage('❌ Error deleting category');
     } finally {
       setLoading(false);
@@ -152,22 +152,22 @@ export default function CategoryManagement() {
   };
 
   return (
-    <div className="container">
-      <div className="header">Manage Frequency Categories</div>
+    <div className="freqcat-container">
+      <h1 className="freqcat-header">Manage Frequency Categories</h1>
 
-      {message && <p className="message">{message}</p>}
+      {message && <p className="freqcat-message">{message}</p>}
 
-      <div className="button-group">
-        <button className="action-button" onClick={openModalForAdd}>
+      <div className="freqcat-button-group">
+        <button className="freqcat-action-button" onClick={openModalForAdd}>
           + Add New Category
         </button>
-        <button className="action-button" onClick={() => navigate('/AddLocation')}>
+        <button className="freqcat-action-button" onClick={() => navigate('/AddLocation')}>
           ← Back
         </button>
       </div>
 
-      <div className="table-container">
-        <table className="table" aria-label="Frequency categories table">
+      <div className="freqcat-table-container">
+        <table className="freqcat-table" aria-label="Frequency categories table">
           <thead>
             <tr>
               <th>ID</th>
@@ -184,19 +184,19 @@ export default function CategoryManagement() {
               </tr>
             ) : (
               frequencies.map((f, index) => (
-                <tr key={f.f_id} className="table-row">
+                <tr key={f.f_id} className="freqcat-table-row">
                   <td>{index + 1}</td>
                   <td>{f.f_category}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button
-                      className="action-button"
+                      className="freqcat-action-button"
                       onClick={() => openModalForEdit(f.f_id, f.f_category)}
                       aria-label={`Edit category ${f.f_category}`}
                     >
                       Edit
                     </button>
                     <button
-                      className="action-button delete-button"
+                      className="freqcat-action-button freqcat-delete-button"
                       onClick={() => handleDelete(f.f_id)}
                       aria-label={`Delete category ${f.f_category}`}
                     >
@@ -212,18 +212,17 @@ export default function CategoryManagement() {
 
       {modalOpen && (
         <div
-          className="modal-overlay"
+          className="freqcat-modal-overlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
           onClick={(e) => {
-            // Close modal if clicking outside the modal box
-            if (e.target.classList.contains('modal-overlay')) {
+            if (e.target.classList.contains('freqcat-modal-overlay')) {
               closeModal();
             }
           }}
         >
-          <div className="modal" tabIndex={-1}>
+          <div className="freqcat-modal" tabIndex={-1}>
             <h3 id="modal-title">{editId ? 'Edit Category' : 'Add New Category'}</h3>
             <form onSubmit={handleSubmit}>
               <input
@@ -235,12 +234,13 @@ export default function CategoryManagement() {
                 aria-label="Category Name"
                 autoFocus
                 disabled={loading}
+                className="freqcat-input"
               />
-              <div className="modal-buttons">
-                <button type="submit" disabled={loading}>
+              <div className="freqcat-modal-buttons">
+                <button type="submit" disabled={loading} className="freqcat-submit-button">
                   {loading ? 'Saving...' : 'Save'}
                 </button>
-                <button type="button" onClick={closeModal} disabled={loading}>
+                <button type="button" onClick={closeModal} disabled={loading} className="freqcat-cancel-button">
                   Cancel
                 </button>
               </div>

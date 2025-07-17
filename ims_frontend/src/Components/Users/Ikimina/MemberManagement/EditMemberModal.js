@@ -11,7 +11,6 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
     member_email: '',
     member_type_id: '',
   });
-
   const [loading, setLoading] = useState(false);
   const [gudianMembers, setGudianMembers] = useState([]);
   const [memberTypes, setMemberTypes] = useState([]);
@@ -19,25 +18,8 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [ikiminaData, setIkiminaData] = useState({
-    iki_id: '',
-    iki_name: '',
-    cell: '',
-    village: '',
-    sector: '',
-  });
-
   const user = JSON.parse(localStorage.getItem('user')) || {};
-
-  useEffect(() => {
-    setIkiminaData({
-      iki_id: user.id || '',
-      iki_name: user.name || '',
-      cell: user.cell || '',
-      village: user.village || '',
-      sector: user.sector || '',
-    });
-  }, [user]);
+  const headerIkiId = iki_id || user.iki_id || user.id;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -52,7 +34,7 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
 
       try {
         const [gudianRes, typesRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/gudianMembersRoutes/select', { params: { iki_id } }),
+          axios.get('http://localhost:5000/api/gudianMembersRoutes/select', { params: { iki_id: headerIkiId } }),
           axios.get('http://localhost:5000/api/memberTypeRoutes/select'),
         ]);
         if (cancelled) return;
@@ -61,7 +43,9 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
         setMemberTypes(typesRes.data || []);
 
         if (editMember && editMember.member_id) {
-          const res = await axios.get(`http://localhost:5000/api/membersInfoRoutes/select/${editMember.member_id}`);
+          const res = await axios.get(`http://localhost:5000/api/membersInfoRoutes/select/${editMember.member_id}`, {
+            headers: { 'x-iki-id': headerIkiId },
+          });
           if (cancelled) return;
 
           if (res.data.success && res.data.data) {
@@ -98,6 +82,7 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
           member_email: '',
           member_type_id: '',
         });
+        setMessage('Failed to load necessary data. Please try again.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -108,7 +93,7 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
     return () => {
       cancelled = true;
     };
-  }, [isOpen, editMember, iki_id]);
+  }, [isOpen, editMember, headerIkiId]);
 
   const validate = () => {
     const errs = {};
@@ -147,12 +132,14 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting update with x-iki-id header:', headerIkiId);
+
       const res = await axios.put(
         `http://localhost:5000/api/membersInfoRoutes/update/${editMember.member_id}`,
         formData,
         {
           headers: {
-            'x-iki-id': user?.iki_id || user?.id,
+            'x-iki-id': headerIkiId,
           },
         }
       );
@@ -175,7 +162,13 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
       setTimeout(onClose, 1500);
     } catch (err) {
       console.error('Submission failed:', err);
-      setMessage(err.response?.data?.message || '❌ Operation failed.');
+
+      if (err.response?.status === 401) {
+        setMessage('Unauthorized. Please login again.');
+        // optionally, redirect to login here or handle globally
+      } else {
+        setMessage(err.response?.data?.message || '❌ Operation failed.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -269,7 +262,7 @@ export default function EditMemberModal({ isOpen, onClose, onSuccess, editMember
   );
 }
 
-// ✅ Download TXT helper function
+// Download helper
 function downloadMemberUpdateFile({ member_names, ikiminaName, location, member_code, member_pass, changes }) {
   const content = `
 Member: ${member_names}

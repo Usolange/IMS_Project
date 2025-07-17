@@ -25,10 +25,18 @@ export default function MemberTypeModal({ isOpen, onClose, onSuccess }) {
         member_type: typeName.trim(),
         type_desc: description.trim()
       });
+
       setMessage('✅ Type added successfully.');
       setTypeName('');
       setDescription('');
+
+      // Inform parent to refresh
       if (onSuccess) onSuccess();
+
+      // Delay a bit before closing
+      setTimeout(() => {
+        if (onClose) onClose();
+      }, 1000);
     } catch (err) {
       setMessage('❌ Failed to add type.');
     }
@@ -41,6 +49,7 @@ export default function MemberTypeModal({ isOpen, onClose, onSuccess }) {
       <div className="modal-form">
         <h3>Add Member Type</h3>
         {message && <div className="message">{message}</div>}
+
         <form onSubmit={handleSubmit}>
           <input
             type="text"

@@ -12,7 +12,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
     member_type_id: '',
   });
 
-  const [loading, setLoading] = useState(false);
   const [gudianMembers, setGudianMembers] = useState([]);
   const [memberTypes, setMemberTypes] = useState([]);
   const [message, setMessage] = useState('');
@@ -31,82 +30,96 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
   });
 
   useEffect(() => {
-    if (!isOpen) return;
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+    console.log('Loaded user:', user);
 
-    let cancelled = false;
-
-    async function fetchData() {
-      setLoading(true);
-      setMessage('');
-      setErrors({});
-      setGenerated(null);
-      setResendStatus('');
-      setResendLoading(false);
-      setIsSubmitting(false);
-
-      const user = JSON.parse(localStorage.getItem('user')) || {};
-
+    if (user) {
       setIkiminaData({
-        iki_id: user.id || user.iki_id || '',
+        iki_id: user.id || '',
         iki_name: user.name || '',
         cell: user.cell || '',
         village: user.village || '',
         sector: user.sector || '',
       });
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
 
+    setFormData({
+      member_names: '',
+      member_Nid: '',
+      gm_Nid: '',
+      member_phone_number: '',
+      member_email: '',
+      member_type_id: '',
+    });
+
+    const fetchDropdowns = async () => {
       try {
-        const [gudianRes, typesRes] = await Promise.all([
+        const [gudiansRes, typesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/gudianMembersRoutes/select', { params: { iki_id } }),
           axios.get('http://localhost:5000/api/memberTypeRoutes/select'),
         ]);
-        if (cancelled) return;
-
-        setGudianMembers(gudianRes.data || []);
-        setMemberTypes(typesRes.data || []);
-
-        setFormData({
-          member_names: '',
-          member_Nid: '',
-          gm_Nid: '',
-          member_phone_number: '',
-          member_email: '',
-          member_type_id: '',
-        });
-      } catch (e) {
-        console.error('Fetching data failed:', e);
-        if (cancelled) return;
-
-        setGudianMembers([]);
-        setMemberTypes([]);
-      } finally {
-        if (!cancelled) setLoading(false);
+        setGudianMembers(gudiansRes.data);
+        setMemberTypes(typesRes.data);
+      } catch (err) {
+        console.error('Dropdown fetch failed:', err);
       }
-    }
-
-    fetchData();
-
-    return () => {
-      cancelled = true;
     };
+
+    fetchDropdowns();
+
+    setErrors({});
+    setMessage('');
+    setGenerated(null);
+    setResendStatus('');
+    setResendLoading(false);
+    setIsSubmitting(false);
   }, [isOpen, iki_id]);
 
   const validate = () => {
     const errs = {};
-    if (!formData.member_names.trim()) errs.member_names = 'Full Name is required.';
-    if (!formData.member_Nid.trim() && !formData.gm_Nid.trim())
-      errs.member_Nid = errs.gm_Nid = 'Either National ID or Guardian is required.';
-    if (!/^\d{10}$/.test(formData.member_phone_number.trim()))
+
+    // Full name required
+    if (!formData.member_names.trim()) {
+      errs.member_names = 'Full Name is required.';
+    }
+
+    // National ID or Guardian required, validate National ID length if provided
+    if (!formData.member_Nid.trim() && !formData.gm_Nid) {
+      errs.member_Nid = 'Either National ID or Guardian is required.';
+      errs.gm_Nid = 'Either National ID or Guardian is required.';
+    } else if (formData.member_Nid.trim()) {
+      // Validate National ID length and numeric only
+      if (!/^\d{16}$/.test(formData.member_Nid.trim())) {
+        errs.member_Nid = 'National ID must be exactly 16 digits.';
+      }
+    }
+
+    // Phone number exactly 10 digits
+    if (!/^\d{10}$/.test(formData.member_phone_number.trim())) {
       errs.member_phone_number = 'Phone Number must be exactly 10 digits.';
+    }
+
+    // Email format validation (optional)
     if (
       formData.member_email.trim() &&
       !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.member_email.trim())
-    )
+    ) {
       errs.member_email = 'Invalid email format.';
-    if (!formData.member_type_id) errs.member_type_id = 'Please select a Member Type.';
+    }
+
+    // Member type required
+    if (!formData.member_type_id) {
+      errs.member_type_id = 'Please select a Member Type.';
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,58 +137,108 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
     link.href = URL.createObjectURL(blob);
     link.download = `member_credentials_${code}.txt`;
     link.click();
-    URL.revokeObjectURL(link.href);
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMessage('');
-  setResendStatus('');
-  setGenerated(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setResendStatus('');
+    setGenerated(null);
 
-  if (!validate()) {
-    setMessage('Please fix the errors below.');
-    return;
-  }
+    if (!validate()) {
+      setMessage('Please fix the errors below.');
+      return;
+    }
 
-  setIsSubmitting(true);
+    setIsSubmitting(true);
 
-  const payload = {
-    ...formData,
+    if (
+      !ikiminaData.iki_id ||
+      !ikiminaData.iki_name ||
+      !ikiminaData.cell ||
+      !ikiminaData.village ||
+      !ikiminaData.sector
+    ) {
+      setMessage('Missing Ikimina data.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const payload = {
+      member_names: formData.member_names,
+      member_Nid: formData.member_Nid,
+      gm_Nid: formData.gm_Nid,
+      member_phone_number: formData.member_phone_number,
+      member_email: formData.member_email,
+      member_type_id: formData.member_type_id,
+    };
+
+    const headers = {
+      'x-iki-id': ikiminaData.iki_id,
+      'x-iki-name': ikiminaData.iki_name,
+      'x-cell': ikiminaData.cell,
+      'x-village': ikiminaData.village,
+      'x-sector': ikiminaData.sector,
+    };
+
+    console.log('Submitting payload:', payload);
+    console.log('Submitting headers:', headers);
+
+    try {
+      const response = await axios.post(
+        'http://localhost:5000/api/membersInfoRoutes/newMember',
+        payload,
+        { headers }
+      );
+
+      setMessage(response.data.message || '✅ Member registered successfully.');
+      setGenerated({
+        member_code: response.data.data?.member_code,
+        member_pass: response.data.data?.member_pass,
+      });
+
+      downloadCredentials(response.data.data?.member_code, response.data.data?.member_pass);
+
+      // Trigger parent data refresh
+      onSuccess?.();
+
+      // Close modal after a short delay
+      setTimeout(() => {
+        onClose?.();
+      }, 1200); // Optional delay to show success message or credentials
+
+
+      downloadCredentials(response.data.data?.member_code, response.data.data?.member_pass);
+      onSuccess?.();
+    } catch (err) {
+      // Log detailed error info
+      console.error('Member registration failed:', err);
+
+      // Extract backend error message if available
+      const serverMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        '❌ Operation failed.';
+
+      // Optionally, handle specific status codes
+      if (err.response?.status === 409) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          member_phone_number: 'Phone number or National ID already registered.',
+        }));
+      } else if (err.response?.status === 400) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          member_type_id: 'Invalid member type selected.',
+        }));
+      }
+
+      setMessage(serverMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const headers = {
-    'x-iki-id': ikiminaData.iki_id,
-    'x-iki-name': ikiminaData.iki_name,
-    'x-cell': ikiminaData.cell,
-    'x-village': ikiminaData.village,
-    'x-sector': ikiminaData.sector,
-  };
-
-  console.log("Submitting payload:", payload);
-  console.log("Headers:", headers);
-
-  try {
-    const res = await axios.post(
-      'http://localhost:5000/api/membersInfoRoutes/newMember',
-      payload,
-      { headers }
-    );
-
-    setMessage(res.data.message || '✅ Member registered successfully.');
-    setGenerated({
-      member_code: res.data.data?.member_code,
-      member_pass: res.data.data?.member_pass,
-    });
-    downloadCredentials(res.data.data?.member_code, res.data.data?.member_pass);
-    onSuccess?.();
-  } catch (err) {
-    console.error('Submission failed:', err);
-    setMessage(err.response?.data?.message || '❌ Operation failed.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
 
   const handleResendSMS = async () => {
@@ -226,20 +289,34 @@ const handleSubmit = async (e) => {
         <h3>➕ Register Member</h3>
 
         <div className="location-info" style={{ marginBottom: '1rem' }}>
-          <p><strong>Ikimina Name:</strong> {ikiminaData.iki_name || 'Not set'}</p>
-          <p><strong>Cell:</strong> {ikiminaData.cell || 'Not set'}</p>
-          <p><strong>Village:</strong> {ikiminaData.village || 'Not set'}</p>
-          <p><strong>Sector:</strong> {ikiminaData.sector || 'Not set'}</p>
+          <p>
+            <strong>ID:</strong> {ikiminaData.iki_id || 'Not set'}
+          </p>
+          <p>
+            <strong>Ikimina Name:</strong> {ikiminaData.iki_name || 'Not set'}
+          </p>
+          <p>
+            <strong>Cell:</strong> {ikiminaData.cell || 'Not set'}
+          </p>
+          <p>
+            <strong>Village:</strong> {ikiminaData.village || 'Not set'}
+          </p>
+          <p>
+            <strong>Sector:</strong> {ikiminaData.sector || 'Not set'}
+          </p>
         </div>
 
-        {loading && <p>Loading...</p>}
         {message && <div className="form-msg">{message}</div>}
 
         {generated && (
           <div className="generated-box">
             <h4>🎉 Access Credentials</h4>
-            <p><strong>Code:</strong> {generated.member_code}</p>
-            <p><strong>Password:</strong> {generated.member_pass}</p>
+            <p>
+              <strong>Code:</strong> {generated.member_code}
+            </p>
+            <p>
+              <strong>Password:</strong> {generated.member_pass}
+            </p>
             <p className="note">⚠️ Save or download these credentials for the member.</p>
 
             <div style={{ marginTop: '1rem' }}>
@@ -251,14 +328,8 @@ const handleSubmit = async (e) => {
                   {resendLoading ? 'Sending Email...' : 'Resend Email'}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => downloadCredentials(generated.member_code, generated.member_pass)}
-                style={{ marginLeft: '8px' }}
-              >
-                Download Credentials
-              </button>
             </div>
+
             {resendStatus && <p style={{ marginTop: '0.5rem' }}>{resendStatus}</p>}
           </div>
         )}
@@ -279,7 +350,6 @@ const handleSubmit = async (e) => {
             placeholder="National ID"
             value={formData.member_Nid}
             onChange={handleChange}
-            disabled={formData.gm_Nid.trim() !== ''}
           />
           <small>If National ID is empty, select Guardian.</small>
           {errors.member_Nid && <div className="error">{errors.member_Nid}</div>}
@@ -317,11 +387,7 @@ const handleSubmit = async (e) => {
           />
           {errors.member_email && <div className="error">{errors.member_email}</div>}
 
-          <select
-            name="member_type_id"
-            value={formData.member_type_id}
-            onChange={handleChange}
-          >
+          <select name="member_type_id" value={formData.member_type_id} onChange={handleChange}>
             <option value="">Select Member Type</option>
             {memberTypes.map((type) => (
               <option key={type.member_type_id} value={type.member_type_id}>

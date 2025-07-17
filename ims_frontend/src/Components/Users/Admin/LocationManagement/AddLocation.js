@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import '../../../CSS/AddLocation.css';
 import axios from 'axios';
 
-export default function LocationSelector({ onSelect }) {
+export default function AddLocation({ onSelect }) {
   const [selectedProvince, setSelectedProvince] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
@@ -156,14 +156,14 @@ export default function LocationSelector({ onSelect }) {
 
   return (
     <form className="location-selector-form" onSubmit={handleSubmit} noValidate>
-       <div className="form-group">
+      <div className="form-group">
         <label>Logged in user: <strong>{loggedUserName}</strong></label>
       </div>
       <div className="flex-end">
-        <a href="/FrequencyCategoryManagement" className="btn-add-category">+ Add Category</a>
+        <Link to="/FrequencyCategoryManagement" className="btn-add-category">+ Add Category</Link>
       </div>
 
-       <div className="form-group">
+      <div className="form-group">
         <input
           type="text"
           name="ikiminaName"
@@ -174,7 +174,7 @@ export default function LocationSelector({ onSelect }) {
           aria-describedby="ikiminaName-error"
         />
         {errorMessages.ikiminaName && (
-          <p className="field-error">{errorMessages.ikiminaName}</p>
+          <p className="field-error" id="ikiminaName-error">{errorMessages.ikiminaName}</p>
         )}
       </div>
 
@@ -183,6 +183,7 @@ export default function LocationSelector({ onSelect }) {
           value={selectedCategoryId}
           onChange={e => setSelectedCategoryId(e.target.value)}
           className="form-select"
+          aria-describedby="category-error"
         >
           <option value="">Select Category</option>
           {categories.map(cat => (
@@ -191,7 +192,7 @@ export default function LocationSelector({ onSelect }) {
             </option>
           ))}
         </select>
-        {errorMessages.category && <p className="field-error">{errorMessages.category}</p>}
+        {errorMessages.category && <p className="field-error" id="category-error">{errorMessages.category}</p>}
       </div>
 
       {[{
@@ -216,13 +217,14 @@ export default function LocationSelector({ onSelect }) {
             value={value}
             onChange={e => set(e.target.value)}
             disabled={disabled}
+            aria-describedby={`${label.toLowerCase()}-error`}
           >
             <option value="">{`Select ${label}`}</option>
             {list.map(item => (
               <option key={item.name} value={item.name}>{item.name}</option>
             ))}
           </select>
-          {error && <p className="field-error">{error}</p>}
+          {error && <p className="field-error" id={`${label.toLowerCase()}-error`}>{error}</p>}
         </div>
       ))}
 

@@ -1,130 +1,119 @@
 /* AddLocation.css */
 
 .location-selector-form {
-  max-width: 7000vh;
-  margin-top: 10%;
+  max-width: 480px;
   margin: 2rem auto;
-  padding: 2rem;
-  background: fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
 }
 
-.location-selector-form h2 {
+.location-selector-form .form-group {
   margin-bottom: 1rem;
-  font-size: 1.5rem;
-  font-weight: bold;
+}
+
+.location-selector-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
   color: #333;
 }
 
-.form-input,
-.form-select {
+.location-selector-form .form-input,
+.location-selector-form .form-select {
   width: 100%;
-  padding: 10px 12px;
-  margin-top: 4px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.2s;
 }
 
-.form-input:focus,
-.form-select:focus {
-  border-color: #007bff;
+.location-selector-form .form-input:focus,
+.location-selector-form .form-select:focus {
+  border-color: #3b82f6;
   outline: none;
-  box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
+  box-shadow: 0 0 4px rgba(59,130,246,0.5);
 }
 
-.field-error {
-  color: #d32f2f;
+.location-selector-form .form-select:disabled {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.location-selector-form .field-error {
+  margin-top: 0.25rem;
+  color: #dc2626;
   font-size: 0.875rem;
-  margin-top: -10px;
-  margin-bottom: 12px;
+  font-weight: 600;
 }
 
-.buttons-wrapper {
+.location-selector-form .buttons-wrapper {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1.5rem;
 }
 
-.form-button {
-  padding: 10px 16px;
-  font-size: 1rem;
-  font-weight: 500;
+.location-selector-form .form-button {
+  padding: 0.55rem 1.25rem;
+  font-weight: 700;
+  border-radius: 5px;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
 }
 
-.submit-button {
-  background-color: #007bff;
+.location-selector-form .submit-button {
+  background-color: #2563eb;
   color: white;
 }
 
-.submit-button:hover {
-  background-color: #0056b3;
+.location-selector-form .submit-button:hover {
+  background-color: #1e40af;
 }
 
-.reset-button {
-  background-color: #6c757d;
+.location-selector-form .reset-button {
+  background-color: #6b7280;
   color: white;
 }
 
-.reset-button:hover {
-  background-color: #5a6268;
+.location-selector-form .reset-button:hover {
+  background-color: #4b5563;
 }
-.flex-end {
-  background: #f6f4f4;
 
-}
-.btn-add-category {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: #28a745;
-  font-weight: bold;
-  text-decoration:double;
-}
-.form-link {
-  font-size: 1rem;
-  color: #007bff;
+.location-selector-form .form-link {
+  color: #2563eb;
+  font-weight: 600;
   text-decoration: none;
-  padding: 10px 0;
+  user-select: none;
+  white-space: nowrap;
 }
 
-.form-link:hover {
+.location-selector-form .form-link:hover {
   text-decoration: underline;
 }
 
-.btn-add-location {
-  display: inline-block;
+.location-selector-form .flex-end {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 1rem;
-  color: #28a745;
-  font-weight: bold;
+}
+
+.location-selector-form .btn-add-category {
+  background-color: #10b981;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  border-radius: 5px;
   text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s;
 }
 
-.btn-add-location:hover {
-  text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 600px) {
-  .location-selector-form {
-    padding: 1rem;
-  }
-
-  .form-button,
-  .form-link {
-    width: 100%;
-    text-align: center;
-  }
-
-  .buttons-wrapper {
-    flex-direction: column;
-    gap: 8px;
-  }
+.location-selector-form .btn-add-category:hover {
+  background-color: #047857;
 }
