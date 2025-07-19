@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { sql, poolConnect, pool } = require('../config/db');
+const { pool, sql, poolConnect } = require('../config/db');
+
+// Helper async function to run query with inputs and return recordset
+async function queryDB(query, inputs = {}) {
+  await poolConnect;
+  const request = pool.request();
+  for (const [key, value] of Object.entries(inputs)) {
+    request.input(key, value);
+  }
+  const result = await request.query(query);
+  return result.recordset;
+}
 
 // Middleware to check x-sad-id header for protected routes
 const authenticateSadId = (req, res, next) => {
@@ -12,17 +23,65 @@ const authenticateSadId = (req, res, next) => {
   next();
 };
 
-// Helper async function to run query with inputs and return recordset
-async function queryDB(query, inputs = {}) {
+
+async function runQuery(query, params = []) {
+  await poolConnect;
   const request = pool.request();
-  for (const [key, value] of Object.entries(inputs)) {
-    request.input(key, value);
-  }
+  params.forEach(({ name, type, value }) => {
+    request.input(name, type, value);
+  });
   const result = await request.query(query);
   return result.recordset;
 }
 
-// Create Ikimina_info
+// GET all Ikimina_info created by the current admin (with proper time formatting)
+router.get('/select', async (req, res) => {
+  const sad_id = req.query.sad_id;
+
+  if (!sad_id) {
+    return res.status(400).json({ message: 'Admin ID (sad_id) is required' });
+  }
+
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('sad_id', sql.Int, sad_id);
+
+    const result = await request.query(`
+      SELECT 
+        i.iki_id,
+        i.iki_name,
+        i.iki_email,
+        i.iki_username,
+        i.iki_password,
+        i.location_id,
+        i.f_id,
+        i.dayOfEvent,
+        CONVERT(VARCHAR(5), i.timeOfEvent, 108) AS timeOfEvent,  -- returns "HH:mm"
+        i.numberOfEvents,
+        i.weekly_saving_days,
+        i.monthly_saving_days,
+        i.created_at,
+        l.cell,
+        l.village,
+        f.f_category AS category_name
+      FROM Ikimina_info i
+      INNER JOIN ikimina_locations l ON i.location_id = l.location_id
+      INNER JOIN frequency_category_info f ON i.f_id = f.f_id
+      WHERE l.sad_id = @sad_id
+    `);
+
+    console.log('Fetched Ikimina_info (formatted):', result.recordset);
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('Error fetching Ikimina_info by sad_id:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+// CREATE new Ikimina
 router.post('/newIkimina', async (req, res) => {
   const {
     iki_name, iki_email, iki_username, iki_password,
@@ -49,10 +108,10 @@ router.post('/newIkimina', async (req, res) => {
   }
 
   try {
-    // Check if location belongs to admin
+    // Check location ownership
     const locationRows = await queryDB(
       `SELECT ikimina_name FROM ikimina_locations WHERE location_id = @location_id AND sad_id = @sad_id`,
-      { location_id: location_id, sad_id }
+      { location_id, sad_id }
     );
 
     if (locationRows.length === 0) {
@@ -141,37 +200,15 @@ router.post('/newIkimina', async (req, res) => {
     res.status(201).json({ message: 'Ikimina was created successfully.' });
   } catch (err) {
     console.error('Database error while creating Ikimina:', err);
-    if (err?.number === 2627) { // Unique constraint violation in MSSQL
+    if (err?.number === 2627) {
       return res.status(409).json({ message: 'One or more fields must be unique and already exist in the system.' });
     }
     res.status(500).json({ message: 'Something went wrong while saving Ikimina. Please try again.' });
   }
 });
 
-// List all Ikimina_info created by a specific admin
-router.get('/select', async (req, res) => {
-  const sad_id = req.query.sad_id;
-  if (!sad_id) {
-    return res.status(400).json({ message: 'Admin ID (sad_id) is required' });
-  }
 
-  try {
-    const rows = await queryDB(`
-      SELECT i.*, l.cell, l.village, f.f_category AS category_name 
-      FROM Ikimina_info i 
-      JOIN ikimina_locations l ON i.location_id = l.location_id	
-      JOIN frequency_category_info f ON l.f_id = f.f_id 
-      WHERE l.sad_id = @sad_id`,
-      { sad_id });
-
-    res.json(rows);
-  } catch (err) {
-    console.error('Error fetching Ikimina by user:', err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// UPDATE Ikimina_info
+// UPDATE Ikimina
 router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
   const iki_id = req.params.iki_id;
   const sad_id = req.sad_id;
@@ -196,10 +233,6 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
 
   if (missingFields.length > 0) {
     return res.status(400).json({ message: `Missing fields: ${missingFields.join(', ')}` });
-  }
-
-  if (!weekly_saving_days && !monthly_saving_days) {
-    return res.status(400).json({ message: 'Either weekly saving days or monthly saving days must be provided.' });
   }
 
   let weeklySavingDaysJson = null;
@@ -258,7 +291,7 @@ router.put('/update/:iki_id', authenticateSadId, async (req, res) => {
   }
 });
 
-// DELETE Ikimina_info
+// DELETE Ikimina
 router.delete('/delete/:iki_id', authenticateSadId, async (req, res) => {
   const iki_id = req.params.iki_id;
   const sad_id = req.sad_id;

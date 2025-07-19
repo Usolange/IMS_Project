@@ -73,13 +73,14 @@ const MonthlyScheduleForm = ({ f_id, onClose }) => {
     setSaving(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
+      const formattedTime = time.length === 5 ? `${time}:00` : time;
       await axios.post(
         'http://localhost:5000/api/monthlyTimeRoutes/newSchedule',
         {
           location_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
           selected_dates: selectedDates,
-          mtime_time: time,
+          mtime_time: formattedTime,
           f_id,
         },
         {

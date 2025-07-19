@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+
 const PAGE_SIZE = 10;
 
 const SlotManager = ({ iki_id: propIkiId }) => {
   const [slots, setSlots] = useState([]);
-  const [cycle, setCycle] = useState(null);
+  const [round, setRound] = useState(null);
   const [message, setMessage] = useState('');
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [loadingCycle, setLoadingCycle] = useState(false);
+  const [loadingRound, setLoadingRound] = useState(false);
   const [user, setUser] = useState({ id: null, name: null });
   const [page, setPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [slotsExist, setSlotsExist] = useState(false); 
+  const [toastError, setToastError] = useState('');
 
-  // Read user info from localStorage
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -35,9 +38,14 @@ const SlotManager = ({ iki_id: propIkiId }) => {
     if (!iki_id) return;
     setLoadingSlots(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/${iki_id}`);
-      setSlots(res.data);
-      setPage(1); // reset page when new data arrives
+      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/selectAllSlots/${iki_id}`);
+      const formattedSlots = res.data.map(slot => ({
+        ...slot,
+        slot_time: slot.slot_time?.slice(0, 5) || '00:00',
+      }));
+      setSlots(formattedSlots);
+      setSlotsExist(formattedSlots.length > 0); // ✅ persist known state
+      setPage(1);
     } catch {
       setMessage('Failed to fetch slots');
     } finally {
@@ -45,164 +53,143 @@ const SlotManager = ({ iki_id: propIkiId }) => {
     }
   };
 
-  const fetchCycle = async () => {
+  const fetchRound = async () => {
     if (!iki_id) return;
-    setLoadingCycle(true);
+    setLoadingRound(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/metadata/${iki_id}`);
-      setCycle(res.data || null);
+      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/roundMetadata/${iki_id}`);
+      setRound(res.data || null);
     } catch {
-      setMessage('Failed to fetch cycle info');
+      setMessage('Failed to fetch round info');
     } finally {
-      setLoadingCycle(false);
+      setLoadingRound(false);
     }
   };
 
-  const handleGenerate = async () => {
-    if (!iki_id) return;
-    setMessage('Generating slots...');
-    try {
-      await axios.post(`http://localhost:5000/api/slotsManagementRoutes/generate/${iki_id}`);
-      setMessage('Slots generated successfully');
-      fetchCycle();
-      fetchSlots();
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to generate slots');
-    }
-  };
+const handleGenerate = async () => {
+  if (!iki_id) return;
+  setMessage('Generating slots...');
+  setToastError('');
+  try {
+    await axios.post(`http://localhost:5000/api/slotsManagementRoutes/newSlots/${iki_id}`);
+    setMessage('Slots generated successfully');
+    fetchRound();
+    fetchSlots();
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || 'Failed to generate slots';
+    setMessage(errorMsg);
+    setToastError(errorMsg);
+    // Clear toast after 4 seconds
+    setTimeout(() => setToastError(''), 4000);
+  }
+};
 
-  const handleReset = async () => {
-    if (!iki_id) return;
-    if (!window.confirm('Are you sure you want to reset all slots?')) return;
-    setMessage('Resetting slots...');
-    try {
-      await axios.put(`http://localhost:5000/api/slotsManagementRoutes/reset/${iki_id}`);
-      setMessage('Slots reset successfully');
-      fetchCycle();
-      fetchSlots();
-    } catch (err) {
-      setMessage(err.response?.data?.message || 'Failed to reset slots');
-    }
-  };
+
+const handleReset = async () => {
+  if (!iki_id) return;
+  if (!window.confirm('Are you sure you want to reset all slots?')) return;
+  setMessage('Resetting slots...');
+  try {
+    const res = await axios.put(`http://localhost:5000/api/slotsManagementRoutes/reset/${iki_id}`);
+    setMessage(res.data.message);
+    fetchRound();
+    fetchSlots();
+  } catch (err) {
+    setMessage(err.response?.data?.message || 'Failed to reset slots');
+  }
+};
+
 
   useEffect(() => {
     if (iki_id) {
-      fetchCycle();
+      fetchRound();
       fetchSlots();
     }
   }, [iki_id]);
 
-  // Date today as YYYY-MM-DD string
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  // Filter slots by status
   const filteredSlots = slots.filter(slot => {
     if (filterStatus === 'all') return true;
-    if (filterStatus === 'passed') return slot.slot_date < todayStr;
-    if (filterStatus === 'future') return slot.slot_date >= todayStr;
+    if (filterStatus === 'passed') return slot.slot_status === 'passed';
+    if (filterStatus === 'upcoming') return slot.slot_status === 'upcoming';
+    if (filterStatus === 'current') return slot.slot_status === 'pending';
     return true;
   });
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredSlots.length / PAGE_SIZE);
   const paginatedSlots = filteredSlots.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Passed and remaining counts based on all slots
-  const passedSlotsCount = slots.filter(slot => slot.slot_date < todayStr).length;
+  const passedSlotsCount = slots.filter(slot => slot.slot_status === 'passed').length;
   const remainingSlotsCount = slots.length - passedSlotsCount;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow max-w-4xl mx-auto">
       <h2 className="text-xl font-semibold text-blue-700 mb-4">Manage Saving Slots</h2>
 
-      {/* User info */}
       {user.name && user.id ? (
         <div className="mb-4 p-4 border rounded bg-gray-100 text-gray-800">
-          <p>
-            <strong>User:</strong> {user.name} (ID: {user.id})
-          </p>
+          <p><strong>User:</strong> {user.name} (ID: {user.id})</p>
         </div>
       ) : (
         <p className="mb-4 text-red-500">User info not found in localStorage.</p>
       )}
 
-      {/* Cycle info */}
-      {loadingCycle ? (
-        <p>Loading cycle info...</p>
-      ) : cycle && cycle.cycle_start ? (
+      {loadingRound ? (
+        <p>Loading round info...</p>
+      ) : round && round.start_date ? (
         <div className="mb-4 p-4 border rounded bg-gray-50">
-          <p>
-            <strong>Current Cycle:</strong> {new Date(cycle.cycle_start).toLocaleDateString()} —{' '}
-            {new Date(cycle.cycle_end).toLocaleDateString()}
-          </p>
-          <p>
-            <strong>Status:</strong>{' '}
-            {cycle.is_cycle_active ? (
-              <span className="text-green-600 font-semibold">Active</span>
-            ) : (
-              <span className="text-gray-600">Inactive</span>
-            )}
-          </p>
-          <p>
-            <strong>Total Slots:</strong> {cycle.total_slots}
-          </p>
-          <p>
-            <strong>Slots Passed:</strong> {passedSlotsCount}
-          </p>
-          <p>
-            <strong>Slots Remaining:</strong> {remainingSlotsCount}
-          </p>
+          <p><strong>Current Round:</strong> {new Date(round.start_date).toLocaleDateString()} — {new Date(round.end_date).toLocaleDateString()}</p>
+          <p><strong>Status:</strong> {round.round_status === 'active' ? <span className="text-green-600 font-semibold">Active</span> : <span className="text-gray-600 capitalize">{round.round_status}</span>}</p>
+          <p><strong>Total Slots:</strong> {round.total_slots}</p>
+          <p><strong>Slots Passed:</strong> {passedSlotsCount}</p>
+          <p><strong>Slots Remaining:</strong> {remainingSlotsCount}</p>
         </div>
       ) : (
-        <p>No active or past saving cycle found.</p>
+        <p>No active or upcoming round found.</p>
       )}
 
-      {/* Action buttons */}
       <div className="flex space-x-4 mb-4">
         <button
           onClick={handleGenerate}
-          disabled={cycle?.is_cycle_active}
+          disabled={slotsExist}
           className={`px-4 py-2 rounded text-white ${
-            cycle?.is_cycle_active ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+            slotsExist ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
           }`}
         >
           Generate Slots
         </button>
         <button
           onClick={handleReset}
-          disabled={!cycle?.is_cycle_active}
+          disabled={round?.round_status !== 'active'}
           className={`px-4 py-2 rounded text-white ${
-            cycle?.is_cycle_active ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'
+            round?.round_status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
           Reset Slots
         </button>
+        {toastError && <div className="toast-error">{toastError}</div>}
+
       </div>
 
-      {/* Filter dropdown */}
       <div className="mb-4">
-        <label htmlFor="filterStatus" className="mr-2 font-medium">
-          Filter slots by status:
-        </label>
+        <label htmlFor="filterStatus" className="mr-2 font-medium">Filter slots by status:</label>
         <select
           id="filterStatus"
           value={filterStatus}
           onChange={(e) => {
             setFilterStatus(e.target.value);
-            setPage(1); // reset to page 1 on filter change
+            setPage(1);
           }}
           className="border rounded px-2 py-1"
         >
           <option value="all">All</option>
           <option value="passed">Passed</option>
-          <option value="future">Future</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="current">Current Saving Day</option>
         </select>
       </div>
 
-      {/* Message */}
       {message && <p className="text-sm text-gray-600 mb-4">{message}</p>}
 
-      {/* Slots table */}
       {loadingSlots ? (
         <p>Loading slots...</p>
       ) : paginatedSlots.length > 0 ? (
@@ -219,14 +206,9 @@ const SlotManager = ({ iki_id: propIkiId }) => {
             </thead>
             <tbody>
               {paginatedSlots.map((slot, i) => {
-                const isPassed = slot.slot_date < todayStr;
+                const isPassed = slot.slot_status === 'passed';
                 return (
-                  <tr
-                    key={slot.slot_id}
-                    className={`border-b ${
-                      isPassed ? 'bg-gray-100 text-gray-500' : ''
-                    }`}
-                  >
+                  <tr key={slot.slot_id} className={`border-b ${isPassed ? 'bg-gray-100 text-gray-500' : ''}`}>
                     <td className="p-2 border">{(page - 1) * PAGE_SIZE + i + 1}</td>
                     <td className="p-2 border">{slot.slot_date}</td>
                     <td className="p-2 border">{slot.slot_time}</td>
@@ -238,7 +220,6 @@ const SlotManager = ({ iki_id: propIkiId }) => {
             </tbody>
           </table>
 
-          {/* Pagination controls */}
           <div className="flex justify-between items-center mt-3">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -249,9 +230,7 @@ const SlotManager = ({ iki_id: propIkiId }) => {
             >
               Prev
             </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
+            <span>Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}

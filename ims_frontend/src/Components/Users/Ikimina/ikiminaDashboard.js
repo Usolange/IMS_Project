@@ -54,7 +54,17 @@ export default function IkiminaDashboard() {
   );
 
   const exportToExcel = () => {
-    const dataToExport = filteredMembers.map(({ member_id, ...rest }) => rest);
+    if (filteredMembers.length === 0) {
+      alert('No data to export.');
+      return;
+    }
+
+    // Remove member_id and format phone to string (if needed)
+    const dataToExport = filteredMembers.map(({ member_id, ...rest }) => ({
+      ...rest,
+      member_phone_number: rest.member_phone_number?.toString() || '',
+    }));
+
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Members');
@@ -65,7 +75,7 @@ export default function IkiminaDashboard() {
     <div className="dashboard-container">
       <h2 className="dashboard-title">👥 Members in Your Ikimina</h2>
 
-      {error && <div className="dashboard-error">{error}</div>}
+      {error && <div className="dashboard-error" role="alert">{error}</div>}
 
       <div className="dashboard-actions">
         <input
@@ -74,20 +84,27 @@ export default function IkiminaDashboard() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="dashboard-search"
+          aria-label="Search members"
         />
-        <button className="dashboard-export-btn" onClick={exportToExcel}>
+        <button
+          className="dashboard-export-btn"
+          onClick={exportToExcel}
+          disabled={filteredMembers.length === 0}
+          aria-disabled={filteredMembers.length === 0}
+          title={filteredMembers.length === 0 ? 'No data to export' : 'Export to Excel'}
+        >
           📥 Export to Excel
         </button>
       </div>
 
       {loading ? (
-        <div className="dashboard-loading">Loading members...</div>
+        <div className="dashboard-loading" aria-live="polite">Loading members...</div>
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" role="region" aria-label="Members Table">
           <table className="dashboard-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th>Number</th>
                 <th>Names</th>
                 <th>National ID</th>
                 <th>Guardian</th>
@@ -96,6 +113,8 @@ export default function IkiminaDashboard() {
                 <th>Type</th>
                 <th>Access Code</th>
                 <th>Ikimina</th>
+                <th>Member Status</th>
+
               </tr>
             </thead>
             <tbody>
@@ -111,11 +130,14 @@ export default function IkiminaDashboard() {
                     <td>{m.member_type || 'Unknown'}</td>
                     <td>{m.member_code || '—'}</td>
                     <td>{m.iki_name || '—'}</td>
+                    <td>{m.m_status || '—'}</td>
+
+
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="no-members">
+                  <td colSpan="9" className="no-members" role="row">
                     No members found.
                   </td>
                 </tr>

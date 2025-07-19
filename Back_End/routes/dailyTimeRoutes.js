@@ -2,40 +2,47 @@ const express = require('express');
 const router = express.Router();
 const { pool, sql, poolConnect } = require('../config/db');
 
-// Helper to run queries with parameters
+function normalizeTimeString(value) {
+  if (!value) return null;
+  // Accept HH:mm or HH:mm:ss exactly
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
+  if (!timeRegex.test(value)) return null;
+
+  const parts = value.split(':');
+  const hh = parts[0];
+  const mm = parts[1];
+  const ss = parts[2] || '00'; // If no seconds, add '00'
+  return `${hh}:${mm}:${ss}`;
+}
+
+function isTimeString(value) {
+  return typeof value === 'string' && /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/.test(value);
+}
+
 async function queryDB(query, inputs = {}) {
+  await poolConnect;
   const request = pool.request();
+
   for (const [key, value] of Object.entries(inputs)) {
-    request.input(key, value);
+    if (typeof value === 'number') {
+      request.input(key, sql.Int, value);
+    } else if (isTimeString(value)) {
+      const normalized = normalizeTimeString(value);
+      if (!normalized) throw new Error(`Invalid time format for parameter ${key}: ${value}`);
+      // Pass as NVARCHAR(8) string instead of sql.Time
+      request.input(key, sql.NVarChar(8), normalized);
+    } else {
+      request.input(key, sql.NVarChar(sql.MAX), value);
+    }
   }
+
   return request.query(query);
 }
 
+
 /**
- * GET all daily times created by the logged-in user
+ * POST new daily schedule
  */
-router.get('/daily', async (req, res) => {
-  const userId = req.query.sad_id;
-
-  if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized: user ID missing' });
-  }
-
-  try {
-    const query = `
-      SELECT d.*
-      FROM ik_daily_time_info d
-      JOIN frequency_category_info c ON d.f_id = c.f_id
-      WHERE c.sad_id = @userId
-    `;
-    const result = await queryDB(query, { userId });
-    res.json(result.recordset);
-  } catch (error) {
-    console.error('Error fetching daily times:', error.message);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
 router.post('/newSchedule', async (req, res) => {
   const userId = req.headers['x-sad-id'];
   const { ikimina_name, dtime_time, f_id, location_id } = req.body;
@@ -46,7 +53,7 @@ router.post('/newSchedule', async (req, res) => {
   }
 
   try {
-    // Verify ownership of category
+    // Verify ownership of frequency category
     const categoryCheckQuery = 'SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @userId';
     const categoryResult = await queryDB(categoryCheckQuery, { f_id, userId });
 
@@ -54,21 +61,21 @@ router.post('/newSchedule', async (req, res) => {
       return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
     }
 
-    // Check if schedule exists in any frequency tables for location
-    const dailyCheck = await queryDB('SELECT 1 FROM ik_daily_time_info WHERE location_id = @location_id', { location_id });
-    const weeklyCheck = await queryDB('SELECT 1 FROM ik_weekly_time_info WHERE location_id = @location_id', { location_id });
-    const monthlyCheck = await queryDB('SELECT 1 FROM ik_monthly_time_info WHERE location_id = @location_id', { location_id });
+    // Check if schedule exists in any frequency tables for this location
+    const dailyCheck = await queryDB('SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id', { location_id });
+    const weeklyCheck = await queryDB('SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id', { location_id });
+    const monthlyCheck = await queryDB('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id', { location_id });
 
     if (dailyCheck.recordset.length > 0 || weeklyCheck.recordset.length > 0 || monthlyCheck.recordset.length > 0) {
       return res.status(409).json({ message: 'This Ikimina already has a schedule in daily, weekly, or monthly.' });
     }
 
-    // Ensure no duplicate ikimina name in same frequency category
-    const existingCheckQuery = 'SELECT * FROM ik_daily_time_info WHERE location_id = @location_id AND f_id = @f_id';
-    const existingResult = await queryDB(existingCheckQuery, { location_id, f_id });
+    // Ensure no duplicate ikimina_name in same frequency category
+    const existingCheckQuery = 'SELECT TOP 1 1 FROM ik_daily_time_info WHERE ikimina_name = @ikimina_name AND f_id = @f_id';
+    const existingResult = await queryDB(existingCheckQuery, { ikimina_name: ikimina_name.trim(), f_id });
 
     if (existingResult.recordset.length > 0) {
-      return res.status(409).json({ message: 'Ikimina already exists for this frequency category.' });
+      return res.status(409).json({ message: 'Ikimina name already exists for this frequency category.' });
     }
 
     // Insert new daily schedule
@@ -76,7 +83,7 @@ router.post('/newSchedule', async (req, res) => {
       INSERT INTO ik_daily_time_info (ikimina_name, dtime_time, f_id, location_id)
       VALUES (@ikimina_name, @dtime_time, @f_id, @location_id)
     `;
-    await queryDB(insertQuery, { ikimina_name, dtime_time, f_id, location_id });
+    await queryDB(insertQuery, { ikimina_name: ikimina_name.trim(), dtime_time, f_id, location_id });
 
     res.status(201).json({ message: 'Daily time saved successfully.' });
   } catch (error) {
@@ -86,18 +93,16 @@ router.post('/newSchedule', async (req, res) => {
 });
 
 /**
- * PUT: Update existing daily schedule
- * - Validates category ownership
- * - Prevents name duplication
+ * PUT update daily schedule by id
  */
 router.put('/:id', async (req, res) => {
   const userId = req.headers['x-sad-id'];
-  const { ikimina_name, dtime_time, f_id } = req.body;
+  const { ikimina_name, dtime_time, f_id, location_id } = req.body;
   const { id } = req.params;
 
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-  if (!dtime_time || !f_id) {
-    return res.status(400).json({ message: 'Missing dtime_time or f_id' });
+  if (!ikimina_name || !dtime_time || !f_id || !location_id) {
+    return res.status(400).json({ message: 'Missing required fields: ikimina_name, dtime_time, f_id, or location_id' });
   }
 
   try {
@@ -117,26 +122,33 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Daily time not found or unauthorized' });
     }
 
-    // Prevent duplicate names for the same category
-    if (ikimina_name) {
-      const duplicateCheck = `
-        SELECT * FROM ik_daily_time_info 
-        WHERE ikimina_name = @ikimina_name AND f_id = @f_id AND dtime_id != @id
-      `;
-      const duplicateResult = await queryDB(duplicateCheck, { ikimina_name, f_id, id });
+    // Prevent duplicate ikimina_name for the same category (exclude current record)
+    const duplicateCheck = `
+      SELECT TOP 1 1 FROM ik_daily_time_info
+      WHERE ikimina_name = @ikimina_name AND f_id = @f_id AND dtime_id != @id
+    `;
+    const duplicateResult = await queryDB(duplicateCheck, { ikimina_name: ikimina_name.trim(), f_id, id });
 
-      if (duplicateResult.recordset.length > 0) {
-        return res.status(409).json({ message: 'Ikimina name already exists for this frequency category' });
-      }
+    if (duplicateResult.recordset.length > 0) {
+      return res.status(409).json({ message: 'Ikimina name already exists for this frequency category' });
+    }
+
+    // Check if location_id is already used in other schedules (except this record)
+    const dailyLocationCheck = await queryDB('SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id AND dtime_id != @id', { location_id, id });
+    const weeklyLocationCheck = await queryDB('SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id', { location_id });
+    const monthlyLocationCheck = await queryDB('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id', { location_id });
+
+    if (dailyLocationCheck.recordset.length > 0 || weeklyLocationCheck.recordset.length > 0 || monthlyLocationCheck.recordset.length > 0) {
+      return res.status(409).json({ message: 'This Ikimina location already has a schedule in daily, weekly, or monthly.' });
     }
 
     // Update daily schedule
     const updateQuery = `
-      UPDATE ik_daily_time_info 
-      SET ikimina_name = @ikimina_name, dtime_time = @dtime_time, f_id = @f_id 
+      UPDATE ik_daily_time_info
+      SET ikimina_name = @ikimina_name, dtime_time = @dtime_time, f_id = @f_id, location_id = @location_id
       WHERE dtime_id = @id
     `;
-    await queryDB(updateQuery, { ikimina_name, dtime_time, f_id, id });
+    await queryDB(updateQuery, { ikimina_name: ikimina_name.trim(), dtime_time, f_id, location_id, id });
 
     res.status(200).json({ message: 'Daily time updated successfully.' });
   } catch (error) {

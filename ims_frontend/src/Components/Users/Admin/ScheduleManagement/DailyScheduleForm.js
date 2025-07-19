@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../../../CSS/DailyScheduleForm.css'
+import '../../../CSS/DailyScheduleForm.css';
 
 const DailyScheduleForm = ({ f_id, onClose }) => {
   const [ikiminaList, setIkiminaList] = useState([]);
@@ -50,6 +50,7 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
     setSelectedIkiminaName(selected?.ikimina_name || '');
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -58,15 +59,18 @@ const DailyScheduleForm = ({ f_id, onClose }) => {
       return;
     }
 
+   
+
     setSaving(true);
     try {
       const user = JSON.parse(localStorage.getItem('user'));
+      const formattedTime = time.length === 5 ? `${time}:00` : time;
       await axios.post(
         'http://localhost:5000/api/dailyTimeRoutes/newSchedule',
         {
           location_id: selectedIkiminaId,
           ikimina_name: selectedIkiminaName,
-          dtime_time: time,
+          dtime_time: formattedTime,
           f_id,
         },
         {

@@ -1,178 +1,233 @@
 const express = require('express');
 const router = express.Router();
-const { sql, pool } = require('../config/db');
+const { sql, poolConnect, pool } = require('../config/db');
 
-// POST: Add new monthly schedules (multiple dates)
+/**
+ * Normalize time string to HH:mm:ss format for SQL Server Time type
+ */
+function normalizeTimeString(value) {
+  if (!value) return null;
+  const timeRegex = /^\d{2}:\d{2}(:\d{2})?(\.\d{1,7})?$/;
+  if (!timeRegex.test(value)) return null;
+
+  const parts = value.split(':');
+  const hh = parts[0];
+  const mm = parts[1];
+  let ss = '00';
+  if (parts.length > 2) {
+    ss = parts[2].split('.')[0];
+  }
+  return `${hh}:${mm}:${ss}`;
+}
+
+const TIME_KEYS = ['dtime_time', 'weeklytime_time', 'monthlytime_time', 'timeOfEven'];
+
+/**
+ * Generic DB query helper with correct typing
+ */
+async function queryDB(query, inputs = {}) {
+  await poolConnect;
+  const request = pool.request();
+
+  for (const [key, value] of Object.entries(inputs)) {
+    if (TIME_KEYS.includes(key)) {
+      const normalized = normalizeTimeString(value);
+      if (!normalized) throw new Error(`Invalid time format for parameter ${key}: ${value}`);
+      // Pass time as string NVARCHAR(8) to avoid timezone and validation issues
+      request.input(key, sql.NVarChar(8), normalized);
+    } else if (typeof value === 'number') {
+      request.input(key, sql.Int, value);
+    } else {
+      request.input(key, sql.NVarChar(sql.MAX), value);
+    }
+  }
+
+  return request.query(query);
+}
+
+/**
+ * GET all monthly schedules for current user
+ */
+router.get('/monthly', async (req, res) => {
+  const userId = req.query.sad_id;
+  if (!userId) return res.status(401).json({ message: 'Unauthorized: user ID missing' });
+
+  try {
+    const result = await queryDB(`
+      SELECT m.*
+      FROM ik_monthly_time_info m
+      JOIN frequency_category_info c ON m.f_id = c.f_id
+      WHERE c.sad_id = @userId
+    `, { userId });
+
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('Error fetching monthly schedules:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+/**
+ * POST - Add new monthly schedule (multiple dates)
+ */
 router.post('/newSchedule', async (req, res) => {
-  const userId = req.headers['x-sad-id'];
-  const { location_id, ikimina_name, selected_dates, mtime_time, f_id } = req.body;
+  const sad_id = req.headers['x-sad-id'];
+  const { ikimina_name, selected_dates, mtime_time, f_id, location_id } = req.body;
 
-  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!sad_id) return res.status(401).json({ message: 'Unauthorized' });
   if (
-    !location_id ||
     !ikimina_name ||
     !Array.isArray(selected_dates) ||
     selected_dates.length === 0 ||
     !mtime_time ||
-    !f_id
+    !f_id ||
+    !location_id
   ) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  try {
-    // Verify user owns the frequency category
-    const freqCatResult = await pool.request()
-      .input('f_id', sql.Int, f_id)
-      .input('sad_id', sql.Int, userId)
-      .query('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id');
+  const normalizedTime = normalizeTimeString(mtime_time);
+  if (!normalizedTime) {
+    return res.status(400).json({ message: 'Invalid time format' });
+  }
 
-    if (freqCatResult.recordset.length === 0) {
-      return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
+  try {
+    await poolConnect;
+
+    // Verify frequency category ownership
+    const categoryCheck = await queryDB('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id', { f_id, sad_id });
+    if (categoryCheck.recordset.length === 0) {
+      return res.status(403).json({ message: 'Unauthorized access to frequency category' });
     }
 
-    // Check if this ikimina already has any schedule in daily, weekly or monthly tables
-    const dailyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .query('SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id');
-    const weeklyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .query('SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id');
-    const monthlyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .query('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id');
+    // Check if Ikimina already has any schedule in daily, weekly, monthly
+    const conflictRes = await queryDB(`
+      SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id
+      UNION
+      SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id
+      UNION
+      SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id
+    `, { location_id });
 
-    if (
-      dailyResult.recordset.length > 0 ||
-      weeklyResult.recordset.length > 0 ||
-      monthlyResult.recordset.length > 0
-    ) {
+    if (conflictRes.recordset.length > 0) {
       return res.status(409).json({ message: 'This Ikimina already has a schedule.' });
     }
 
-    // Check if ikimina_name already exists for this category in monthly schedules
-    const existingNameResult = await pool.request()
-      .input('ikimina_name', sql.NVarChar(255), ikimina_name.trim())
-      .input('f_id', sql.Int, f_id)
-      .query('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE ikimina_name = @ikimina_name AND f_id = @f_id');
-
-    if (existingNameResult.recordset.length > 0) {
-      return res.status(409).json({ message: 'Ikimina name already exists for this frequency category.' });
-    }
-
-    // Insert one row per selected date (inside transaction)
+    // Insert multiple dates within a transaction
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
 
     try {
       for (const date of selected_dates) {
-        const request = new sql.Request(transaction);  // <--- NEW request per iteration
-        await request
-          .input('ikimina_name', sql.NVarChar(255), ikimina_name.trim())
-          .input('monthlytime_date', sql.NVarChar(50), date.trim())
-          .input('monthlytime_time', sql.NVarChar(50), mtime_time)
-          .input('f_id', sql.Int, f_id)
-          .input('location_id', sql.Int, location_id)
-          .query(
-            `INSERT INTO ik_monthly_time_info
-            (ikimina_name, monthlytime_date, monthlytime_time, f_id, location_id)
-            VALUES (@ikimina_name, @monthlytime_date, @monthlytime_time, @f_id, @location_id)`
-          );
+        // Validate date is number between 1 and 31
+        const dayInt = parseInt(date);
+        if (isNaN(dayInt) || dayInt < 1 || dayInt > 31) {
+          throw new Error(`Invalid date value: ${date}`);
+        }
+
+        const insert = new sql.Request(transaction);
+        insert.input('ikimina_name', sql.NVarChar(255), ikimina_name.trim());
+        insert.input('monthlytime_date', sql.Int, dayInt);
+        insert.input('monthlytime_time', sql.NVarChar(8), normalizedTime);
+        insert.input('f_id', sql.Int, f_id);
+        insert.input('location_id', sql.Int, location_id);
+
+        await insert.query(`
+          INSERT INTO ik_monthly_time_info (ikimina_name, monthlytime_date, monthlytime_time, f_id, location_id)
+          VALUES (@ikimina_name, @monthlytime_date, @monthlytime_time, @f_id, @location_id)
+        `);
       }
 
       await transaction.commit();
       res.status(201).json({ message: 'Monthly schedule saved successfully.' });
     } catch (err) {
       await transaction.rollback();
-      throw err;
+      console.error('Transaction error inserting monthly schedule:', err);
+      res.status(500).json({ message: 'Failed to save monthly schedule.' });
     }
   } catch (error) {
-    console.error('Error saving monthly schedule:', error.message);
-    res.status(500).json({ message: 'Internal server error while saving monthly schedule.' });
+    console.error('Error in POST monthly schedule:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// PUT: Update a monthly schedule by id
-router.put('/monthly/:id', async (req, res) => {
-  const userId = req.headers['x-sad-id'];
+/**
+ * PUT - Update a monthly schedule by id
+ */
+router.put('/:id', async (req, res) => {
+  const sad_id = req.headers['x-sad-id'];
   const { id } = req.params;
-  const { ikimina_name, monthlytime_day, monthlytime_time, f_id, location_id } = req.body;
+  const { ikimina_name, monthlytime_date, monthlytime_time, f_id, location_id } = req.body;
 
-  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-  if (!ikimina_name || !monthlytime_day || !monthlytime_time || !f_id || !location_id) {
+  if (!sad_id) return res.status(401).json({ message: 'Unauthorized' });
+  if (!ikimina_name || !monthlytime_date || !monthlytime_time || !f_id || !location_id) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  try {
-    // Confirm ownership of frequency category
-    const categoryResult = await pool.request()
-      .input('f_id', sql.Int, f_id)
-      .input('sad_id', sql.Int, userId)
-      .query('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id');
+  const normalizedTime = normalizeTimeString(monthlytime_time);
+  if (!normalizedTime) {
+    return res.status(400).json({ message: 'Invalid time format' });
+  }
 
-    if (categoryResult.recordset.length === 0) {
-      return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
+  // Validate monthlytime_date
+  const dayInt = parseInt(monthlytime_date);
+  if (isNaN(dayInt) || dayInt < 1 || dayInt > 31) {
+    return res.status(400).json({ message: 'Invalid monthly date. Must be 1 to 31.' });
+  }
+
+  try {
+    // Confirm frequency category ownership
+    const ownershipCheck = await queryDB('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id', { f_id, sad_id });
+    if (ownershipCheck.recordset.length === 0) {
+      return res.status(403).json({ message: 'Unauthorized category access' });
     }
 
-    // Confirm record exists and belongs to category
-    const monthlyTimeResult = await pool.request()
-      .input('monthlytime_id', sql.Int, id)
-      .input('f_id', sql.Int, f_id)
-      .query('SELECT * FROM ik_monthly_time_info WHERE monthlytime_id = @monthlytime_id AND f_id = @f_id');
-
-    if (monthlyTimeResult.recordset.length === 0) {
+    // Confirm record exists and belongs to frequency category
+    const scheduleCheck = await queryDB('SELECT * FROM ik_monthly_time_info WHERE monthlytime_id = @id AND f_id = @f_id', { id, f_id });
+    if (scheduleCheck.recordset.length === 0) {
       return res.status(404).json({ message: 'Monthly time not found or unauthorized' });
     }
 
-    // Prevent duplicate ikimina_name in this category (excluding current record)
-    const duplicateNameResult = await pool.request()
-      .input('ikimina_name', sql.NVarChar(255), ikimina_name.trim())
-      .input('f_id', sql.Int, f_id)
-      .input('monthlytime_id', sql.Int, id)
-      .query('SELECT * FROM ik_monthly_time_info WHERE ikimina_name = @ikimina_name AND f_id = @f_id AND monthlytime_id != @monthlytime_id');
+    // Check duplicate ikimina_name in this category excluding current record
+    const duplicateName = await queryDB(`
+      SELECT 1 FROM ik_monthly_time_info 
+      WHERE ikimina_name = @ikimina_name AND f_id = @f_id AND monthlytime_id != @id
+    `, { ikimina_name: ikimina_name.trim(), f_id, id });
 
-    if (duplicateNameResult.recordset.length > 0) {
-      return res.status(409).json({ message: 'Ikimina name already used in this frequency category' });
+    if (duplicateName.recordset.length > 0) {
+      return res.status(409).json({ message: 'Ikimina name already exists in this category' });
     }
 
-    // Validate location_id uniqueness across all schedules except current record
-    const dailyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .query('SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id');
-    const weeklyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .query('SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id');
-    const monthlyResult = await pool.request()
-      .input('location_id', sql.Int, location_id)
-      .input('monthlytime_id', sql.Int, id)
-      .query('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id AND monthlytime_id != @monthlytime_id');
+    // Check location_id uniqueness across schedules excluding current record
+    const conflicts = await queryDB(`
+      SELECT 1 FROM ik_daily_time_info WHERE location_id = @location_id
+      UNION
+      SELECT 1 FROM ik_weekly_time_info WHERE location_id = @location_id
+      UNION
+      SELECT 1 FROM ik_monthly_time_info WHERE location_id = @location_id AND monthlytime_id != @id
+    `, { location_id, id });
 
-    if (
-      dailyResult.recordset.length > 0 ||
-      weeklyResult.recordset.length > 0 ||
-      monthlyResult.recordset.length > 0
-    ) {
-      return res.status(409).json({
-        message: 'This Ikimina already has a schedule in daily, weekly, or monthly.',
-      });
+    if (conflicts.recordset.length > 0) {
+      return res.status(409).json({ message: 'Ikimina already has a schedule in another category' });
     }
 
     // Update record
-    await pool.request()
-      .input('ikimina_name', sql.NVarChar(255), ikimina_name.trim())
-      .input('monthlytime_day', sql.NVarChar(50), monthlytime_day.trim())
-      .input('monthlytime_time', sql.NVarChar(50), monthlytime_time)
-      .input('f_id', sql.Int, f_id)
-      .input('location_id', sql.Int, location_id)
-      .input('monthlytime_id', sql.Int, id)
-      .query(
-        `UPDATE ik_monthly_time_info
-         SET ikimina_name = @ikimina_name,
-             monthlytime_day = @monthlytime_day,
-             monthlytime_time = @monthlytime_time,
-             f_id = @f_id,
-             location_id = @location_id
-         WHERE monthlytime_id = @monthlytime_id`
-      );
+    await queryDB(`
+      UPDATE ik_monthly_time_info
+      SET ikimina_name = @ikimina_name,
+          monthlytime_date = @monthlytime_date,
+          monthlytime_time = @monthlytime_time,
+          f_id = @f_id,
+          location_id = @location_id
+      WHERE monthlytime_id = @id
+    `, {
+      ikimina_name: ikimina_name.trim(),
+      monthlytime_date: dayInt,
+      monthlytime_time: normalizedTime,
+      f_id,
+      location_id,
+      id
+    });
 
     res.status(200).json({ message: 'Monthly time updated successfully.' });
   } catch (error) {
@@ -181,35 +236,34 @@ router.put('/monthly/:id', async (req, res) => {
   }
 });
 
-// DELETE a monthly schedule by id
-router.delete('/monthly/:id', async (req, res) => {
-  const userId = req.headers['x-sad-id'];
+/**
+ * DELETE - Delete a monthly schedule by id
+ */
+router.delete('/:id', async (req, res) => {
+  const sad_id = req.headers['x-sad-id'];
   const { id } = req.params;
 
-  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!sad_id) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
-    const rows = await pool.request()
-      .input('monthlytime_id', sql.Int, id)
-      .input('sad_id', sql.Int, userId)
-      .query(
-        `SELECT m.monthlytime_id
-         FROM ik_monthly_time_info m
-         INNER JOIN frequency_category_info c ON m.f_id = c.f_id
-         WHERE m.monthlytime_id = @monthlytime_id AND c.sad_id = @sad_id`
-      );
+    // Check ownership
+    const check = await queryDB(`
+      SELECT m.monthlytime_id
+      FROM ik_monthly_time_info m
+      JOIN frequency_category_info c ON m.f_id = c.f_id
+      WHERE m.monthlytime_id = @id AND c.sad_id = @sad_id
+    `, { id, sad_id });
 
-    if (rows.recordset.length === 0) {
-      return res.status(404).json({ message: 'Monthly time not found or unauthorized' });
+    if (check.recordset.length === 0) {
+      return res.status(404).json({ message: 'Record not found or not authorized' });
     }
 
-    await pool.request()
-      .input('monthlytime_id', sql.Int, id)
-      .query('DELETE FROM ik_monthly_time_info WHERE monthlytime_id = @monthlytime_id');
+    // Delete
+    await queryDB('DELETE FROM ik_monthly_time_info WHERE monthlytime_id = @id', { id });
 
-    res.status(200).json({ message: 'Monthly time deleted successfully.' });
+    res.status(200).json({ message: 'Monthly schedule deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting monthly time:', error.message);
+    console.error('Error deleting monthly schedule:', error.message);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });

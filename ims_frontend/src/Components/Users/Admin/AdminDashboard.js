@@ -7,8 +7,8 @@ import '../../CSS/adminDashboard.css';
 
 export default function Dashboard() {
   const { user } = useContext(Auth);
-  const [allIkiminas, setAllIkiminas] = useState([]); // original data
-  const [ikiminas, setIkiminas] = useState([]); // filtered
+  const [allIkiminas, setAllIkiminas] = useState([]);
+  const [ikiminas, setIkiminas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +23,61 @@ export default function Dashboard() {
     }
   };
 
+  // Format days based on category and JSON fields
+  const formatDays = (item) => {
+    if (!item.category_name) return '';
+
+    const category = item.category_name.toLowerCase();
+
+    if (category === 'daily') {
+      return item.dayOfEvent || 'Daily';
+    }
+
+    if (category === 'weekly') {
+      if (item.weekly_saving_days) {
+        try {
+          const days = JSON.parse(item.weekly_saving_days);
+          if (Array.isArray(days) && days.length > 0) return days.join(', ');
+        } catch {
+          // ignore parse error
+        }
+      }
+      return item.dayOfEvent || '';
+    }
+
+    if (category === 'monthly') {
+      if (item.monthly_saving_days) {
+        try {
+          const dates = JSON.parse(item.monthly_saving_days);
+          if (Array.isArray(dates) && dates.length > 0) return dates.join(', ');
+        } catch {
+          // ignore parse error
+        }
+      }
+      return item.dayOfEvent || '';
+    }
+
+    return item.dayOfEvent || '';
+  };
+
+  // Format time string HH:mm:ss.0000000 to 12-hour format e.g. 2:00 PM
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+
+    const [hourStr, minuteStr] = timeStr.split(':');
+    if (!hourStr || !minuteStr) return timeStr;
+
+    let hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12; // Convert 0 to 12
+
+    const minuteFormatted = minute < 10 ? `0${minute}` : minute;
+
+    return `${hour}:${minuteFormatted} ${ampm}`;
+  };
+
   useEffect(() => {
     const fetchIkiminas = async () => {
       const sad_id = getSadId();
@@ -31,48 +86,64 @@ export default function Dashboard() {
         setLoading(false);
         return;
       }
+
       try {
         const { data } = await axios.get(`http://localhost:5000/api/ikiminaInfoRoutes/select?sad_id=${sad_id}`);
         setAllIkiminas(data);
         setIkiminas(data);
-      } catch {
+      } catch (err) {
+        console.error('Fetch error:', err);
         setError('Failed to load Ikimina data.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchIkiminas();
   }, []);
 
+  // Debounced search
   useEffect(() => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
     debounceTimeout.current = setTimeout(() => {
       if (!searchTerm.trim()) {
         setIkiminas(allIkiminas);
       } else {
         const filtered = allIkiminas.filter(item =>
-          item.iki_name.toLowerCase().includes(searchTerm.toLowerCase())
+          item.iki_name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setIkiminas(filtered);
       }
     }, 300);
+
     return () => clearTimeout(debounceTimeout.current);
   }, [searchTerm, allIkiminas]);
 
   const handleExportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(ikiminas);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Ikiminas');
-    XLSX.writeFile(wb, 'ikimina_list.xlsx');
+    if (ikiminas.length === 0) return;
+
+    const dataForExport = ikiminas.map((item, i) => ({
+      Number: i + 1,
+      Name: item.iki_name || '',
+      Email: item.iki_email || '',
+      Username: item.iki_username || '',
+      Location: `${item.cell || ''}, ${item.village || ''}`,
+      Day: formatDays(item),
+      Time: formatTime(item.timeOfEvent),
+      Events: item.numberOfEvents || '',
+      Category: item.category_name || ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ikiminas');
+    XLSX.writeFile(workbook, 'ikimina_list.xlsx');
   };
 
   return (
     <div className="dashboard-container">
-      <p className="text-right text-sm text-gray-600 mb-4">
-        Welcome, <span className="font-semibold">{user?.name}</span> ({user?.role})
-      </p>
-
-      <h2 className="dashboard-title">Your Ikimina Accounts</h2>
+      <h2 className="dashboard-title">Manage Saving Groups in your Sector</h2>
 
       {loading ? (
         <p className="dashboard-loading">Loading Ikimina data...</p>
@@ -88,6 +159,7 @@ export default function Dashboard() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+
             <button className="dashboard-export-btn" onClick={handleExportToExcel}>
               <FaFileExcel style={{ marginRight: '8px' }} />
               Export to Excel
@@ -99,7 +171,7 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   <th>Number</th>
-                  <th>Ikimina Name</th>
+                  <th>Name</th>
                   <th>Email</th>
                   <th>Username</th>
                   <th>Location</th>
@@ -112,22 +184,20 @@ export default function Dashboard() {
               <tbody>
                 {ikiminas.length === 0 ? (
                   <tr>
-                    <td colSpan="9" style={{ textAlign: 'center', fontStyle: 'italic', color: '#888' }}>
-                      No Ikimina records available.
-                    </td>
+                    <td colSpan="9" className="no-data">No Ikimina records found.</td>
                   </tr>
                 ) : (
-                  ikiminas.map((iki, index) => (
-                    <tr key={iki.iki_id}>
+                  ikiminas.map((item, index) => (
+                    <tr key={item.iki_id}>
                       <td>{index + 1}</td>
-                      <td>{iki.iki_name}</td>
-                      <td>{iki.iki_email}</td>
-                      <td>{iki.iki_username}</td>
-                      <td>{`${iki.cell || ''}, ${iki.village || ''}`}</td>
-                      <td>{iki.dayOfEvent}</td>
-                      <td>{iki.timeOfEvent}</td>
-                      <td>{iki.numberOfEvents}</td>
-                      <td>{iki.category_name}</td>
+                      <td>{item.iki_name}</td>
+                      <td>{item.iki_email}</td>
+                      <td>{item.iki_username}</td>
+                      <td>{`${item.cell || ''}, ${item.village || ''}`}</td>
+                      <td>{formatDays(item)}</td>
+                      <td>{formatTime(item.timeOfEvent)}</td>
+                      <td>{item.numberOfEvents}</td>
+                      <td>{item.category_name}</td>
                     </tr>
                   ))
                 )}

@@ -1,3 +1,45 @@
+-- Disable constraints
+EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT ALL";
+
+-- Delete data
+DELETE FROM member_saving_activities;
+DELETE FROM member_access_info;
+DELETE FROM members_info;
+DELETE FROM gudian_members;
+DELETE FROM ikimina_saving_slots;
+DELETE FROM ikimina_saving_rules;
+DELETE FROM ikimina_rounds;
+DELETE FROM ik_daily_time_info;
+DELETE FROM ik_weekly_time_info;
+DELETE FROM ik_monthly_time_info;
+DELETE FROM ikimina_info;
+DELETE FROM ikimina_locations;
+DELETE FROM member_type_info;
+DELETE FROM frequency_category_info;
+
+-- Reset identity columns
+DBCC CHECKIDENT ('member_saving_activities', RESEED, 0);
+DBCC CHECKIDENT ('member_access_info', RESEED, 0);
+DBCC CHECKIDENT ('members_info', RESEED, 0);
+DBCC CHECKIDENT ('gudian_members', RESEED, 0);
+DBCC CHECKIDENT ('ikimina_saving_slots', RESEED, 0);
+DBCC CHECKIDENT ('ikimina_saving_rules', RESEED, 0);
+DBCC CHECKIDENT ('ikimina_rounds', RESEED, 0);
+DBCC CHECKIDENT ('ik_daily_time_info', RESEED, 0);
+DBCC CHECKIDENT ('ik_weekly_time_info', RESEED, 0);
+DBCC CHECKIDENT ('ik_monthly_time_info', RESEED, 0);
+DBCC CHECKIDENT ('ikimina_info', RESEED, 0);
+DBCC CHECKIDENT ('ikimina_locations', RESEED, 0);
+DBCC CHECKIDENT ('member_type_info', RESEED, 0);
+DBCC CHECKIDENT ('frequency_category_info', RESEED, 0);
+
+-- Re-enable constraints
+EXEC sp_msforeachtable "ALTER TABLE ? CHECK CONSTRAINT ALL";
+
+
+
+
+
 DROP TABLE IF EXISTS member_saving_activities;
 DROP TABLE IF EXISTS ikimina_saving_slots;
 DROP TABLE IF EXISTS ikimina_saving_rules;
@@ -177,8 +219,8 @@ CREATE TABLE ikimina_saving_slots (
   iki_id INT NOT NULL,
   slot_date DATE NOT NULL,
   slot_time TIME NOT NULL,
-  frequency_category VARCHAR(10) NOT NULL,      -- e.g., Daily, Weekly, Monthly
-  slot_status VARCHAR(10) NOT NULL DEFAULT 'future', -- future, current, missed, saved
+  frequency_category VARCHAR(10) NOT NULL,     
+  slot_status VARCHAR(10) NOT NULL DEFAULT,
   created_at DATETIME DEFAULT GETDATE(),
   CONSTRAINT UQ_IkiminaSlot UNIQUE (iki_id, slot_date, slot_time),
   FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE

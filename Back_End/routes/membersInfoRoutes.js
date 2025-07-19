@@ -32,11 +32,16 @@ router.get('/select', async (req, res) => {
   }
 
   try {
+    const ikiIdInt = parseInt(iki_id, 10);
+    if (isNaN(ikiIdInt)) {
+      return res.status(400).json({ success: false, message: 'iki_id must be a valid number.' });
+    }
+
     const result = await pool.request()
-      .input('iki_id', iki_id)
+      .input('iki_id', sql.Int, ikiIdInt)
       .query(`
         SELECT mi.member_id, mi.member_names, mi.member_Nid, mi.gm_Nid, mi.member_phone_number, 
-               mi.member_email, mi.member_type_id, mi.iki_id,
+               mi.member_email, mi.member_type_id, mi.iki_id, m_status,
                mt.member_type, ik.iki_name,
                mai.member_code
         FROM members_info mi

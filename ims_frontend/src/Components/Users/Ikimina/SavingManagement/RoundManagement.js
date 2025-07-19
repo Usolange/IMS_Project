@@ -5,18 +5,27 @@ const RoundManagement = () => {
   const [rounds, setRounds] = useState([]);
   const [newRound, setNewRound] = useState({ start_date: '', number_of_categories: '' });
   const [lastEndDate, setLastEndDate] = useState('');
+  const [minDate, setMinDate] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [editingRoundId, setEditingRoundId] = useState(null);
   const [setupInfo, setSetupInfo] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    'x-iki-id': user?.id
+    'Authorization': `Bearer ${user?.token}`,
+    'x-iki-id': user?.id,
+    'x-sad-id': user?.sad_id,
+    'x-f-id': user?.f_id
+  };
+
+  // Format date to YYYY-MM-DD in Kigali (UTC+3)
+  const formatDateToKigali = (dateString) => {
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 3); // UTC+3 for Kigali
+    return date.toISOString().split('T')[0];
   };
 
   useEffect(() => {
@@ -29,8 +38,12 @@ const RoundManagement = () => {
     try {
       const res = await fetch('http://localhost:5000/api/ikiminaRoundRoutes/selectRounds', { method: 'GET', headers });
       const data = await res.json();
-      if (data.success) setRounds(data.data);
-      else setErrorMessage(data.message);
+      if (res.ok && data.success) {
+        setRounds(Array.isArray(data.data) ? data.data : []);
+      } else {
+        if (data.message?.toLowerCase() !== 'no rounds found') setErrorMessage(data.message);
+        setRounds([]);
+      }
     } catch {
       setErrorMessage('Failed to fetch rounds.');
     }
@@ -41,13 +54,23 @@ const RoundManagement = () => {
       const res = await fetch('http://localhost:5000/api/ikiminaRoundRoutes/getLastRound', { method: 'GET', headers });
       const data = await res.json();
       if (data.success && data.data) {
-        const formatted = new Date(data.data.end_date).toISOString().split('T')[0];
-        setLastEndDate(formatted);
+        const formattedEndDate = formatDateToKigali(data.data.end_date);
+        setLastEndDate(formattedEndDate);
+
+        // Set minDate to day after last round's end_date
+        const nextDay = new Date(data.data.end_date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        setMinDate(nextDay.toISOString().split('T')[0]);
       } else {
         setLastEndDate('');
+        // No last round, minDate is today
+        const today = new Date();
+        setMinDate(today.toISOString().split('T')[0]);
       }
     } catch {
       setErrorMessage('Failed to fetch last round.');
+      const today = new Date();
+      setMinDate(today.toISOString().split('T')[0]);
     }
   };
 
@@ -55,10 +78,55 @@ const RoundManagement = () => {
     try {
       const res = await fetch('http://localhost:5000/api/ikiminaRoundRoutes/roundSetupInfo', { method: 'GET', headers });
       const data = await res.json();
-      if (res.ok) setSetupInfo(data);
-      else setErrorMessage('Failed to fetch setup info.');
+      if (res.ok) {
+        setSetupInfo(data);
+      } else {
+        setErrorMessage('Failed to fetch setup info.');
+      }
     } catch {
       setErrorMessage('Failed to fetch setup info.');
+    }
+  };
+
+  // Validate if selected date is allowed for frequency and minDate
+  const isDateValidForFrequency = (dateStr) => {
+    if (!dateStr || !setupInfo || !minDate) return true;
+
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj)) return false;
+
+    // Check date is >= minDate
+    const minDateObj = new Date(minDate);
+    if (dateObj < minDateObj) return false;
+
+    const dayOfWeek = dateObj.getDay();
+    const dayOfMonth = dateObj.getDate();
+
+    if (setupInfo.frequencyName.toLowerCase() === 'weekly' && Array.isArray(setupInfo.weeklyDays)) {
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const allowedDays = setupInfo.weeklyDays.map(day => day.toLowerCase());
+      const selectedDay = dayNames[dayOfWeek].toLowerCase();
+      return allowedDays.includes(selectedDay);
+    }
+
+    if (setupInfo.frequencyName.toLowerCase() === 'monthly' && Array.isArray(setupInfo.monthlyDays)) {
+      const allowedDates = setupInfo.monthlyDays.map(d => Number(d));
+      return allowedDates.includes(dayOfMonth);
+    }
+
+    // For daily, just check date >= minDate
+    return dateObj >= minDateObj;
+  };
+
+  // Date input change handler with instant validation
+  const handleDateChange = (e) => {
+    const value = e.target.value;
+    setNewRound({ ...newRound, start_date: value });
+
+    if (!isDateValidForFrequency(value)) {
+      setErrorMessage('Selected start date is invalid based on frequency rules or minimum allowed date.');
+    } else {
+      setErrorMessage('');
     }
   };
 
@@ -71,12 +139,29 @@ const RoundManagement = () => {
       return;
     }
 
-    if (setupInfo && parseInt(newRound.number_of_categories) > setupInfo.maxCategories) {
+    if (!isDateValidForFrequency(newRound.start_date)) {
+      const freq = setupInfo?.frequencyName?.toLowerCase();
+      if (freq === 'weekly') {
+        setErrorMessage(`Start date must be one of: ${setupInfo.weeklyDays.join(', ')}`);
+      } else if (freq === 'monthly') {
+        setErrorMessage(`Start date must be one of: ${setupInfo.monthlyDays.join(', ')}`);
+      } else {
+        setErrorMessage('Start date is not valid.');
+      }
+      return;
+    }
+
+    if (setupInfo && parseInt(newRound.number_of_categories, 10) > setupInfo.maxCategories) {
       setErrorMessage(`Max allowed categories: ${setupInfo.maxCategories}`);
       return;
     }
 
-    const payload = JSON.stringify({ ...newRound, iki_id: user.id });
+    const payload = JSON.stringify({
+      ...newRound,
+      number_of_categories: parseInt(newRound.number_of_categories, 10),
+      iki_id: user.id,
+      f_id: user.f_id
+    });
 
     try {
       const url = editingRoundId
@@ -89,7 +174,7 @@ const RoundManagement = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMessage(data.message + (data.end_date ? ` Ends on: ${data.end_date}` : ''));
+        setSuccessMessage(data.message + (data.end_date ? ` Ends on: ${formatDateToKigali(data.end_date)}` : ''));
         setNewRound({ start_date: '', number_of_categories: '' });
         setEditingRoundId(null);
         fetchRounds();
@@ -104,8 +189,8 @@ const RoundManagement = () => {
 
   const handleEdit = (round) => {
     setNewRound({
-      start_date: round.start_date.split('T')[0],
-      number_of_categories: ''
+      start_date: formatDateToKigali(round.start_date),
+      number_of_categories: round.number_of_categories.toString()
     });
     setEditingRoundId(round.round_id);
     setErrorMessage('');
@@ -160,25 +245,22 @@ const RoundManagement = () => {
 
       <div className="form-section">
         <h2>{editingRoundId ? 'Edit Round' : 'Add New Round'}</h2>
-        {lastEndDate && (
-          <p className="hint">Last round ended on: <strong>{lastEndDate}</strong></p>
+        {lastEndDate && <p className="hint">Last round ended on: <strong>{lastEndDate}</strong></p>}
+
+        {setupInfo?.frequencyName?.toLowerCase() === 'weekly' && setupInfo.weeklyDays?.length > 0 && (
+          <p className="hint">Start date must be one of: {setupInfo.weeklyDays.join(', ')}</p>
         )}
-        {setupInfo?.frequencyName && (
-          <p className="hint">
-            {setupInfo.frequencyName === 'weekly' && setupInfo.weeklyDays?.length
-              ? `Start date must match one of these days: ${setupInfo.weeklyDays.join(', ')}`
-              : setupInfo.frequencyName === 'monthly' && setupInfo.monthlyDays?.length
-              ? `Start date must match one of these dates: ${setupInfo.monthlyDays.join(', ')}`
-              : ''}
-          </p>
+        {setupInfo?.frequencyName?.toLowerCase() === 'monthly' && setupInfo.monthlyDays?.length > 0 && (
+          <p className="hint">Start date must be one of: {setupInfo.monthlyDays.join(', ')}</p>
         )}
+
         <form onSubmit={(e) => { e.preventDefault(); handleAddOrUpdateRound(); }}>
           <input
             type="date"
             value={newRound.start_date}
-            onChange={(e) => setNewRound({ ...newRound, start_date: e.target.value })}
+            min={minDate}
+            onChange={handleDateChange}
             required
-            min={lastEndDate || ''}
           />
           <input
             type="number"
@@ -186,15 +268,24 @@ const RoundManagement = () => {
             onChange={(e) => setNewRound({ ...newRound, number_of_categories: e.target.value })}
             required
             placeholder="Number of Categories"
+            min={1}
           />
           <button type="submit" className="btn">
             {editingRoundId ? 'Update Round' : 'Add Round'}
           </button>
           {editingRoundId && (
-            <button type="button" className="btn cancel" onClick={() => {
-              setEditingRoundId(null);
-              setNewRound({ start_date: '', number_of_categories: '' });
-            }}>Cancel</button>
+            <button
+              type="button"
+              className="btn cancel"
+              onClick={() => {
+                setEditingRoundId(null);
+                setNewRound({ start_date: '', number_of_categories: '' });
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+            >
+              Cancel
+            </button>
           )}
         </form>
       </div>
@@ -207,7 +298,7 @@ const RoundManagement = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Round #</th>
+                <th>Round</th>
                 <th>Year</th>
                 <th>Start</th>
                 <th>End</th>
@@ -218,12 +309,12 @@ const RoundManagement = () => {
             <tbody>
               {rounds.map(round => (
                 <tr key={round.round_id}>
-                  <td data-label="Round #">{round.round_number}</td>
-                  <td data-label="Year">{round.cycle_year}</td>
-                  <td data-label="Start">{round.start_date}</td>
-                  <td data-label="End">{round.end_date}</td>
-                  <td data-label="Status">{round.round_status}</td>
-                  <td data-label="Actions">
+                  <td>{round.round_number}</td>
+                  <td>{round.round_year}</td>
+                  <td>{formatDateToKigali(round.start_date)}</td>
+                  <td>{formatDateToKigali(round.end_date)}</td>
+                  <td>{round.round_status}</td>
+                  <td>
                     <button className="btn-edit" onClick={() => handleEdit(round)}>Edit</button>
                     <button className="btn-delete" onClick={() => handleDelete(round.round_id)}>Delete</button>
                   </td>

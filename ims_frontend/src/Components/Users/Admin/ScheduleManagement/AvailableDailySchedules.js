@@ -11,9 +11,39 @@ const AvailableSchedules = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [modalData, setModalData] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Format time fallback if backend schedule string missing
+  const formatTimeFallback = (rawTime, type) => {
+    if (!rawTime) return 'N/A';
+
+    // rawTime expected in 'hh:mm tt' format or ISO string
+    // Try parsing with Date first, fallback to raw string
+    try {
+      // If rawTime looks like '09:00 AM' (12h), create a date to format nicely
+      if (/^\d{1,2}:\d{2} [AP]M$/i.test(rawTime)) {
+        return type === 'daily' ? `Every day at ${rawTime}`
+             : type === 'weekly' ? `Weekly at ${rawTime}`
+             : type === 'monthly' ? `Monthly at ${rawTime}`
+             : rawTime;
+      }
+
+      // Otherwise, try Date parsing
+      const date = new Date(rawTime);
+      if (isNaN(date)) return rawTime;
+
+      const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (type === 'daily') return `Every day at ${timeString}`;
+      if (type === 'weekly') return `Weekly at ${timeString}`;
+      if (type === 'monthly') return `Monthly at ${timeString}`;
+      return timeString;
+
+    } catch {
+      return rawTime;
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -39,7 +69,14 @@ const AvailableSchedules = () => {
         const res = await axios.get(`http://localhost:5000/api/scheduleManagerRoutes/allSchedules`, {
           headers: { 'x-sad-id': sad_id }
         });
-        setSchedules(res.data);
+
+        // Map schedules - use backend schedule string if present, otherwise build fallback
+        const processed = res.data.map(schedule => ({
+          ...schedule,
+          schedule: schedule.schedule || formatTimeFallback(schedule.time, schedule.scheduleType)
+        }));
+
+        setSchedules(processed);
         setError('');
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to load schedules');
@@ -77,7 +114,7 @@ const AvailableSchedules = () => {
   const paginatedSchedules = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredSortedSchedules.slice(start, start + itemsPerPage);
-  }, [filteredSortedSchedules, currentPage, itemsPerPage]);
+  }, [filteredSortedSchedules, currentPage]);
 
   const handleExportExcel = () => {
     const exportData = filteredSortedSchedules.map(({ id, ikimina_name, schedule, cell, village, scheduleType }) => ({
