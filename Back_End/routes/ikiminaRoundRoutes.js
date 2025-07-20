@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { sql, poolConnect, pool } = require('../config/db');
-
-// -- Utility functions --
-
 // Convert a YYYY-MM-DD string to a Date in local time (00:00:00)
 function parseLocalDate(dateStr) {
   const parts = dateStr.split('-').map(Number);
@@ -78,6 +75,32 @@ function getTodayDateStringKigali() {
 
 
 // -- Routes --
+router.patch('/updateRoundStatus/:round_id', async (req, res) => {
+  const { round_id } = req.params;
+  const { round_status } = req.body;
+
+  if (!round_status) {
+    return res.status(400).json({ success: false, message: 'Missing round_status in request body' });
+  }
+
+  try {
+    await poolConnect;
+    const result = await pool.request()
+      .input('round_id', sql.Int, round_id)
+      .input('round_status', sql.VarChar, round_status)
+      .query(`
+        UPDATE ikimina_rounds
+        SET round_status = @round_status
+        WHERE round_id = @round_id
+      `);
+
+    res.status(200).json({ success: true, message: 'Round status updated successfully' });
+
+  } catch (err) {
+    console.error('Error updating round status:', err);
+    res.status(500).json({ success: false, message: 'Database error updating round' });
+  }
+});
 
 // GET round setup info
 router.get('/roundSetupInfo', async (req, res) => {

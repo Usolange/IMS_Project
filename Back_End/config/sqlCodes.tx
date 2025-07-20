@@ -9,13 +9,6 @@ DELETE FROM gudian_members;
 DELETE FROM ikimina_saving_slots;
 DELETE FROM ikimina_saving_rules;
 DELETE FROM ikimina_rounds;
-DELETE FROM ik_daily_time_info;
-DELETE FROM ik_weekly_time_info;
-DELETE FROM ik_monthly_time_info;
-DELETE FROM ikimina_info;
-DELETE FROM ikimina_locations;
-DELETE FROM member_type_info;
-DELETE FROM frequency_category_info;
 
 -- Reset identity columns
 DBCC CHECKIDENT ('member_saving_activities', RESEED, 0);
@@ -25,13 +18,6 @@ DBCC CHECKIDENT ('gudian_members', RESEED, 0);
 DBCC CHECKIDENT ('ikimina_saving_slots', RESEED, 0);
 DBCC CHECKIDENT ('ikimina_saving_rules', RESEED, 0);
 DBCC CHECKIDENT ('ikimina_rounds', RESEED, 0);
-DBCC CHECKIDENT ('ik_daily_time_info', RESEED, 0);
-DBCC CHECKIDENT ('ik_weekly_time_info', RESEED, 0);
-DBCC CHECKIDENT ('ik_monthly_time_info', RESEED, 0);
-DBCC CHECKIDENT ('ikimina_info', RESEED, 0);
-DBCC CHECKIDENT ('ikimina_locations', RESEED, 0);
-DBCC CHECKIDENT ('member_type_info', RESEED, 0);
-DBCC CHECKIDENT ('frequency_category_info', RESEED, 0);
 
 -- Re-enable constraints
 EXEC sp_msforeachtable "ALTER TABLE ? CHECK CONSTRAINT ALL";
@@ -203,15 +189,19 @@ CREATE TABLE member_access_info (
 
 -- 13. Ikimina_saving_rules
 CREATE TABLE ikimina_saving_rules (
-  rule_id INT IDENTITY(1,1) PRIMARY KEY,
+  rule_id INT PRIMARY KEY IDENTITY(1,1),
   iki_id INT NOT NULL,
-  saving_ratio DECIMAL(10,2) DEFAULT 0,
-  time_delay_penalty DECIMAL(10,2) DEFAULT 0,
-  date_delay_penalty DECIMAL(10,2) DEFAULT 0,
-  time_limit_minutes INT DEFAULT 0,
+  round_id INT NOT NULL,
+  saving_ratio DECIMAL(5, 2),
+  time_delay_penalty DECIMAL(5, 2),
+  date_delay_penalty DECIMAL(5, 2),
+  time_limit_minutes INT,
   created_at DATETIME DEFAULT GETDATE(),
-  FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE CASCADE
+  CONSTRAINT FK_saving_rules_ikimina FOREIGN KEY (iki_id) REFERENCES ikimina_info(iki_id) ON DELETE NO ACTION,
+  CONSTRAINT FK_saving_rules_round FOREIGN KEY (round_id) REFERENCES ikimina_rounds(round_id) ON DELETE NO  ACTION,
+  CONSTRAINT UQ_ikimina_round UNIQUE (iki_id, round_id)
 );
+
 
 -- 14. Ikimina_saving_slots
 CREATE TABLE ikimina_saving_slots (
@@ -238,3 +228,20 @@ CREATE TABLE member_saving_activities (
   FOREIGN KEY (member_id) REFERENCES members_info(member_id) ON DELETE CASCADE,
   FOREIGN KEY (slot_id) REFERENCES ikimina_saving_slots(slot_id) ON DELETE NO ACTION
 );
+
+--16. penalty_logs
+CREATE TABLE penalty_logs (
+  penalty_id INT IDENTITY(1,1) PRIMARY KEY,
+  save_id INT FOREIGN KEY REFERENCES member_saving_activities(save_id),
+  member_id INT,
+  iki_id INT,
+  slot_id INT,
+  penalty_type VARCHAR(10),
+  penalty_amount DECIMAL(10,2),
+  rule_time_limit_minutes INT,
+  actual_saving_time TIME,
+  allowed_time_limit TIME,
+  saving_date DATE,
+  created_at DATETIME DEFAULT GETDATE()
+);
+

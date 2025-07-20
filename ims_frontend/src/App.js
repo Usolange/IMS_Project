@@ -36,9 +36,6 @@ import MemberManagementPage from './Components/Users/Ikimina/MemberManagement/Me
 import SavingRulesForm from './Components/Users/Ikimina/SavingManagement/SavingRulesForm';
 import RoundManagement from './Components/Users/Ikimina/SavingManagement/RoundManagement';
 import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager';
-import AdminSavingStats from './Components/Users/Ikimina/SavingManagement/AdminSavingStats';
-import SavingActivityLog from './Components/Users/Ikimina/SavingManagement/SavingActivityLog';
-import PenaltiesOverview from './Components/Users/Ikimina/SavingManagement/PenaltiesOverview';
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
 
 import MeLayout from './Components/Users/Members/meLayout';
@@ -94,9 +91,6 @@ export default function App() {
           <Route path="rules" element={<SavingRulesForm />} />
           <Route path="rounds" element={<RoundManagement />} />
           <Route path="slots" element={<SlotManager />} />
-          <Route path="stats" element={<AdminSavingStats />} />
-          <Route path="activities" element={<SavingActivityLog />} />
-          <Route path="penalties" element={<PenaltiesOverview />} />
         </Route>
       </Route>
 

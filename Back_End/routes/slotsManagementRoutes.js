@@ -104,15 +104,16 @@ router.get('/roundMetadata/:iki_id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch round metadata' });
   }
 });
+
 router.get('/customTimeConfig/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
   try {
-    const pool = await db.poolConnect;
-    const request = db.pool.request();
+    const pool = await poolConnect;
+    const request = pool.request();
 
     // Fetch location_id
     const group = await request
-      .input('iki_id', db.sql.Int, iki_id)
+      .input('iki_id', sql.Int, iki_id)
       .query(`SELECT location_id FROM ikimina_info WHERE iki_id = @iki_id`);
 
     if (group.recordset.length === 0) {
@@ -123,7 +124,7 @@ router.get('/customTimeConfig/:iki_id', async (req, res) => {
 
     // Weekly config
     const weeklyResult = await request
-      .input('location_id', db.sql.Int, location_id)
+      .input('location_id', sql.Int, location_id)
       .query(`SELECT TOP 1 weeklytime_day FROM ik_weekly_time_info WHERE location_id = @location_id`);
 
     const map = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
@@ -133,7 +134,7 @@ router.get('/customTimeConfig/:iki_id', async (req, res) => {
 
     // Monthly config
     const monthlyResult = await request
-      .input('location_id', db.sql.Int, location_id)
+      .input('location_id', sql.Int, location_id)
       .query(`SELECT TOP 1 monthlytime_date FROM ik_monthly_time_info WHERE location_id = @location_id`);
 
     const monthlyStartDay = monthlyResult.recordset.length > 0
@@ -146,6 +147,7 @@ router.get('/customTimeConfig/:iki_id', async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
 // PUT /reset/:iki_id
 router.put('/reset/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
@@ -164,8 +166,8 @@ router.put('/reset/:iki_id', async (req, res) => {
       return res.status(404).json({ message: 'No round found to reset slots for.' });
     }
 
-    // 2. Prevent reset if round is active or completed
-    if (round.round_status === 'active' || round.round_status === 'completed' || round.round_status === 'closed') {
+    // 2. Prevent reset if round is active or completed or closed
+    if (['active', 'completed', 'closed'].includes(round.round_status)) {
       return res.status(400).json({ message: `Cannot reset slots: round status is '${round.round_status}'.` });
     }
 
@@ -182,161 +184,197 @@ router.put('/reset/:iki_id', async (req, res) => {
   }
 });
 
-
-const formatTime = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return null;
-  return date.toISOString().substr(11, 8); // "HH:mm:ss"
-};
-
-// POST generate all saving slots for a group
 router.post('/newSlots/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
 
   try {
-    // 1. Find active round
-    let roundQuery = `
-      SELECT TOP 1 * FROM ikimina_rounds
-      WHERE iki_id = @iki_id AND round_status = 'active'
-      ORDER BY start_date ASC
-    `;
-    let rounds = await runQuery(roundQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
-    let round = rounds[0];
+    await pool.connect();
 
-    // 2. If no active, use nearest upcoming round
-    if (!round) {
-      roundQuery = `
+    // 1. Find active round
+    let result = await pool.request()
+      .input('iki_id', sql.Int, iki_id)
+      .query(`
         SELECT TOP 1 * FROM ikimina_rounds
-        WHERE iki_id = @iki_id AND round_status = 'upcoming'
+        WHERE iki_id = @iki_id AND round_status = 'active'
         ORDER BY start_date ASC
-      `;
-      rounds = await runQuery(roundQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
-      round = rounds[0];
+      `);
+
+    let round = result.recordset[0];
+
+    // 2. If no active round, find upcoming round
+    if (!round) {
+      result = await pool.request()
+        .input('iki_id', sql.Int, iki_id)
+        .query(`
+          SELECT TOP 1 * FROM ikimina_rounds
+          WHERE iki_id = @iki_id AND round_status = 'upcoming'
+          ORDER BY start_date ASC
+        `);
+      round = result.recordset[0];
+
       if (!round) {
         return res.status(400).json({ message: 'No active or upcoming rounds found for this Ikimina.' });
       }
     }
 
-    // 3. Check if slots already exist
-    const slotCheckQuery = `
-      SELECT TOP 1 1 FROM ikimina_saving_slots WHERE round_id = @round_id
-    `;
-    const existingSlots = await runQuery(slotCheckQuery, [{ name: 'round_id', type: sql.Int, value: round.round_id }]);
-    if (existingSlots.length > 0) {
+    // 3. Check if slots already exist for this round
+    const existingSlotsResult = await pool.request()
+      .input('round_id', sql.Int, round.round_id)
+      .query(`SELECT TOP 1 1 FROM ikimina_saving_slots WHERE round_id = @round_id`);
+
+    if (existingSlotsResult.recordset.length > 0) {
       return res.status(400).json({ message: 'Slots already generated for this round.' });
     }
 
     // 4. Get Ikimina location and frequency info
-    const ikiminaQuery = `
-      SELECT location_id, f_id FROM ikimina_info WHERE iki_id = @iki_id
-    `;
-    const ikiminaRows = await runQuery(ikiminaQuery, [{ name: 'iki_id', type: sql.Int, value: iki_id }]);
-    if (ikiminaRows.length === 0) return res.status(404).json({ message: 'Ikimina not found' });
+    const ikiminaResult = await pool.request()
+      .input('iki_id', sql.Int, iki_id)
+      .query(`SELECT location_id, f_id FROM ikimina_info WHERE iki_id = @iki_id`);
 
-    const { location_id, f_id } = ikiminaRows[0];
+    if (ikiminaResult.recordset.length === 0) {
+      return res.status(404).json({ message: 'Ikimina not found' });
+    }
 
-    const categoryQuery = `
-      SELECT f_category FROM frequency_category_info WHERE f_id = @f_id
-    `;
-    const categoryRows = await runQuery(categoryQuery, [{ name: 'f_id', type: sql.Int, value: f_id }]);
-    if (categoryRows.length === 0) return res.status(404).json({ message: 'Frequency category not found' });
+    const { location_id, f_id } = ikiminaResult.recordset[0];
 
-    const frequencyType = categoryRows[0].f_category.toLowerCase();
+    const categoryResult = await pool.request()
+      .input('f_id', sql.Int, f_id)
+      .query(`SELECT f_category FROM frequency_category_info WHERE f_id = @f_id`);
+
+    if (categoryResult.recordset.length === 0) {
+      return res.status(404).json({ message: 'Frequency category not found' });
+    }
+
+    const frequencyType = categoryResult.recordset[0].f_category.toLowerCase();
     const startDate = dayjs(round.start_date);
     const endDate = dayjs(round.end_date);
     const slots = [];
 
-    // 5. Generate slots
+    // 5. Generate slots based on frequency
     if (frequencyType === 'daily') {
-      const timesQuery = `SELECT dtime_time FROM ik_daily_time_info WHERE location_id = @location_id`;
-      const times = await runQuery(timesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
+      // Get earliest daily time only
+      const timeResult = await pool.request()
+        .input('location_id', sql.Int, location_id)
+        .query(`SELECT MIN(dtime_time) as dtime_time FROM ik_daily_time_info WHERE location_id = @location_id`);
+
+      const timeStr = formatTimeToHHMMSS(timeResult.recordset[0]?.dtime_time);
+
       let current = startDate;
       while (current.isSameOrBefore(endDate)) {
-        times.forEach(t => {
-          const timeStr = formatTime(t.dtime_time);
-          if (!timeStr) {
-            console.warn('Skipping invalid daily time:', t.dtime_time);
-            return;
-          }
+        if (timeStr) {
           slots.push([iki_id, current.format('YYYY-MM-DD'), timeStr, 'Daily', round.round_id]);
-        });
+        }
         current = current.add(1, 'day');
       }
 
     } else if (frequencyType === 'weekly') {
-      const entriesQuery = `SELECT weeklytime_day, weeklytime_time FROM ik_weekly_time_info WHERE location_id = @location_id`;
-      const entries = await runQuery(entriesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
-      let current = startDate;
-      while (current.isSameOrBefore(endDate)) {
-        entries.forEach(e => {
-          const targetDay = dayMap[e.weeklytime_day.toLowerCase()];
-          const timeStr = formatTime(e.weeklytime_time);
-          if (typeof targetDay !== 'number' || !timeStr) {
-            console.warn('Skipping invalid weekly entry:', e);
-            return;
-          }
-          let targetDate = current.day(targetDay);
-          if (targetDate.isBefore(current, 'day')) targetDate = targetDate.add(1, 'week');
-          if (targetDate.isSameOrBefore(endDate)) {
-            slots.push([iki_id, targetDate.format('YYYY-MM-DD'), timeStr, 'Weekly', round.round_id]);
-          }
-        });
-        current = current.add(1, 'week');
-      }
+      const entriesResult = await pool.request()
+        .input('location_id', sql.Int, location_id)
+        .query(`SELECT weeklytime_day, weeklytime_time FROM ik_weekly_time_info WHERE location_id = @location_id`);
+
+      const startDayNum = startDate.day();
+
+      entriesResult.recordset.forEach(entry => {
+        const targetDayNum = dayMap[entry.weeklytime_day.toLowerCase()];
+        if (targetDayNum === undefined) return;
+
+        let dayDiff = (targetDayNum - startDayNum + 7) % 7;
+        let firstDate = startDate.add(dayDiff, 'day');
+
+        for (let d = firstDate; d.isSameOrBefore(endDate); d = d.add(7, 'day')) {
+          const timeStr = formatTimeToHHMMSS(entry.weeklytime_time);
+          if (!timeStr) continue;
+          slots.push([iki_id, d.format('YYYY-MM-DD'), timeStr, 'Weekly', round.round_id]);
+        }
+      });
 
     } else if (frequencyType === 'monthly') {
-      const entriesQuery = `SELECT monthlytime_date, monthlytime_time FROM ik_monthly_time_info WHERE location_id = @location_id`;
-      const entries = await runQuery(entriesQuery, [{ name: 'location_id', type: sql.Int, value: location_id }]);
-      let current = startDate;
-      while (current.isSameOrBefore(endDate)) {
-        entries.forEach(e => {
-          const timeStr = formatTime(e.monthlytime_time);
-          const day = parseInt(e.monthlytime_date);
-          const targetDate = current.date(day);
-          if (!timeStr || !targetDate.isValid() || !targetDate.isSameOrBefore(endDate)) {
-            console.warn('Skipping invalid monthly entry:', e);
-            return;
+      const entriesResult = await pool.request()
+        .input('location_id', sql.Int, location_id)
+        .query(`SELECT monthlytime_date, monthlytime_time FROM ik_monthly_time_info WHERE location_id = @location_id`);
+
+      entriesResult.recordset.forEach(entry => {
+        const dayNum = parseInt(entry.monthlytime_date);
+        if (isNaN(dayNum)) return;
+
+        let monthIter = startDate;
+
+        while (monthIter.isSameOrBefore(endDate, 'month')) {
+          let targetDate = monthIter.date(dayNum);
+          if (!targetDate.isValid()) {
+            monthIter = monthIter.add(1, 'month');
+            continue;
           }
-          slots.push([iki_id, targetDate.format('YYYY-MM-DD'), timeStr, 'Monthly', round.round_id]);
-        });
-        current = current.add(1, 'month');
-      }
+          if (targetDate.isBefore(startDate, 'day')) {
+            monthIter = monthIter.add(1, 'month');
+            continue;
+          }
+          if (targetDate.isSameOrBefore(endDate, 'day')) {
+            const timeStr = formatTimeToHHMMSS(entry.monthlytime_time);
+            if (timeStr) {
+              slots.push([iki_id, targetDate.format('YYYY-MM-DD'), timeStr, 'Monthly', round.round_id]);
+            }
+          }
+          monthIter = monthIter.add(1, 'month');
+        }
+      });
 
     } else {
       return res.status(400).json({ message: 'Unknown frequency category.' });
     }
 
-    if (slots.length === 0) return res.status(400).json({ message: 'No valid slots generated' });
+    if (slots.length === 0) {
+      return res.status(400).json({ message: 'No valid slots generated' });
+    }
 
-    // 6. Bulk insert into DB inside transaction
+    // 6. Insert slots in batches inside a transaction
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
+
     try {
-      const request = new sql.Request(transaction);
-      for (const [iki, date, time, category, roundId] of slots) {
-        request.input('iki_id', sql.Int, iki);
-        request.input('slot_date', sql.Date, date);
-        request.input('slot_time', sql.VarChar, time);
-        request.input('frequency_category', sql.VarChar, category);
-        request.input('round_id', sql.Int, roundId);
-        await request.query(`
-          INSERT INTO ikimina_saving_slots (iki_id, slot_date, slot_time, frequency_category, round_id)
-          VALUES (@iki_id, @slot_date, @slot_time, @frequency_category, @round_id)
-        `);
-        request.parameters = {}; // clear inputs for next insert
+      const BATCH_SIZE = 500;
+
+      for (let i = 0; i < slots.length; i += BATCH_SIZE) {
+        const batch = slots.slice(i, i + BATCH_SIZE);
+        let insertQuery = `INSERT INTO ikimina_saving_slots (iki_id, slot_date, slot_time, frequency_category, round_id) VALUES `;
+        const valueStrings = [];
+        const request = new sql.Request(transaction);
+
+        batch.forEach(([iki, date, time, category, roundId], idx) => {
+          const formattedTime = formatTimeToHHMMSS(time);
+          const timeParts = formattedTime.split(':');
+          const timeValue = new Date(1970, 0, 1, Number(timeParts[0]), Number(timeParts[1]), Number(timeParts[2]));
+
+          valueStrings.push(`(@iki_id${idx}, @slot_date${idx}, @slot_time${idx}, @freq_cat${idx}, @round_id${idx})`);
+
+          request.input(`iki_id${idx}`, sql.Int, iki);
+          request.input(`slot_date${idx}`, sql.Date, date);
+          request.input(`slot_time${idx}`, sql.Time, timeValue);
+          request.input(`freq_cat${idx}`, sql.VarChar(50), category);
+          request.input(`round_id${idx}`, sql.Int, roundId);
+        });
+
+        insertQuery += valueStrings.join(', ');
+
+        await request.query(insertQuery);
       }
+
       await transaction.commit();
+
       res.json({ success: true, slotsGenerated: slots.length, roundId: round.round_id });
     } catch (err) {
-      await transaction.rollback();
+      try {
+        await transaction.rollback();
+      } catch (rollbackErr) {
+        console.error('Rollback error:', rollbackErr);
+      }
       console.error('Error inserting slots:', err);
-      res.status(500).json({ success: false, message: 'Failed to generate saving slots' });
+      return res.status(500).json({ success: false, message: 'Failed to generate saving slots', error: err.message });
     }
 
   } catch (err) {
     console.error('POST generate slots error:', err);
-    res.status(500).json({ success: false, message: 'Failed to generate saving slots' });
+    return res.status(500).json({ success: false, message: 'Failed to generate saving slots', error: err.message });
   }
 });
 

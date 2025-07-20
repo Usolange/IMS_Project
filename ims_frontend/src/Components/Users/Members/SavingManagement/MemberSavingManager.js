@@ -1,186 +1,306 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import dayjs from 'dayjs';
+
+const STATUS_STYLES = {
+  saved: { backgroundColor: '#d1e7dd', color: '#0f5132' },
+  missed: { backgroundColor: '#f8d7da', color: '#842029' },
+  current: { backgroundColor: '#fff3cd', color: '#664d03' },
+  upcoming: { backgroundColor: '#cfe2ff', color: '#084298' },
+};
 
 const MemberSavingManager = () => {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [slotDetails, setSlotDetails] = useState(null);
   const [amount, setAmount] = useState('');
-  const [message, setMessage] = useState(null);
-  const [savingLoading, setSavingLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('MTN');
+  const [phoneUsed, setPhoneUsed] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const memberId = user?.id;
-  const ikiId = user?.iki_id;
+  // Get logged-in user info from localStorage
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const memberId = user?.id || null;
+  const ikiId = user?.iki_id || null;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  // Fetch saving slots
+  // Fetch member saving slots on load or member/ikiId change
   useEffect(() => {
     if (!memberId || !ikiId) {
-      setMessage({ type: 'error', text: 'User not authenticated.' });
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    axios
-      .get(`http://localhost:5000/api/SavingInfoRoutes/savingSlots/member/${memberId}/${ikiId}`)
-      .then((res) => {
-        setSlots(res.data.slots || []);
-      })
-      .catch((err) => {
-        console.error('Error fetching saving slots:', err);
-        setMessage({ type: 'error', text: 'Failed to load saving slots.' });
-        setSlots([]);
-      })
-      .finally(() => setLoading(false));
+    const fetchSlots = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/savingManagementRoutes/memberSlots/${memberId}/${ikiId}`
+        );
+        if (Array.isArray(res.data)) {
+          setSlots(res.data);
+        } else {
+          alert('Failed to load saving slots.');
+        }
+      } catch (error) {
+        alert('Error fetching slots.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSlots();
   }, [memberId, ikiId]);
 
-  // Handle save
-  const handleSaveMoney = async () => {
-    if (!amount || isNaN(amount) || Number(amount) <= 0) {
-      setMessage({ type: 'error', text: 'Enter a valid positive amount.' });
+  // Fetch details for the selected slot
+  useEffect(() => {
+    if (!selectedSlotId || !memberId) {
+      setSlotDetails(null);
+      setAmount('');
+      setPhoneUsed('');
+      setFormMessage('');
       return;
     }
 
-    if (!selectedSlot) return;
+    setSlotDetails(null);
+    axios
+      .get(
+        `http://localhost:5000/api/savingManagementRoutes/slotDetails/${selectedSlotId}/${memberId}`
+      )
+      .then((res) => {
+        setSlotDetails(res.data);
+        setAmount('');
+        setPhoneUsed('');
+        setFormMessage('');
+      })
+      .catch(() => alert('Failed to load slot details'));
+  }, [selectedSlotId, memberId]);
 
-    setSavingLoading(true);
-    setMessage(null);
+  const closeModal = () => {
+    setSelectedSlotId(null);
+    setFormMessage('');
+    setAmount('');
+    setPhoneUsed('');
+    setSlotDetails(null);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setFormMessage('');
+    setSaving(true);
+
+    if (!slotDetails) {
+      setFormMessage('No slot selected.');
+      setSaving(false);
+      return;
+    }
+
+    const minAmount = slotDetails.saving_ratio;
+    const valAmount = Number(amount);
+
+    if (valAmount < minAmount || valAmount % minAmount !== 0) {
+      setFormMessage(`Amount must be at least ${minAmount} and a multiple of it.`);
+      setSaving(false);
+      return;
+    }
+
+    // Validate phone number if entered
+    if (phoneUsed && !/^\d{10,15}$/.test(phoneUsed)) {
+      setFormMessage('Phone used must be 10 to 15 digits.');
+      setSaving(false);
+      return;
+    }
 
     try {
-      const res = await axios.post('http://localhost:5000/api/SavingInfoRoutes/saveMoney', {
+      const res = await axios.post('http://localhost:5000/api/savingManagementRoutes/saveSlot', {
+        slot_id: selectedSlotId,
         member_id: memberId,
-        iki_id: ikiId,
-        amount: Number(amount),
-        ikiminaSavingDate: selectedSlot.target_date,
-        payment_method: paymentMethod,
+        amount: valAmount,
+        phone_used: phoneUsed || null,
       });
 
-      if (res.data.success) {
-        setMessage({ type: 'success', text: res.data.message });
+      setFormMessage(res.data.message || 'Saved successfully!');
 
-        setSlots((prev) =>
-          prev.map((s) =>
-            s.slot_id === selectedSlot.slot_id
-              ? { ...s, status: 'saved', saved_amount: amount }
-              : s
-          )
-        );
-        setSelectedSlot(null);
-        setAmount('');
-      } else {
-        setMessage({ type: 'error', text: res.data.message || 'Failed to save money.' });
-      }
+      // Refresh slots after save
+      const refreshed = await axios.get(
+        `http://localhost:5000/api/savingManagementRoutes/memberSlots/${memberId}/${ikiId}`
+      );
+      setSlots(Array.isArray(refreshed.data) ? refreshed.data : []);
+
+      // Automatically close modal after success
+      setTimeout(() => closeModal(), 1200);
     } catch (err) {
-      console.error('Error saving money:', err);
-      const errMsg = err.response?.data?.message || 'Error saving money.';
-      setMessage({ type: 'error', text: errMsg });
-    } finally {
-      setSavingLoading(false);
+      setFormMessage(err.response?.data?.message || 'Saving failed');
     }
+
+    setSaving(false);
   };
 
-  // Classify slot status for color
-  const getSlotStyle = (slot) => {
-    if (slot.status === 'saved') return 'bg-green-200';
-    if (slot.status === 'missed') return 'bg-red-200';
-    if (slot.target_date === todayStr && slot.status !== 'saved') return 'bg-yellow-200';
-    if (slot.target_date > todayStr && slot.status !== 'saved') return 'bg-blue-200';
-    return 'bg-gray-200';
-  };
-
-  if (!memberId || !ikiId) {
-    return <div className="text-red-600 p-4">User not authenticated.</div>;
-  }
-
-  if (loading) return <div>Loading saving slots...</div>;
+  if (!user) return <p>Please log in to access your saving slots.</p>;
+  if (loading) return <p>Loading slots...</p>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Your Saving Slots</h2>
-
-      {message && (
-        <div
-          className={`mb-4 p-3 rounded ${
-            message.type === 'error'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-green-100 text-green-700'
-          }`}
+    <div style={{ padding: '1rem', fontFamily: 'Arial, sans-serif' }}>
+      <h2>My Saving Slots</h2>
+      {slots.length === 0 ? (
+        <p>No saving slots found.</p>
+      ) : (
+        <table
+          border="1"
+          cellPadding="8"
+          cellSpacing="0"
+          style={{ width: '100%', maxWidth: '800px', marginBottom: '1rem', borderCollapse: 'collapse' }}
         >
-          {message.text}
-        </div>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Scheduled Time</th>
+              <th>Actual Saving Status</th>
+              <th>Saved Amount</th>
+              <th>Phone Used</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slots.map((slot) => {
+              const rowStatus = slot.friendly_status || 'upcoming';
+              const style = STATUS_STYLES[rowStatus] || {};
+
+              return (
+                <tr key={slot.slot_id} style={style}>
+                  <td>{dayjs(slot.slot_date).format('YYYY-MM-DD')}</td>
+                  <td>{slot.slot_time ? slot.slot_time.slice(0, 5) : '—'}</td>
+                  <td>{slot.is_saved ? 'Saved' : '—'}</td>
+                  <td>{slot.saved_amount ?? '—'}</td>
+                  <td>{slot.phone_used ?? '—'}</td>
+                  <td style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{rowStatus}</td>
+                  <td>
+                    {(rowStatus === 'current' || rowStatus === 'upcoming') && !slot.is_saved ? (
+                      <button onClick={() => setSelectedSlotId(slot.slot_id)} aria-label={`Save for slot on ${dayjs(slot.slot_date).format('YYYY-MM-DD')}`}>
+                        Save
+                      </button>
+                    ) : rowStatus === 'saved' ? (
+                      '✔ Saved'
+                    ) : rowStatus === 'missed' ? (
+                      '❌ Missed'
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {slots.length === 0 && <p>No saving slots found.</p>}
-
-        {slots.map((slot) => {
-          const cardStyle = getSlotStyle(slot);
-
-          return (
-            <div
-              key={slot.slot_id}
-              className={`${cardStyle} rounded p-4 cursor-pointer hover:shadow-lg`}
-              onClick={() => {
-                if (slot.status !== 'saved') setSelectedSlot(slot);
-              }}
-              title={
-                slot.status === 'saved'
-                  ? `Saved: ${slot.saved_amount}`
-                  : `Due date: ${slot.target_date}`
-              }
-            >
-              <p className="font-semibold">{slot.target_date}</p>
-              <p>Status: {slot.status || 'pending'}</p>
-              {slot.status === 'saved' && <p>Amount: {slot.saved_amount} RWF</p>}
-            </div>
-          );
-        })}
-      </div>
-
-      {selectedSlot && (
-        <div className="mt-6 p-4 border rounded bg-white max-w-md">
-          <h3 className="mb-2 font-semibold">
-            Save Money for {selectedSlot.target_date}
-          </h3>
-          <input
-            type="number"
-            placeholder="Enter amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="border p-2 w-full mb-2"
-          />
-
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="border p-2 w-full mb-3"
+      {/* Modal for saving */}
+      {selectedSlotId && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalTitle"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+          onClick={closeModal}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              width: '400px',
+              maxWidth: '90%',
+              boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+            }}
           >
-            <option value="MTN">MTN Mobile Money</option>
-            <option value="AIRTEL">Airtel Money</option>
-          </select>
+            {slotDetails ? (
+              <>
+                <h3 id="modalTitle">Save for Slot</h3>
+                <p>
+                  <b>Date:</b> {dayjs(slotDetails.slot_date).format('YYYY-MM-DD')}
+                </p>
+                <p>
+                  <b>Scheduled Time:</b> {slotDetails.slot_time ? slotDetails.slot_time.slice(0, 5) : '—'}
+                </p>
+                <p>
+                  <b>Saving Ratio:</b> {slotDetails.saving_ratio}
+                </p>
 
-          <div className="flex gap-2">
-            <button
-              onClick={handleSaveMoney}
-              disabled={savingLoading}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {savingLoading ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedSlot(null);
-                setAmount('');
-                setMessage(null);
-              }}
-              className="px-4 py-2 rounded border border-gray-400 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
+                <form onSubmit={handleSave} noValidate>
+                  <div style={{ marginBottom: '8px' }}>
+                    <label htmlFor="amountInput">
+                      Amount (Min: {slotDetails.saving_ratio}):<br />
+                      <input
+                        id="amountInput"
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        min={slotDetails.saving_ratio}
+                        required
+                        disabled={saving}
+                        aria-describedby="amountHelp"
+                      />
+                    </label>
+                    <small id="amountHelp" style={{ color: 'gray' }}>
+                      Must be a multiple of {slotDetails.saving_ratio}
+                    </small>
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <label htmlFor="phoneInput">
+                      Phone Used (optional):<br />
+                      <input
+                        id="phoneInput"
+                        type="tel"
+                        value={phoneUsed}
+                        onChange={(e) => setPhoneUsed(e.target.value)}
+                        placeholder="Leave blank to use default"
+                        disabled={saving}
+                        pattern="\d{10,15}"
+                        title="Enter 10 to 15 digits"
+                        aria-describedby="phoneHelp"
+                      />
+                    </label>
+                    <small id="phoneHelp" style={{ color: 'gray' }}>
+                      Optional. Enter 10 to 15 digits.
+                    </small>
+                  </div>
+                  <button type="submit" disabled={saving} style={{ cursor: saving ? 'wait' : 'pointer' }}>
+                    {saving ? 'Saving...' : 'Submit Saving'}
+                  </button>
+                </form>
+
+                {formMessage && (
+                  <p
+                    style={{
+                      marginTop: '10px',
+                      color: formMessage.toLowerCase().includes('fail') ? 'red' : 'green',
+                    }}
+                    role="alert"
+                  >
+                    {formMessage}
+                  </p>
+                )}
+
+                <button onClick={closeModal} style={{ marginTop: '10px' }}>
+                  Close
+                </button>
+              </>
+            ) : (
+              <p>Loading slot details...</p>
+            )}
           </div>
         </div>
       )}

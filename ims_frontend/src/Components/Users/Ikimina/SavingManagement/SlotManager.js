@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 
 const SlotManager = ({ iki_id: propIkiId }) => {
   const [slots, setSlots] = useState([]);
@@ -34,24 +34,31 @@ const SlotManager = ({ iki_id: propIkiId }) => {
 
   const iki_id = propIkiId || user.id;
 
-  const fetchSlots = async () => {
-    if (!iki_id) return;
-    setLoadingSlots(true);
-    try {
-      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/selectAllSlots/${iki_id}`);
-      const formattedSlots = res.data.map(slot => ({
+ const fetchSlots = async () => {
+  if (!iki_id) return;
+  setLoadingSlots(true);
+  try {
+    const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/selectAllSlots/${iki_id}`);
+
+    const formattedSlots = res.data
+      .map(slot => ({
         ...slot,
         slot_time: slot.slot_time?.slice(0, 5) || '00:00',
-      }));
-      setSlots(formattedSlots);
-      setSlotsExist(formattedSlots.length > 0); // ✅ persist known state
-      setPage(1);
-    } catch {
-      setMessage('Failed to fetch slots');
-    } finally {
-      setLoadingSlots(false);
-    }
-  };
+      }))
+      .filter((slot, index, self) =>
+        index === self.findIndex(s => s.slot_id === slot.slot_id)
+      ); // ✅ Deduplicate by slot_id
+
+    setSlots(formattedSlots);
+    setSlotsExist(formattedSlots.length > 0);
+    setPage(1);
+  } catch {
+    setMessage('Failed to fetch slots');
+  } finally {
+    setLoadingSlots(false);
+  }
+};
+
 
   const fetchRound = async () => {
     if (!iki_id) return;

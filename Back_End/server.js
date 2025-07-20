@@ -20,7 +20,9 @@ const membersInfoRoutes = require('./routes/membersInfoRoutes');
 const ikiminaRoundRoutes = require('./routes/ikiminaRoundRoutes');
 const savingManagementRoutes = require('./routes/savingManagementRoutes');
 const slotsManagementRoutes = require('./routes/slotsManagementRoutes');
-const penalityManagementRoutes = require('./routes/penalityManagementRoutes');
+const savingRulesRoutes = require('./routes/savingRulesRoutes');
+
+
 
 dotenv.config();
 
@@ -48,7 +50,7 @@ app.use(cors({
 app.use(express.json());
 
 // Import and run scheduler (do NOT use as middleware)
-require('./routes/roundStatusScheduler');
+// require('./routes/roundStatusScheduler');
 
 // Register routes
 app.use('/api/userLoginRoutes', userLoginRoutes);
@@ -67,7 +69,7 @@ app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
 app.use('/api/ikiminaRoundRoutes', ikiminaRoundRoutes);
 app.use('/api/savingManagementRoutes', savingManagementRoutes);
 app.use('/api/slotsManagementRoutes', slotsManagementRoutes);
-app.use('/api/penalityManagementRoutes', penalityManagementRoutes);
+app.use('/api/savingRulesRoutes', savingRulesRoutes);
 
 // Start the server
 app.listen(PORT, () => {

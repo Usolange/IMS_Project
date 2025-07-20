@@ -33,16 +33,20 @@ router.get('/select', async (req, res) => {
 });
 
 // Add a new Gudian member
+// Add a new Gudian member
 router.post('/newGudianMember', async (req, res) => {
   const { gm_names, gm_Nid, gm_phonenumber, iki_id } = req.body;
 
+  // Input validation
   if (!gm_names || !gm_Nid || !gm_phonenumber || !iki_id) {
-    return res.status(400).json({ message: 'All fields including iki_id are required.' });
+    return res.status(400).json({
+      message: 'All fields are required: gm_names, gm_Nid, gm_phonenumber, iki_id.'
+    });
   }
 
   try {
     const insertSql = `
-      INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber, iki_id) 
+      INSERT INTO gudian_members (gm_names, gm_Nid, gm_phonenumber, iki_id)
       VALUES (@gm_names, @gm_Nid, @gm_phonenumber, @iki_id)
     `;
 
@@ -51,9 +55,28 @@ router.post('/newGudianMember', async (req, res) => {
     res.status(201).json({ message: 'Gudian member added successfully.' });
   } catch (err) {
     console.error('Error adding Gudian member:', err);
-    res.status(500).json({ message: 'Failed to add Gudian member.' });
+
+    let detailedMessage = 'An error occurred while adding the Gudian member.';
+
+    // Microsoft SQL Server specific parsing
+    const sqlMessage = err.originalError?.info?.message || err.message || '';
+
+    if (/duplicate|UNIQUE/i.test(sqlMessage)) {
+      if (sqlMessage.includes('gm_Nid')) {
+        detailedMessage = 'A Gudian member with this National ID already exists.';
+      } else if (sqlMessage.includes('gm_phonenumber')) {
+        detailedMessage = 'A Gudian member with this phone number already exists.';
+      } else {
+        detailedMessage = 'Duplicate entry detected. Please use unique National ID and phone number.';
+      }
+    } else if (/conversion failed|incorrect/i.test(sqlMessage)) {
+      detailedMessage = 'Invalid data format. Please check all input fields.';
+    }
+
+    res.status(500).json({ message: detailedMessage });
   }
 });
+
 
 // Update a Gudian member
 router.put('/:id', async (req, res) => {
