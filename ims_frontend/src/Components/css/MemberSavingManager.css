@@ -1,0 +1,136 @@
+/* General Styles */
+.saving-manager {
+  font-family: Arial, sans-serif;
+  color: #333;
+  padding: 20px;
+}
+
+.saving-manager h2 {
+  font-size: 24px;
+  color: #2563eb;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Tables */
+.saving-manager table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.saving-manager th, .saving-manager td {
+  padding: 12px 15px;
+  text-align: left;
+  border: 1px solid #e0e0e0;
+}
+
+.saving-manager th {
+  background-color: #f3f4f6;
+  color: #2563eb;
+}
+
+.saving-manager td {
+  background-color: #fff;
+}
+
+.saving-manager .penalty-warning {
+  background-color: #fef3c7;
+  color: #9a9a1f;
+  padding: 10px;
+  margin: 20px 0;
+  border-radius: 8px;
+}
+
+.saving-manager .btn-action {
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.saving-manager .btn-action:hover {
+  background-color: #1d4ed8;
+}
+
+.saving-manager .btn-submit {
+  padding: 10px 20px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.saving-manager .btn-submit:hover {
+  background-color: #1d4ed8;
+}
+
+.saving-manager .btn-close {
+  padding: 8px 16px;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.saving-manager .form-message {
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.saving-manager .form-message.success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.saving-manager .form-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.modal-content h3 {
+  font-size: 22px;
+  color: #2563eb;
+}
+
+.modal-content button {
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.modal-content button:hover {
+  background-color: #1d4ed8;
+}

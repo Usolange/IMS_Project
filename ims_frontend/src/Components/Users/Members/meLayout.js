@@ -61,7 +61,7 @@ export default function MemberLayout() {
           <ul className="menu-list">
             <li>
               <NavLink
-                to="/member-dashboard"
+                to="/memberDashboard"
                 className={({ isActive }) =>
                   isActive ? 'nav-linkadmin active' : 'nav-linkadmin'
                 }
@@ -70,7 +70,7 @@ export default function MemberLayout() {
                 Dashboard
               </NavLink>
             </li>
-            <li>
+             <li>
               <NavLink
                 to="/memberSavingManager"
                 className={({ isActive }) =>
