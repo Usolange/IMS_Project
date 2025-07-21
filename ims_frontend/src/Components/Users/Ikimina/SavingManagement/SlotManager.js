@@ -171,11 +171,16 @@ const SlotManager = ({ iki_id: propIkiId }) => {
         </button>
         <button
           onClick={handleReset}
-          disabled={round?.round_status !== 'active' || loadingSlots || loadingRound}
+          disabled={
+            !round ||
+            ['active', 'completed', 'closed'].includes(round.round_status) ||
+            loadingSlots ||
+            loadingRound
+          }
           aria-label="Reset saving slots"
           className={`px-4 py-2 rounded text-white ${
-            round?.round_status === 'active' && !loadingSlots && !loadingRound
-              ? 'bg-red-600 hover:bg-red-700'
+            round && !['active', 'completed', 'closed'].includes(round.round_status) && !loadingSlots && !loadingRound
+              ? 'bg-red-600 hover:bg-red-700 cursor-pointer'
               : 'bg-gray-400 cursor-not-allowed'
           }`}
         >

@@ -514,11 +514,14 @@ router.get('/roundMetadata/:iki_id', async (req, res) => {
   }
 });
 
-// PUT /reset/:iki_id to clear slots (only if round NOT active/completed/closed)
+
+
+// PUT /reset/:iki_id to clear slots only if round is NOT active/completed/closed
 router.put('/reset/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
 
   try {
+    // Get the latest round for this iki_id
     const roundQuery = `
       SELECT TOP 1 * FROM ikimina_rounds
       WHERE iki_id = @iki_id
@@ -531,16 +534,39 @@ router.put('/reset/:iki_id', async (req, res) => {
       return res.status(404).json({ message: 'No round found to reset slots for.' });
     }
 
+    // Check if round status forbids resetting slots
     if (['active', 'completed', 'closed'].includes(round.round_status)) {
-      return res.status(400).json({ message: `Cannot reset slots: round status is '${round.round_status}'.` });
+      return res.status(400).json({
+        message: `Cannot reset slots: round status is '${round.round_status}'.`
+      });
     }
 
+    // Disable constraints temporarily to allow delete
+    const disableConstraints = `
+      EXEC sp_msforeachtable "ALTER TABLE ? NOCHECK CONSTRAINT ALL";
+    `;
+    await runQuery(disableConstraints);
+
+    // Delete only slots for this round
     const deleteQuery = `
       DELETE FROM ikimina_saving_slots WHERE round_id = @round_id
     `;
     await runQuery(deleteQuery, [{ name: 'round_id', type: sql.Int, value: round.round_id }]);
 
-    res.json({ message: 'Slots cleared successfully for this round.' });
+    // Reset identity seed for ikimina_saving_slots
+    const resetIdentity = `
+      DBCC CHECKIDENT ('ikimina_saving_slots', RESEED, 0);
+    `;
+    await runQuery(resetIdentity);
+
+    // Re-enable constraints after deletion
+    const enableConstraints = `
+      EXEC sp_msforeachtable "ALTER TABLE ? CHECK CONSTRAINT ALL";
+    `;
+    await runQuery(enableConstraints);
+
+    res.json({ message: 'Slots cleared and identity reset successfully for this round.' });
+
   } catch (err) {
     console.error('PUT reset slots error:', err);
     res.status(500).json({ message: 'Failed to reset slots' });

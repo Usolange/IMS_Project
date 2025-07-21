@@ -949,11 +949,179 @@ router.post('/logNotification', async (req, res) => {
   }
 });
 
+// router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
+//   const { memberId, ikiId } = req.params;
 
-router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
+//   console.log('Received request for memberId:', memberId, 'ikiId:', ikiId);
+
+//   if (!memberId || !ikiId) {
+//     return res.status(400).json({ error: 'memberId and ikiId are required' });
+//   }
+
+//   try {
+//     await poolConnect;
+
+//     const request = pool.request();
+//     request.input('memberId', sql.Int, memberId);
+//     request.input('ikiId', sql.Int, ikiId);
+//     request.input('now', sql.DateTime, new Date());
+
+//     const query = `
+//     WITH MemberSlots AS (
+//       SELECT
+//         s.slot_id,
+//         s.slot_date,
+//         s.slot_time,
+//         s.frequency_category,
+//         s.slot_status,
+//         s.round_id
+//       FROM ikimina_saving_slots s
+//       WHERE s.iki_id = @ikiId
+//     ),
+//     MemberSavings AS (
+//       SELECT
+//         sa.save_id,
+//         sa.slot_id,
+//         sa.saved_amount,
+//         sa.saved_at,
+//         sa.penalty_applied,
+//         sa.is_late,
+//         sa.phone_used,
+//         sa.momo_reference_id
+//       FROM member_saving_activities sa
+//       WHERE sa.member_id = @memberId
+//     ),
+//     MemberPenalties AS (
+//       SELECT
+//         p.penalty_id,
+//         p.slot_id,
+//         p.penalty_type,
+//         p.penalty_amount,
+//         p.is_paid,
+//         p.paid_at
+//       FROM penalty_logs p
+//       WHERE p.member_id = @memberId AND p.iki_id = @ikiId
+//     ),
+//     SlotsWithSavingsAndPenalties AS (
+//       SELECT
+//         ms.slot_id,
+//         ms.slot_date,
+//         ms.slot_time,
+//         ms.frequency_category,
+//         ms.slot_status,
+//         ms.round_id,
+//         COALESCE(sa.saved_amount, 0) AS saved_amount,
+//         sa.saved_at,
+//         CASE WHEN sa.save_id IS NOT NULL THEN 1 ELSE 0 END AS is_saved,
+//         p.penalty_amount,
+//         p.is_paid AS penalty_paid
+//       FROM MemberSlots ms
+//       LEFT JOIN MemberSavings sa ON ms.slot_id = sa.slot_id
+//       LEFT JOIN MemberPenalties p ON ms.slot_id = p.slot_id
+//     )
+//     SELECT
+//       s.slot_id,
+//       s.slot_date,
+//       s.slot_time,
+//       s.frequency_category,
+//       s.slot_status,
+//       s.round_id,
+//       s.saved_amount,
+//       s.saved_at,
+//       s.is_saved,
+//       s.penalty_amount,
+//       s.penalty_paid,
+
+//       (SELECT SUM(saved_amount) FROM SlotsWithSavingsAndPenalties) AS total_saved_amount,
+//       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS slots_completed,
+//       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties) AS total_slots,
+//       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE penalty_paid = 1) AS total_penalties_paid,
+//       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE (penalty_paid = 0 OR penalty_paid IS NULL) AND penalty_amount > 0) AS total_penalties_unpaid,
+//       (SELECT AVG(NULLIF(saved_amount, 0)) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS average_saving_amount,
+//       (SELECT MAX(saved_at) FROM SlotsWithSavingsAndPenalties WHERE saved_at IS NOT NULL) AS most_recent_saving_at,
+//       (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date
+//     FROM SlotsWithSavingsAndPenalties s
+//     ORDER BY s.slot_date ASC;
+//     `;
+
+//     const result = await request.query(query);
+
+//     if (result.recordset.length === 0) {
+//       return res.status(404).json({ error: 'No saving slots found for this member and iki' });
+//     }
+
+//     const aggregates = {
+//       total_saved_amount: result.recordset[0].total_saved_amount,
+//       slots_completed: result.recordset[0].slots_completed,
+//       total_slots: result.recordset[0].total_slots,
+//       total_penalties_paid: result.recordset[0].total_penalties_paid,
+//       total_penalties_unpaid: result.recordset[0].total_penalties_unpaid,
+//       average_saving_amount: result.recordset[0].average_saving_amount,
+//       most_recent_saving_at: result.recordset[0].most_recent_saving_at,
+//       next_upcoming_slot_date: result.recordset[0].next_upcoming_slot_date,
+//     };
+
+//     const slots = result.recordset.map(({ 
+//       total_saved_amount, slots_completed, total_slots, 
+//       total_penalties_paid, total_penalties_unpaid, 
+//       average_saving_amount, most_recent_saving_at, 
+//       next_upcoming_slot_date, ...slot 
+//     }) => slot);
+
+//     console.log('Sending member saving summary data:', { slots, aggregates });
+
+//     res.json({ slots, aggregates });
+//   } catch (error) {
+//     console.error('Error fetching member saving summary:', error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
+
+
+
+router.get('/memberRounds/:memberId/:ikiId', async (req, res) => {
   const { memberId, ikiId } = req.params;
 
+  console.log('GET /memberRounds called with:', { memberId, ikiId });
+
   if (!memberId || !ikiId) {
+    console.warn('Missing memberId or ikiId');
+    return res.status(400).json({ error: 'memberId and ikiId are required' });
+  }
+
+  try {
+    await poolConnect;
+
+    const request = pool.request();
+    request.input('ikiId', sql.Int, ikiId);
+
+    const roundsQuery = `
+      SELECT round_id, round_number, round_year
+      FROM ikimina_rounds
+      WHERE iki_id = @ikiId
+      ORDER BY round_year ASC, round_number ASC
+    `;
+
+    const result = await request.query(roundsQuery);
+
+    console.log('Rounds fetched:', result.recordset);
+
+    res.json({ rounds: result.recordset });
+  } catch (error) {
+    console.error('Error fetching rounds:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
+  const { memberId, ikiId } = req.params;
+  let { roundIds } = req.query;
+
+  console.log('GET /memberSavingSummary called with:', { memberId, ikiId, roundIds });
+
+  if (!memberId || !ikiId) {
+    console.warn('Missing memberId or ikiId');
     return res.status(400).json({ error: 'memberId and ikiId are required' });
   }
 
@@ -964,6 +1132,17 @@ router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
     request.input('memberId', sql.Int, memberId);
     request.input('ikiId', sql.Int, ikiId);
     request.input('now', sql.DateTime, new Date());
+
+    let roundFilterClause = '';
+    if (roundIds) {
+      const roundsArray = roundIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+      console.log('Parsed roundIds:', roundsArray);
+      if (roundsArray.length > 0) {
+        const roundParams = roundsArray.map((id, idx) => `@roundId${idx}`).join(',');
+        roundsArray.forEach((id, idx) => request.input(`roundId${idx}`, sql.Int, id));
+        roundFilterClause = `AND ms.round_id IN (${roundParams})`;
+      }
+    }
 
     const query = `
     WITH MemberSlots AS (
@@ -976,6 +1155,7 @@ router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
         s.round_id
       FROM ikimina_saving_slots s
       WHERE s.iki_id = @ikiId
+      ${roundFilterClause}
     ),
     MemberSavings AS (
       SELECT
@@ -1019,7 +1199,6 @@ router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       LEFT JOIN MemberPenalties p ON ms.slot_id = p.slot_id
     )
     SELECT
-      -- Per slot details:
       s.slot_id,
       s.slot_date,
       s.slot_time,
@@ -1032,32 +1211,29 @@ router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       s.penalty_amount,
       s.penalty_paid,
 
-      -- Aggregates repeated on each row (you can just use from first row):
-      (SELECT SUM(saved_amount) FROM SlotsWithSavingsAndPenalties) AS total_saved_amount,
-
+      (SELECT ISNULL(SUM(saved_amount),0) FROM SlotsWithSavingsAndPenalties) AS total_saved_amount,
       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS slots_completed,
       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties) AS total_slots,
-
       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE penalty_paid = 1) AS total_penalties_paid,
       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE (penalty_paid = 0 OR penalty_paid IS NULL) AND penalty_amount > 0) AS total_penalties_unpaid,
-
       (SELECT AVG(NULLIF(saved_amount, 0)) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS average_saving_amount,
-
       (SELECT MAX(saved_at) FROM SlotsWithSavingsAndPenalties WHERE saved_at IS NOT NULL) AS most_recent_saving_at,
-
       (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date
-
     FROM SlotsWithSavingsAndPenalties s
     ORDER BY s.slot_date ASC;
     `;
 
     const result = await request.query(query);
 
+    console.log('Member saving summary fetched:', {
+      totalRecords: result.recordset.length,
+      firstRecord: result.recordset[0] || null,
+    });
+
     if (result.recordset.length === 0) {
-      return res.status(404).json({ error: 'No saving slots found for this member and iki' });
+      return res.status(404).json({ error: 'No saving slots found for this member, iki, and selected rounds' });
     }
 
-    // Pull aggregates from first record (all rows have same aggregates)
     const aggregates = {
       total_saved_amount: result.recordset[0].total_saved_amount,
       slots_completed: result.recordset[0].slots_completed,
@@ -1069,8 +1245,14 @@ router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       next_upcoming_slot_date: result.recordset[0].next_upcoming_slot_date,
     };
 
-    // Remove aggregate fields from individual slots to avoid redundancy
-    const slots = result.recordset.map(({ total_saved_amount, slots_completed, total_slots, total_penalties_paid, total_penalties_unpaid, average_saving_amount, most_recent_saving_at, next_upcoming_slot_date, ...slot }) => slot);
+    const slots = result.recordset.map(({ 
+      total_saved_amount, slots_completed, total_slots, 
+      total_penalties_paid, total_penalties_unpaid, 
+      average_saving_amount, most_recent_saving_at, 
+      next_upcoming_slot_date, ...slot 
+    }) => slot);
+
+    console.log('Slots returned:', slots.length);
 
     res.json({ slots, aggregates });
   } catch (error) {

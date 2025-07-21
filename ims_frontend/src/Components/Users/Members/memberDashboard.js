@@ -25,7 +25,7 @@ export default function MemberDashboard() {
   const fetchSummary = async (memberId, ikiId) => {
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/memberSavingSummary/${memberId}/${ikiId}`);
+      const res = await axios.get(`http://localhost:5000/api/savingManagementRoutes/memberSavingSummary/${memberId}/${ikiId}`);
       setSummary(res.data);
     } catch (err) {
       console.error('Error fetching summary:', err);
