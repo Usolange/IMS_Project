@@ -10,6 +10,9 @@ const timezone = require('dayjs/plugin/timezone');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+const isBetween = require('dayjs/plugin/isBetween');
+
+dayjs.extend(isBetween); 
 // Utility for SQL queries with parameters
 async function runQuery(query, params = []) {
   await poolConnect;
@@ -34,7 +37,7 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
   const { member_id, iki_id } = req.params;
 
   try {
-    await poolConnect; // Ensure database connection
+    await poolConnect;
     const request = pool.request();
 
     request.input('member_id', sql.Int, member_id);
@@ -55,12 +58,15 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
         r.end_date, 
         r.round_status, 
         r.number_of_categories,
+
+        i.weekly_saving_days,
+        i.monthly_saving_days,
+
         ISNULL(msa.save_id, 0) AS is_saved,
         msa.saved_amount,
         msa.phone_used,
         msa.saved_at,
 
-        -- Penalty Info
         pl.penalty_id,
         pl.save_id AS penalty_save_id,
         pl.member_id AS penalty_member_id,
@@ -77,6 +83,7 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
         pl.paid_at AS penalty_paid_at
       FROM ims_db.dbo.ikimina_saving_slots s
       INNER JOIN ims_db.dbo.ikimina_rounds r ON s.round_id = r.round_id
+      INNER JOIN ims_db.dbo.ikimina_info i ON s.iki_id = i.iki_id
       LEFT JOIN ims_db.dbo.member_saving_activities msa 
           ON msa.slot_id = s.slot_id AND msa.member_id = @member_id
       LEFT JOIN ims_db.dbo.penalty_logs pl 
@@ -88,7 +95,8 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
     const result = await request.query(query);
     const rawSlots = result.recordset;
 
-    // Fetch the saving rules for this Ikimina group and round
+    console.log('🟦 [DEBUG] Raw fetched slots:', rawSlots);
+
     const rulesQuery = `
       SELECT TOP 1 saving_ratio, time_limit_minutes 
       FROM ikimina_saving_rules
@@ -100,11 +108,10 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
 
     const now = dayjs().tz('Africa/Kigali');
 
-    // Process each slot with its penalty and saving information
     const processedSlots = rawSlots.map(slot => {
       const slotDate = slot.slot_date ? dayjs(slot.slot_date).format('YYYY-MM-DD') : null;
-      let slotTimeStr = null;
 
+      let slotTimeStr = null;
       if (slot.slot_time) {
         if (typeof slot.slot_time === 'string') {
           slotTimeStr = slot.slot_time.length >= 8 ? slot.slot_time.substr(0, 8) : null;
@@ -117,37 +124,35 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
       if (slotDate && slotTimeStr) {
         slotDateTime = dayjs.tz(`${slotDate}T${slotTimeStr}`, 'Africa/Kigali');
         if (!slotDateTime.isValid()) {
-          console.warn('Invalid combined datetime for slot:', slot.slot_id, `${slotDate}T${slotTimeStr}`);
+          console.warn('⚠️ Invalid datetime for slot:', slot.slot_id, `${slotDate}T${slotTimeStr}`);
           slotDateTime = null;
         }
       }
 
       const isSaved = slot.is_saved > 0;
-      let friendlyStatus = 'upcoming';  // Default value
+      const savingRatio = rules?.saving_ratio ?? 0;
+      const timeLimitMinutes = rules?.time_limit_minutes ?? 0;
 
-      // Apply the saving ratio and time limits dynamically based on the group rules
-      const savingRatio = rules.saving_ratio;
-      const timeLimitMinutes = rules.time_limit_minutes;
+      let friendlyStatus = 'upcoming';
 
       if (isSaved) {
         const savedTime = dayjs(slot.saved_at);
         if (savedTime.isBefore(slotDateTime)) {
-          friendlyStatus = 'saved'; 
+          friendlyStatus = 'saved';
         } else if (savedTime.isAfter(slotDateTime)) {
-          friendlyStatus = 'saved but late';  // Saved, but after the scheduled time
+          friendlyStatus = 'saved but late';
         }
       } else if (slotDateTime) {
         const timeLimit = slotDateTime.add(timeLimitMinutes, 'minute');
-        if (now.isAfter(slotDateTime) && now.isBefore(timeLimit)) {
-          friendlyStatus = 'pending';  // Pending, within the allowed saving window
+        if (now.isBetween(slotDateTime, timeLimit)) {
+          friendlyStatus = 'pending';
         } else if (now.isAfter(timeLimit)) {
-          friendlyStatus = 'missed';  // Missed, after the allowed time
+          friendlyStatus = 'missed';
         } else {
-          friendlyStatus = 'upcoming';  // Future slot
+          friendlyStatus = 'upcoming';
         }
       }
 
-      // If the saving is done but the slot is a future date, mark it as "upcoming but saved"
       if (!isSaved && slotDateTime && slotDateTime.isAfter(now)) {
         friendlyStatus = 'upcoming but saved';
       }
@@ -169,13 +174,17 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
         actual_saving_time: slot.actual_saving_time ?? null,
         allowed_time_limit: slot.allowed_time_limit ?? null,
         saving_date: slot.saving_date ?? null,
-        penalty_created_at: slot.penalty_created_at ?? null
+        penalty_created_at: slot.penalty_created_at ?? null,
+        weekly_saving_day: slot.weekly_saving_days ?? 'Monday',
+        monthly_start_day: slot.monthly_saving_days ?? 1
       };
     });
 
+    console.log('✅ [DEBUG] Processed slot results:', processedSlots);
+
     res.status(200).json(processedSlots);
   } catch (error) {
-    console.error('Error fetching member slots:', error);
+    console.error('❌ Error fetching member slots:', error);
     res.status(500).json({ message: 'Server Error', error });
   }
 });
@@ -887,8 +896,6 @@ router.post('/payPenalty', async (req, res) => {
   }
 });
 
-
-
 router.post('/logNotification', async (req, res) => {
   const { slot_id, member_id } = req.body;
 
@@ -943,5 +950,133 @@ router.post('/logNotification', async (req, res) => {
 });
 
 
+router.get('memberSavingSummary/:memberId/:ikiId', async (req, res) => {
+  const { memberId, ikiId } = req.params;
+
+  if (!memberId || !ikiId) {
+    return res.status(400).json({ error: 'memberId and ikiId are required' });
+  }
+
+  try {
+    await poolConnect;
+
+    const request = pool.request();
+    request.input('memberId', sql.Int, memberId);
+    request.input('ikiId', sql.Int, ikiId);
+    request.input('now', sql.DateTime, new Date());
+
+    const query = `
+    WITH MemberSlots AS (
+      SELECT
+        s.slot_id,
+        s.slot_date,
+        s.slot_time,
+        s.frequency_category,
+        s.slot_status,
+        s.round_id
+      FROM ikimina_saving_slots s
+      WHERE s.iki_id = @ikiId
+    ),
+    MemberSavings AS (
+      SELECT
+        sa.save_id,
+        sa.slot_id,
+        sa.saved_amount,
+        sa.saved_at,
+        sa.penalty_applied,
+        sa.is_late,
+        sa.phone_used,
+        sa.momo_reference_id
+      FROM member_saving_activities sa
+      WHERE sa.member_id = @memberId
+    ),
+    MemberPenalties AS (
+      SELECT
+        p.penalty_id,
+        p.slot_id,
+        p.penalty_type,
+        p.penalty_amount,
+        p.is_paid,
+        p.paid_at
+      FROM penalty_logs p
+      WHERE p.member_id = @memberId AND p.iki_id = @ikiId
+    ),
+    SlotsWithSavingsAndPenalties AS (
+      SELECT
+        ms.slot_id,
+        ms.slot_date,
+        ms.slot_time,
+        ms.frequency_category,
+        ms.slot_status,
+        ms.round_id,
+        COALESCE(sa.saved_amount, 0) AS saved_amount,
+        sa.saved_at,
+        CASE WHEN sa.save_id IS NOT NULL THEN 1 ELSE 0 END AS is_saved,
+        p.penalty_amount,
+        p.is_paid AS penalty_paid
+      FROM MemberSlots ms
+      LEFT JOIN MemberSavings sa ON ms.slot_id = sa.slot_id
+      LEFT JOIN MemberPenalties p ON ms.slot_id = p.slot_id
+    )
+    SELECT
+      -- Per slot details:
+      s.slot_id,
+      s.slot_date,
+      s.slot_time,
+      s.frequency_category,
+      s.slot_status,
+      s.round_id,
+      s.saved_amount,
+      s.saved_at,
+      s.is_saved,
+      s.penalty_amount,
+      s.penalty_paid,
+
+      -- Aggregates repeated on each row (you can just use from first row):
+      (SELECT SUM(saved_amount) FROM SlotsWithSavingsAndPenalties) AS total_saved_amount,
+
+      (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS slots_completed,
+      (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties) AS total_slots,
+
+      (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE penalty_paid = 1) AS total_penalties_paid,
+      (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE (penalty_paid = 0 OR penalty_paid IS NULL) AND penalty_amount > 0) AS total_penalties_unpaid,
+
+      (SELECT AVG(NULLIF(saved_amount, 0)) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS average_saving_amount,
+
+      (SELECT MAX(saved_at) FROM SlotsWithSavingsAndPenalties WHERE saved_at IS NOT NULL) AS most_recent_saving_at,
+
+      (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date
+
+    FROM SlotsWithSavingsAndPenalties s
+    ORDER BY s.slot_date ASC;
+    `;
+
+    const result = await request.query(query);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: 'No saving slots found for this member and iki' });
+    }
+
+    // Pull aggregates from first record (all rows have same aggregates)
+    const aggregates = {
+      total_saved_amount: result.recordset[0].total_saved_amount,
+      slots_completed: result.recordset[0].slots_completed,
+      total_slots: result.recordset[0].total_slots,
+      total_penalties_paid: result.recordset[0].total_penalties_paid,
+      total_penalties_unpaid: result.recordset[0].total_penalties_unpaid,
+      average_saving_amount: result.recordset[0].average_saving_amount,
+      most_recent_saving_at: result.recordset[0].most_recent_saving_at,
+      next_upcoming_slot_date: result.recordset[0].next_upcoming_slot_date,
+    };
+
+    // Remove aggregate fields from individual slots to avoid redundancy
+    const slots = result.recordset.map(({ total_saved_amount, slots_completed, total_slots, total_penalties_paid, total_penalties_unpaid, average_saving_amount, most_recent_saving_at, next_upcoming_slot_date, ...slot }) => slot);
+
+    res.json({ slots, aggregates });
+  } catch (error) {
+    console.error('Error fetching member saving summary:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;

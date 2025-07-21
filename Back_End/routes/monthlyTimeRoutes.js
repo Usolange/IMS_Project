@@ -23,7 +23,7 @@ function normalizeTimeString(value) {
 const TIME_KEYS = ['dtime_time', 'weeklytime_time', 'monthlytime_time', 'timeOfEven'];
 
 /**
- * Generic DB query helper with correct typing
+ * Generic DB query helper with correct typing and time normalization
  */
 async function queryDB(query, inputs = {}) {
   await poolConnect;
@@ -46,7 +46,7 @@ async function queryDB(query, inputs = {}) {
 }
 
 /**
- * GET all monthly schedules for current user
+ * GET all monthly schedules for current user (sad_id)
  */
 router.get('/monthly', async (req, res) => {
   const userId = req.query.sad_id;
@@ -72,21 +72,21 @@ router.get('/monthly', async (req, res) => {
  */
 router.post('/newSchedule', async (req, res) => {
   const sad_id = req.headers['x-sad-id'];
-  const { ikimina_name, selected_dates, mtime_time, f_id, location_id } = req.body;
+  const { ikimina_name, selected_dates, monthlytime_time, f_id, location_id } = req.body;
 
   if (!sad_id) return res.status(401).json({ message: 'Unauthorized' });
   if (
     !ikimina_name ||
     !Array.isArray(selected_dates) ||
     selected_dates.length === 0 ||
-    !mtime_time ||
+    !monthlytime_time ||
     !f_id ||
     !location_id
   ) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  const normalizedTime = normalizeTimeString(mtime_time);
+  const normalizedTime = normalizeTimeString(monthlytime_time);
   if (!normalizedTime) {
     return res.status(400).json({ message: 'Invalid time format' });
   }
@@ -95,19 +95,25 @@ router.post('/newSchedule', async (req, res) => {
     await poolConnect;
 
     // Verify frequency category ownership
-    const categoryCheck = await queryDB('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id', { f_id, sad_id });
+    const categoryCheck = await queryDB(
+      'SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id',
+      { f_id, sad_id }
+    );
     if (categoryCheck.recordset.length === 0) {
       return res.status(403).json({ message: 'Unauthorized access to frequency category' });
     }
 
     // Check if Ikimina already has any schedule in daily, weekly, monthly
-    const conflictRes = await queryDB(`
+    const conflictRes = await queryDB(
+      `
       SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id
       UNION
       SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id
       UNION
       SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id
-    `, { location_id });
+      `,
+      { location_id }
+    );
 
     if (conflictRes.recordset.length > 0) {
       return res.status(409).json({ message: 'This Ikimina already has a schedule.' });
@@ -177,42 +183,55 @@ router.put('/:id', async (req, res) => {
 
   try {
     // Confirm frequency category ownership
-    const ownershipCheck = await queryDB('SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id', { f_id, sad_id });
+    const ownershipCheck = await queryDB(
+      'SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @sad_id',
+      { f_id, sad_id }
+    );
     if (ownershipCheck.recordset.length === 0) {
       return res.status(403).json({ message: 'Unauthorized category access' });
     }
 
     // Confirm record exists and belongs to frequency category
-    const scheduleCheck = await queryDB('SELECT * FROM ik_monthly_time_info WHERE monthlytime_id = @id AND f_id = @f_id', { id, f_id });
+    const scheduleCheck = await queryDB(
+      'SELECT * FROM ik_monthly_time_info WHERE monthlytime_id = @id AND f_id = @f_id',
+      { id, f_id }
+    );
     if (scheduleCheck.recordset.length === 0) {
       return res.status(404).json({ message: 'Monthly time not found or unauthorized' });
     }
 
     // Check duplicate ikimina_name in this category excluding current record
-    const duplicateName = await queryDB(`
+    const duplicateName = await queryDB(
+      `
       SELECT 1 FROM ik_monthly_time_info 
       WHERE ikimina_name = @ikimina_name AND f_id = @f_id AND monthlytime_id != @id
-    `, { ikimina_name: ikimina_name.trim(), f_id, id });
+      `,
+      { ikimina_name: ikimina_name.trim(), f_id, id }
+    );
 
     if (duplicateName.recordset.length > 0) {
       return res.status(409).json({ message: 'Ikimina name already exists in this category' });
     }
 
     // Check location_id uniqueness across schedules excluding current record
-    const conflicts = await queryDB(`
+    const conflicts = await queryDB(
+      `
       SELECT 1 FROM ik_daily_time_info WHERE location_id = @location_id
       UNION
       SELECT 1 FROM ik_weekly_time_info WHERE location_id = @location_id
       UNION
       SELECT 1 FROM ik_monthly_time_info WHERE location_id = @location_id AND monthlytime_id != @id
-    `, { location_id, id });
+      `,
+      { location_id, id }
+    );
 
     if (conflicts.recordset.length > 0) {
       return res.status(409).json({ message: 'Ikimina already has a schedule in another category' });
     }
 
     // Update record
-    await queryDB(`
+    await queryDB(
+      `
       UPDATE ik_monthly_time_info
       SET ikimina_name = @ikimina_name,
           monthlytime_date = @monthlytime_date,
@@ -220,14 +239,16 @@ router.put('/:id', async (req, res) => {
           f_id = @f_id,
           location_id = @location_id
       WHERE monthlytime_id = @id
-    `, {
-      ikimina_name: ikimina_name.trim(),
-      monthlytime_date: dayInt,
-      monthlytime_time: normalizedTime,
-      f_id,
-      location_id,
-      id
-    });
+      `,
+      {
+        ikimina_name: ikimina_name.trim(),
+        monthlytime_date: dayInt,
+        monthlytime_time: normalizedTime,
+        f_id,
+        location_id,
+        id,
+      }
+    );
 
     res.status(200).json({ message: 'Monthly time updated successfully.' });
   } catch (error) {
@@ -247,12 +268,15 @@ router.delete('/:id', async (req, res) => {
 
   try {
     // Check ownership
-    const check = await queryDB(`
+    const check = await queryDB(
+      `
       SELECT m.monthlytime_id
       FROM ik_monthly_time_info m
       JOIN frequency_category_info c ON m.f_id = c.f_id
       WHERE m.monthlytime_id = @id AND c.sad_id = @sad_id
-    `, { id, sad_id });
+      `,
+      { id, sad_id }
+    );
 
     if (check.recordset.length === 0) {
       return res.status(404).json({ message: 'Record not found or not authorized' });

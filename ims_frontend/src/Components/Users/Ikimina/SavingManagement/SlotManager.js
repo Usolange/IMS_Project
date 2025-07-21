@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-
 const PAGE_SIZE = 50;
 
 const SlotManager = ({ iki_id: propIkiId }) => {
@@ -13,9 +12,8 @@ const SlotManager = ({ iki_id: propIkiId }) => {
   const [user, setUser] = useState({ id: null, name: null });
   const [page, setPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [slotsExist, setSlotsExist] = useState(false); 
+  const [slotsExist, setSlotsExist] = useState(false);
   const [toastError, setToastError] = useState('');
-
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -32,33 +30,33 @@ const SlotManager = ({ iki_id: propIkiId }) => {
     }
   }, []);
 
+  // Use propIkiId if passed, else fallback to user.id
   const iki_id = propIkiId || user.id;
 
- const fetchSlots = async () => {
-  if (!iki_id) return;
-  setLoadingSlots(true);
-  try {
-    const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/selectAllSlots/${iki_id}`);
+  const fetchSlots = async () => {
+    if (!iki_id) return;
+    setLoadingSlots(true);
+    try {
+      const res = await axios.get(`http://localhost:5000/api/slotsManagementRoutes/selectAllSlots/${iki_id}`);
 
-    const formattedSlots = res.data
-      .map(slot => ({
-        ...slot,
-        slot_time: slot.slot_time?.slice(0, 5) || '00:00',
-      }))
-      .filter((slot, index, self) =>
-        index === self.findIndex(s => s.slot_id === slot.slot_id)
-      ); // ✅ Deduplicate by slot_id
+      const formattedSlots = res.data
+        .map(slot => ({
+          ...slot,
+          slot_time: slot.slot_time?.slice(0, 5) || '00:00',
+        }))
+        .filter((slot, index, self) =>
+          index === self.findIndex(s => s.slot_id === slot.slot_id)
+        ); // Deduplicate by slot_id
 
-    setSlots(formattedSlots);
-    setSlotsExist(formattedSlots.length > 0);
-    setPage(1);
-  } catch {
-    setMessage('Failed to fetch slots');
-  } finally {
-    setLoadingSlots(false);
-  }
-};
-
+      setSlots(formattedSlots);
+      setSlotsExist(formattedSlots.length > 0);
+      setPage(1);
+    } catch {
+      setMessage('Failed to fetch slots');
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
 
   const fetchRound = async () => {
     if (!iki_id) return;
@@ -73,39 +71,36 @@ const SlotManager = ({ iki_id: propIkiId }) => {
     }
   };
 
-const handleGenerate = async () => {
-  if (!iki_id) return;
-  setMessage('Generating slots...');
-  setToastError('');
-  try {
-    await axios.post(`http://localhost:5000/api/slotsManagementRoutes/newSlots/${iki_id}`);
-    setMessage('Slots generated successfully');
-    fetchRound();
-    fetchSlots();
-  } catch (err) {
-    const errorMsg = err.response?.data?.message || 'Failed to generate slots';
-    setMessage(errorMsg);
-    setToastError(errorMsg);
-    // Clear toast after 4 seconds
-    setTimeout(() => setToastError(''), 4000);
-  }
-};
+  const handleGenerate = async () => {
+    if (!iki_id) return;
+    setMessage('Generating slots...');
+    setToastError('');
+    try {
+      await axios.post(`http://localhost:5000/api/slotsManagementRoutes/newSlots/${iki_id}`);
+      setMessage('Slots generated successfully');
+      await fetchRound();
+      await fetchSlots();
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to generate slots';
+      setMessage(errorMsg);
+      setToastError(errorMsg);
+      setTimeout(() => setToastError(''), 4000);
+    }
+  };
 
-
-const handleReset = async () => {
-  if (!iki_id) return;
-  if (!window.confirm('Are you sure you want to reset all slots?')) return;
-  setMessage('Resetting slots...');
-  try {
-    const res = await axios.put(`http://localhost:5000/api/slotsManagementRoutes/reset/${iki_id}`);
-    setMessage(res.data.message);
-    fetchRound();
-    fetchSlots();
-  } catch (err) {
-    setMessage(err.response?.data?.message || 'Failed to reset slots');
-  }
-};
-
+  const handleReset = async () => {
+    if (!iki_id) return;
+    if (!window.confirm('Are you sure you want to reset all slots?')) return;
+    setMessage('Resetting slots...');
+    try {
+      const res = await axios.put(`http://localhost:5000/api/slotsManagementRoutes/reset/${iki_id}`);
+      setMessage(res.data.message);
+      await fetchRound();
+      await fetchSlots();
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Failed to reset slots');
+    }
+  };
 
   useEffect(() => {
     if (iki_id) {
@@ -144,8 +139,17 @@ const handleReset = async () => {
         <p>Loading round info...</p>
       ) : round && round.start_date ? (
         <div className="mb-4 p-4 border rounded bg-gray-50">
-          <p><strong>Current Round:</strong> {new Date(round.start_date).toLocaleDateString()} — {new Date(round.end_date).toLocaleDateString()}</p>
-          <p><strong>Status:</strong> {round.round_status === 'active' ? <span className="text-green-600 font-semibold">Active</span> : <span className="text-gray-600 capitalize">{round.round_status}</span>}</p>
+          <p>
+            <strong>Current Round:</strong> {new Date(round.start_date).toLocaleDateString()} — {new Date(round.end_date).toLocaleDateString()}
+          </p>
+          <p>
+            <strong>Status:</strong>{' '}
+            {round.round_status === 'active' ? (
+              <span className="text-green-600 font-semibold">Active</span>
+            ) : (
+              <span className="text-gray-600 capitalize">{round.round_status}</span>
+            )}
+          </p>
           <p><strong>Total Slots:</strong> {round.total_slots}</p>
           <p><strong>Slots Passed:</strong> {passedSlotsCount}</p>
           <p><strong>Slots Remaining:</strong> {remainingSlotsCount}</p>
@@ -157,24 +161,31 @@ const handleReset = async () => {
       <div className="flex space-x-4 mb-4">
         <button
           onClick={handleGenerate}
-          disabled={slotsExist}
+          disabled={slotsExist || loadingSlots || loadingRound}
+          aria-label="Generate saving slots"
           className={`px-4 py-2 rounded text-white ${
-            slotsExist ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+            slotsExist || loadingSlots || loadingRound ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
           }`}
         >
           Generate Slots
         </button>
         <button
           onClick={handleReset}
-          disabled={round?.round_status !== 'active'}
+          disabled={round?.round_status !== 'active' || loadingSlots || loadingRound}
+          aria-label="Reset saving slots"
           className={`px-4 py-2 rounded text-white ${
-            round?.round_status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'
+            round?.round_status === 'active' && !loadingSlots && !loadingRound
+              ? 'bg-red-600 hover:bg-red-700'
+              : 'bg-gray-400 cursor-not-allowed'
           }`}
         >
           Reset Slots
         </button>
-        {toastError && <div className="toast-error">{toastError}</div>}
-
+        {toastError && (
+          <div className="toast-error text-red-600 font-semibold ml-4" role="alert" aria-live="assertive">
+            {toastError}
+          </div>
+        )}
       </div>
 
       <div className="mb-4">
@@ -187,6 +198,7 @@ const handleReset = async () => {
             setPage(1);
           }}
           className="border rounded px-2 py-1"
+          aria-label="Filter saving slots by status"
         >
           <option value="all">All</option>
           <option value="passed">Passed</option>
@@ -231,6 +243,7 @@ const handleReset = async () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
+              aria-label="Previous page"
               className={`px-3 py-1 rounded ${
                 page === 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
@@ -241,6 +254,7 @@ const handleReset = async () => {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
+              aria-label="Next page"
               className={`px-3 py-1 rounded ${
                 page === totalPages ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}

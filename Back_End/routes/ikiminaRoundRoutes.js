@@ -429,13 +429,9 @@ router.post('/newRound', async (req, res) => {
       return res.status(400).json({ message: 'Calculated end_date cannot be before start_date.' });
     }
 
-    // Determine round status based on today
+    // set round status default
     let roundStatus = 'upcoming';
-    if (startDate > todayKigaliDate) roundStatus = 'upcoming';
-    else if (startDate <= todayKigaliDate && endDate >= todayKigaliDate) roundStatus = 'active';
-    else if (endDate < todayKigaliDate) roundStatus = 'completed';
-
-    // Determine round number and year
+   // Determine round number and year
     const roundNumber = lastRound && lastRound.round_number ? lastRound.round_number + 1 : 1;
     const roundYear = startDate.getFullYear();
 

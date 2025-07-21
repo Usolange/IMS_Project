@@ -206,10 +206,6 @@ export default function RegisterMemberModal({ isOpen, onClose, onSuccess, iki_id
       setTimeout(() => {
         onClose?.();
       }, 1200); // Optional delay to show success message or credentials
-
-
-      downloadCredentials(response.data.data?.member_code, response.data.data?.member_pass);
-      onSuccess?.();
     } catch (err) {
       // Log detailed error info
       console.error('Member registration failed:', err);

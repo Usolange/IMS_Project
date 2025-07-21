@@ -2,23 +2,34 @@ const express = require('express');
 const router = express.Router();
 const { pool, sql, poolConnect } = require('../config/db');
 
+/**
+ * Normalize time string to HH:mm:ss format.
+ * Accepts HH:mm or HH:mm:ss.
+ * Returns normalized string or null if invalid.
+ */
 function normalizeTimeString(value) {
   if (!value) return null;
-  // Accept HH:mm or HH:mm:ss exactly
   const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
   if (!timeRegex.test(value)) return null;
 
   const parts = value.split(':');
   const hh = parts[0];
   const mm = parts[1];
-  const ss = parts[2] || '00'; // If no seconds, add '00'
+  const ss = parts[2] || '00'; // add seconds if missing
   return `${hh}:${mm}:${ss}`;
 }
 
+/**
+ * Check if a string is a valid time (HH:mm or HH:mm:ss).
+ */
 function isTimeString(value) {
   return typeof value === 'string' && /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/.test(value);
 }
 
+/**
+ * Helper function to run SQL queries with inputs.
+ * Times are passed as NVARCHAR(8) strings.
+ */
 async function queryDB(query, inputs = {}) {
   await poolConnect;
   const request = pool.request();
@@ -29,7 +40,7 @@ async function queryDB(query, inputs = {}) {
     } else if (isTimeString(value)) {
       const normalized = normalizeTimeString(value);
       if (!normalized) throw new Error(`Invalid time format for parameter ${key}: ${value}`);
-      // Pass as NVARCHAR(8) string instead of sql.Time
+      // Pass time as NVARCHAR(8) string
       request.input(key, sql.NVarChar(8), normalized);
     } else {
       request.input(key, sql.NVarChar(sql.MAX), value);
@@ -38,7 +49,6 @@ async function queryDB(query, inputs = {}) {
 
   return request.query(query);
 }
-
 
 /**
  * POST new daily schedule
@@ -53,7 +63,7 @@ router.post('/newSchedule', async (req, res) => {
   }
 
   try {
-    // Verify ownership of frequency category
+    // Verify frequency category ownership
     const categoryCheckQuery = 'SELECT * FROM frequency_category_info WHERE f_id = @f_id AND sad_id = @userId';
     const categoryResult = await queryDB(categoryCheckQuery, { f_id, userId });
 
@@ -61,13 +71,13 @@ router.post('/newSchedule', async (req, res) => {
       return res.status(403).json({ message: 'Frequency category not found or unauthorized' });
     }
 
-    // Check if schedule exists in any frequency tables for this location
+    // Check if any schedule already exists for this location (daily/weekly/monthly)
     const dailyCheck = await queryDB('SELECT TOP 1 1 FROM ik_daily_time_info WHERE location_id = @location_id', { location_id });
     const weeklyCheck = await queryDB('SELECT TOP 1 1 FROM ik_weekly_time_info WHERE location_id = @location_id', { location_id });
     const monthlyCheck = await queryDB('SELECT TOP 1 1 FROM ik_monthly_time_info WHERE location_id = @location_id', { location_id });
 
     if (dailyCheck.recordset.length > 0 || weeklyCheck.recordset.length > 0 || monthlyCheck.recordset.length > 0) {
-      return res.status(409).json({ message: 'This Ikimina already has a schedule in daily, weekly, or monthly.' });
+      return res.status(409).json({ message: 'This Ikimina location already has a schedule in daily, weekly, or monthly.' });
     }
 
     // Ensure no duplicate ikimina_name in same frequency category
@@ -78,12 +88,17 @@ router.post('/newSchedule', async (req, res) => {
       return res.status(409).json({ message: 'Ikimina name already exists for this frequency category.' });
     }
 
-    // Insert new daily schedule
+    // Insert new daily schedule with time as string
     const insertQuery = `
       INSERT INTO ik_daily_time_info (ikimina_name, dtime_time, f_id, location_id)
       VALUES (@ikimina_name, @dtime_time, @f_id, @location_id)
     `;
-    await queryDB(insertQuery, { ikimina_name: ikimina_name.trim(), dtime_time, f_id, location_id });
+    await queryDB(insertQuery, {
+      ikimina_name: ikimina_name.trim(),
+      dtime_time: normalizeTimeString(dtime_time),
+      f_id,
+      location_id,
+    });
 
     res.status(201).json({ message: 'Daily time saved successfully.' });
   } catch (error) {
@@ -148,7 +163,13 @@ router.put('/:id', async (req, res) => {
       SET ikimina_name = @ikimina_name, dtime_time = @dtime_time, f_id = @f_id, location_id = @location_id
       WHERE dtime_id = @id
     `;
-    await queryDB(updateQuery, { ikimina_name: ikimina_name.trim(), dtime_time, f_id, location_id, id });
+    await queryDB(updateQuery, {
+      ikimina_name: ikimina_name.trim(),
+      dtime_time: normalizeTimeString(dtime_time),
+      f_id,
+      location_id,
+      id,
+    });
 
     res.status(200).json({ message: 'Daily time updated successfully.' });
   } catch (error) {

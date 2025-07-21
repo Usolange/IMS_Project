@@ -10,14 +10,20 @@ async function runQuery(query, params = []) {
   return result.recordset;
 }
 
+// helper function for parsing and validating IDs
+function parseId(id) {
+  const parsed = parseInt(id, 10);
+  if (isNaN(parsed)) throw new Error('Invalid ID parameter');
+  return parsed;
+}
+
+// GET Ikimina Info
 router.get('/ikiminaInfo/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
-
-  if (!iki_id) {
-    return res.status(400).json({ message: 'Ikimina ID is required' });
-  }
-
   try {
+    const iki_id = parseId(req.params.iki_id);
+
+    // TODO: Add auth check here to verify user can access this iki_id
+
     const query = `
       SELECT iki_id, iki_name, iki_email, iki_username, location_id, f_id
       FROM ikimina_info
@@ -25,7 +31,7 @@ router.get('/ikiminaInfo/:iki_id', async (req, res) => {
     `;
 
     const result = await runQuery(query, [
-      { name: 'iki_id', type: sql.Int, value: parseInt(iki_id, 10) }
+      { name: 'iki_id', type: sql.Int, value: iki_id }
     ]);
 
     if (!result.length) {
@@ -34,15 +40,25 @@ router.get('/ikiminaInfo/:iki_id', async (req, res) => {
 
     res.json(result[0]);
   } catch (err) {
-    console.error('[ikiminaInfo] Error fetching ikimina:', err);
-    res.status(500).json({ message: 'Server error fetching Ikimina info' });
+    console.error('[ikiminaInfo] Error:', err.message || err);
+    res.status(400).json({ message: err.message || 'Invalid request' });
   }
 });
 
-router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
-  const { iki_id, round_id } = req.params;
+//  Helper log
+const log = (label, data) => {
+  console.log(`[${label}]`, typeof data === 'object' ? JSON.stringify(data, null, 2) : data);
+};
 
+// ✅ GET Rules for Selected Round
+router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
   try {
+    const iki_id = parseId(req.params.iki_id);
+    const round_id = parseId(req.params.round_id);
+
+    log('getRulesForSelectedRound ▶️ iki_id', iki_id);
+    log('getRulesForSelectedRound ▶️ round_id', round_id);
+
     const result = await pool
       .request()
       .input('iki_id', sql.Int, iki_id)
@@ -54,27 +70,25 @@ router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
       `);
 
     if (result.recordset.length === 0) {
-      return res.status(404).json({ message: 'No rules found for this round.' });
+      log('getRulesForSelectedRound ⚠️ No rules found', {});
+      return res.status(200).json({});
     }
 
+    log('getRulesForSelectedRound ✅ Found', result.recordset[0]);
     res.json(result.recordset[0]);
-  } catch (error) {
-    console.error('Error fetching rules:', error);
-    res.status(500).json({ error: 'Server error while fetching rules.' });
+
+  } catch (err) {
+    console.error('[getRulesForSelectedRound] ❌ Error:', err.message || err);
+    res.status(400).json({ message: err.message || 'Invalid request' });
   }
 });
-// activeRound route
-router.get('/activeRound/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
 
-  if (!iki_id) {
-    console.warn('[selectRules] ❌ Missing iki_id in params');
-    return res.status(400).json({ message: 'Ikimina ID is required.' });
-  }
-
-  console.log(`[selectRules] 🔍 Received iki_id: ${iki_id}`);
-
+// ✅ GET Active Round and Rules (selectRules)
+router.get('/selectRules/:iki_id', async (req, res) => {
   try {
+    const iki_id = parseId(req.params.iki_id);
+    log('selectRules 🔍 iki_id', iki_id);
+
     const roundQuery = `
       SELECT TOP 1 round_id, round_year, start_date, end_date
       FROM ikimina_rounds 
@@ -82,16 +96,16 @@ router.get('/activeRound/:iki_id', async (req, res) => {
       ORDER BY round_id DESC`;
 
     const roundRows = await runQuery(roundQuery, [
-      { name: 'iki_id', type: sql.Int, value: parseInt(iki_id, 10) }
+      { name: 'iki_id', type: sql.Int, value: iki_id }
     ]);
 
     if (!roundRows.length) {
-      console.log('[selectRules] ℹ️ No active round found for iki_id:', iki_id);
-      return res.status(404).json({ message: 'No active round found for this Ikimina.' });
+      log('selectRules ℹ️ No active round found', {});
+      return res.status(200).json({});
     }
 
     const round = roundRows[0];
-    console.log('[selectRules] ✅ Active Round Found:', round);
+    log('selectRules ✅ Active Round Found', round);
 
     const rulesQuery = `
       SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes
@@ -99,40 +113,31 @@ router.get('/activeRound/:iki_id', async (req, res) => {
       WHERE iki_id = @iki_id AND round_id = @round_id`;
 
     const rules = await runQuery(rulesQuery, [
-      { name: 'iki_id', type: sql.Int, value: parseInt(iki_id, 10) },
+      { name: 'iki_id', type: sql.Int, value: iki_id },
       { name: 'round_id', type: sql.Int, value: round.round_id }
     ]);
 
     if (!rules.length) {
-      console.log(`[selectRules] ⚠️ No saving rules found for round_id: ${round.round_id}`);
-      return res.status(404).json({ message: 'No saving rules set for the current active round.' });
+      log(`selectRules ⚠️ No rules found for round_id: ${round.round_id}`, {});
+      return res.status(200).json({ round });
     }
 
-    console.log('[selectRules] ✅ Saving Rules Found:', rules[0]);
-
-    const responsePayload = {
-      round,
-      rules: rules[0]
-    };
-
-    console.log('[selectRules] 🚀 Sending Response:', responsePayload);
+    const responsePayload = { round, rules: rules[0] };
+    log('selectRules 🚀 Sending Response', responsePayload);
     res.json(responsePayload);
 
-  } catch (error) {
-    console.error('[selectRules] ❌ Error fetching rules:', error);
-    res.status(500).json({ message: 'Internal server error while fetching saving rules.' });
+  } catch (err) {
+    console.error('[selectRules] ❌ Error:', err.message || err);
+    res.status(400).json({ message: err.message || 'Invalid request' });
   }
 });
-// completedRounds route
+
+// ✅ GET Completed Rounds
 router.get('/completedRounds/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
-
-  if (!iki_id) {
-    console.warn('[completedRounds] Missing iki_id in params');
-    return res.status(400).json({ message: 'Ikimina ID is required.' });
-  }
-
   try {
+    const iki_id = parseId(req.params.iki_id);
+    log('completedRounds 🔍 iki_id', iki_id);
+
     const roundsQuery = `
       SELECT round_id, round_year, start_date, end_date
       FROM ikimina_rounds
@@ -140,29 +145,24 @@ router.get('/completedRounds/:iki_id', async (req, res) => {
       ORDER BY end_date DESC`;
 
     const rounds = await runQuery(roundsQuery, [
-      { name: 'iki_id', type: sql.Int, value: parseInt(iki_id, 10) }
+      { name: 'iki_id', type: sql.Int, value: iki_id }
     ]);
 
-    if (!rounds.length) {
-      return res.status(404).json({ message: 'No completed rounds found for this Ikimina.' });
-    }
-
+    log('completedRounds ✅ Found', rounds);
     res.json(rounds);
-  } catch (error) {
-    console.error('[completedRounds] Error fetching completed rounds:', error);
-    res.status(500).json({ message: 'Internal server error while fetching completed rounds.' });
+
+  } catch (err) {
+    console.error('[completedRounds] ❌ Error:', err.message || err);
+    res.status(400).json({ message: err.message || 'Invalid request' });
   }
 });
-// upcomingRounds route
+
+// ✅ GET Upcoming Rounds
 router.get('/upcomingRounds/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
-
-  if (!iki_id) {
-    console.warn('[upcomingRounds] Missing iki_id in params');
-    return res.status(400).json({ message: 'Ikimina ID is required.' });
-  }
-
   try {
+    const iki_id = parseId(req.params.iki_id);
+    log('upcomingRounds 🔍 iki_id', iki_id);
+
     const roundsQuery = `
       SELECT round_id, round_year, start_date, end_date
       FROM ikimina_rounds
@@ -170,19 +170,18 @@ router.get('/upcomingRounds/:iki_id', async (req, res) => {
       ORDER BY start_date ASC`;
 
     const rounds = await runQuery(roundsQuery, [
-      { name: 'iki_id', type: sql.Int, value: parseInt(iki_id, 10) }
+      { name: 'iki_id', type: sql.Int, value: iki_id }
     ]);
 
-    if (!rounds.length) {
-      return res.status(404).json({ message: 'No upcoming rounds found for this Ikimina.' });
-    }
-
+    log('upcomingRounds ✅ Found', rounds);
     res.json(rounds);
-  } catch (error) {
-    console.error('[upcomingRounds] Error fetching upcoming rounds:', error);
-    res.status(500).json({ message: 'Internal server error while fetching upcoming rounds.' });
+
+  } catch (err) {
+    console.error('[upcomingRounds] ❌ Error:', err.message || err);
+    res.status(400).json({ message: err.message || 'Invalid request' });
   }
 });
+
 
 // newRules  route
 router.put('/newRules/:iki_id', async (req, res) => {

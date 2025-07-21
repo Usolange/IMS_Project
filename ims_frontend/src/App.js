@@ -39,7 +39,7 @@ import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
 
 import MeLayout from './Components/Users/Members/meLayout';
-import MemberDashboard from './Components/Users/Members/memberDashboard';
+import MemberDashboard from './Components/Users/Members/MemberDashboard';
 import MemberSavingManager from './Components/Users/Members/SavingManagement/MemberSavingManager';
 import LoanManager from './Components/Users/Members/loanManagement/loanManager';
 
