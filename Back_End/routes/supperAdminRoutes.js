@@ -190,7 +190,7 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     const mailOptions = {
-      from: `"Flood Alert App" <${process.env.SMTP_USER}>`,
+      from: `"IKIMINA MANAGEMENT SYSTEM" <${process.env.SMTP_USER}>`,
       to: email,
       subject: 'Password Reset Instructions',
       html: `

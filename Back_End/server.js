@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const db = require('./config/db');
 
 // Import routes
-const loanPredictionDataForRound = require('./routes/loanPredictionDataForRound');
+const { router: loanPredictionRouter } = require('./routes/loanPredictionDataForRound');
 const DailyTimeRoutes = require('./routes/dailyTimeRoutes');
 const frequencyCategoryRoutes = require('./routes/frequencyCategoryRoutes');
 const gudianMembersRoutes = require('./routes/gudianMembersRoutes');
@@ -22,7 +22,9 @@ const ikiminaRoundRoutes = require('./routes/ikiminaRoundRoutes');
 const savingManagementRoutes = require('./routes/savingManagementRoutes');
 const slotsManagementRoutes = require('./routes/slotsManagementRoutes');
 const savingRulesRoutes = require('./routes/savingRulesRoutes');
+const LoanManagementRoutes = require('./routes/LoanManagementRoutes');
 const loanPredictionRoutes = require('./routes/loanPredictionRoutes');
+
 
 
 dotenv.config();
@@ -70,8 +72,10 @@ app.use('/api/ikiminaRoundRoutes', ikiminaRoundRoutes);
 app.use('/api/savingManagementRoutes', savingManagementRoutes);
 app.use('/api/slotsManagementRoutes', slotsManagementRoutes);
 app.use('/api/savingRulesRoutes', savingRulesRoutes);
-app.use('/api/loanPredictionDataForRound', loanPredictionDataForRound);
+app.use('/api/loanPredictionDataForRound', loanPredictionRouter);
 app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
+app.use('/api/loanManagementRoutes', LoanManagementRoutes);
+
 
 
 // Start the server

@@ -15,9 +15,7 @@ final_features = [
     'TotalCurrentSaving',
     'IkiminaCreatedYear',
     'UserJoinedYear',
-    'Age',
     'HasGuardian',
-    'IsEmployed',
     'SavingFrequency_daily',
     'SavingFrequency_monthly',
     'SavingFrequency_weekly',
@@ -42,9 +40,10 @@ def predict_loan():
     try:
         # Required fields without 'model_choice'
         required_fields = [
-            'saving_times_per_period', 'completed_saving_cycles', 'user_savings_made',
+            'saving_times_per_period', 'completed_saving_cycles', 
+            'user_savings_made',
             'total_current_saving', 'ikimina_created_year', 'user_joined_year',
-            'user_age', 'has_guardian', 'employment_status', 'saving_frequency',
+            'has_guardian',  'saving_frequency',
             'recent_loan_payment_status'
         ]
         for field in required_fields:
@@ -66,9 +65,7 @@ def predict_loan():
             'TotalCurrentSaving': float(data['total_current_saving']),
             'IkiminaCreatedYear': int(data['ikimina_created_year']),
             'UserJoinedYear': int(data['user_joined_year']),
-            'Age': int(data['user_age']),
             'HasGuardian': int(data['has_guardian']),
-            'IsEmployed': 1 if data['employment_status'] == 'employed' else 0,
             'SavingFrequency_daily': 1 if data['saving_frequency'] == 'daily' else 0,
             'SavingFrequency_monthly': 1 if data['saving_frequency'] == 'monthly' else 0,
             'SavingFrequency_weekly': 1 if data['saving_frequency'] == 'weekly' else 0,

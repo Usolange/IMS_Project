@@ -169,23 +169,6 @@ const SlotManager = ({ iki_id: propIkiId }) => {
         >
           Generate Slots
         </button>
-        <button
-          onClick={handleReset}
-          disabled={
-            !round ||
-            ['active', 'completed', 'closed'].includes(round.round_status) ||
-            loadingSlots ||
-            loadingRound
-          }
-          aria-label="Reset saving slots"
-          className={`px-4 py-2 rounded text-white ${
-            round && !['active', 'completed', 'closed'].includes(round.round_status) && !loadingSlots && !loadingRound
-              ? 'bg-red-600 hover:bg-red-700 cursor-pointer'
-              : 'bg-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Reset Slots
-        </button>
         {toastError && (
           <div className="toast-error text-red-600 font-semibold ml-4" role="alert" aria-live="assertive">
             {toastError}

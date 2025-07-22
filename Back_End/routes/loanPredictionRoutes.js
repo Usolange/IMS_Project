@@ -13,8 +13,6 @@ async function runQuery(query, params = []) {
   return result.recordset || [];
 }
 
-
-
 // Fetch loan prediction input data for a member for active round only
 router.get('/modalInputData/:member_id', async (req, res) => {
   const member_id = parseInt(req.params.member_id);
@@ -73,12 +71,10 @@ router.get('/modalInputData/:member_id', async (req, res) => {
         user_savings_made,
         total_current_saving,
         ikimina_created_year,
-        coverd_rounds,
-        member_round,
+        member_Join_Year,
         recent_loan_payment_status,
         saving_status,
         has_guardian,
-        round_id
       FROM ims_db.dbo.loan_prediction_data
       WHERE member_id = @member_id AND round_id = @round_id
       ORDER BY id DESC
@@ -104,8 +100,7 @@ router.get('/modalInputData/:member_id', async (req, res) => {
       user_savings_made: result.user_savings_made,
       total_current_saving: result.total_current_saving,
       ikimina_created_year: result.ikimina_created_year,
-      covered_rounds: result.coverd_rounds, // note typo in db column
-      member_round: result.member_round,
+      member_Join_Year: result.member_Join_Year,
       recent_loan_payment_status: result.recent_loan_payment_status,
       saving_status: result.saving_status,
       has_guardian: result.has_guardian === 1 || result.has_guardian === true
@@ -120,6 +115,7 @@ router.get('/modalInputData/:member_id', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error fetching modal input' });
   }
 });
+
 
 // Predict allowed loan for active round using modal input
 router.get('/predictedAllowedLoan/:member_id', async (req, res) => {
@@ -146,6 +142,7 @@ router.get('/predictedAllowedLoan/:member_id', async (req, res) => {
     return res.status(500).json({ message: 'Failed to get prediction from model' });
   }
 });
+
 
 // 1. Get all loans for a member
 router.get('/selectLoans/:memberId', async (req, res) => {

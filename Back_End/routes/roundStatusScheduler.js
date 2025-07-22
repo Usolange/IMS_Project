@@ -17,7 +17,7 @@ const {
   sendCustomEmail,
 } = require('../routes/notification'); // Your existing notification module
 
-const { loanPredictionRoutes } = require('./loanPredictionRoutes');
+const { loanPredictionDataForRound } = require('./loanPredictionDataForRound');
 
 const BACKEND_URL = 'http://localhost:5000/api/ikiminaRoundRoutes';
 const AUTH_TOKEN = process.env.AUTH_TOKEN;
@@ -31,6 +31,9 @@ const KIGALI_OFFSET_MS = 3 * 60 * 60 * 1000; // Kigali timezone offset (UTC+3)
 
 // In-memory cache to track last notified status for rounds
 const lastNotifiedStatus = {}; // key: round_id or 'no_rounds_iki_id', value: last status string
+
+// In-memory cache to track which rounds are active for loan prediction scheduling
+const activeRoundsForLoanPrediction = new Set();
 
 // Helpers
 
@@ -276,6 +279,74 @@ async function updateSlotStatusesForIkimina(iki_id) {
   }
 }
 
+// Validate if all slots and rules exist for a round before activating
+async function checkAllSlotsAndRulesExist(iki_id, round_id) {
+  try {
+    const [slots, rules] = await Promise.all([
+      pool.request()
+        .input('iki_id', sql.Int, iki_id)
+        .input('round_id', sql.Int, round_id)
+        .query(`SELECT COUNT(*) AS count FROM ikimina_saving_slots WHERE iki_id = @iki_id AND round_id = @round_id`),
+      pool.request()
+        .input('iki_id', sql.Int, iki_id)
+        .input('round_id', sql.Int, round_id)
+        .query(`SELECT COUNT(*) AS count FROM ikimina_saving_rules WHERE iki_id = @iki_id AND round_id = @round_id`),
+    ]);
+
+    return slots.recordset[0].count > 0 && rules.recordset[0].count > 0;
+  } catch (err) {
+    console.error(`Error validating slots/rules for round ${round_id}:`, err);
+    return false;
+  }
+}
+
+// Notify ikimina readers (non-members) if slots or rules missing on round start
+async function notifyReadersForMissingSetup(iki_id, round_id) {
+  try {
+    const result = await pool.request()
+      .input('iki_id', sql.Int, iki_id)
+      .query(`SELECT 
+    m.member_names,
+    m.iki_id,
+    mt.member_type
+FROM members_info m
+JOIN member_type_info mt ON m.member_type_id = mt.member_type_id
+WHERE m.iki_id = @iki_id
+  AND mt.member_type != 'member';
+`);
+
+    const subject = 'Ikimina Round Start Blocked - Setup Incomplete';
+    const body = `<p>Hello,</p><p>The scheduled Ikimina round (ID: ${round_id}) could not be started because either slots or rules are not yet generated. Please complete the setup to proceed.</p><p>Thank you.</p>`;
+
+    for (const reader of result.recordset) {
+      if (reader.member_email) {
+        await sendCustomEmail(reader.member_email, subject, body);
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to notify readers for round ${round_id} setup issues:`, err);
+  }
+}
+
+// Notify all members when round is successfully activated
+async function notifyMembersRoundActivated(iki_id) {
+  try {
+    const result = await pool.request()
+      .input('iki_id', sql.Int, iki_id)
+      .query(`SELECT member_email, member_names FROM members_info WHERE iki_id = @iki_id`);
+
+    const subject = 'Ikimina Round Activated';
+    const body = `<p>Dear member,</p><p>The Ikimina round has been activated. You can now start saving.</p><p>Best regards,<br>Ikimina Management System</p>`;
+
+    for (const member of result.recordset) {
+      if (member.member_email) {
+        await sendCustomEmail(member.member_email, subject, body.replace('member', member.member_names));
+      }
+    }
+  } catch (err) {
+    console.error(`Failed to notify members of round activation for ikimina ${iki_id}:`, err);
+  }
+}
 
 async function processRoundsForIkimina(iki_id) {
   const rounds = await fetchRounds(iki_id);
@@ -301,28 +372,48 @@ async function processRoundsForIkimina(iki_id) {
 
     const lastStatus = lastNotifiedStatus[round.round_id];
 
+    // --- NEW LOGIC INJECTION START ---
     if (currentStatus === 'upcoming' && now >= startDate) {
-      // Transition from upcoming -> active
+      // Check if all slots and rules exist
+      const allSetupDone = await checkAllSlotsAndRulesExist(iki_id, round.round_id);
+
+      if (!allSetupDone) {
+        // Do NOT activate round, notify readers
+        await notifyReadersForMissingSetup(iki_id, round.round_id);
+        // Do NOT change round status or notify members yet
+        continue; // skip to next round
+      }
+
+      // Proceed with activation if setup complete
       const updated = await updateRoundStatus(iki_id, round.round_id, 'active');
       if (updated && lastStatus !== 'active') {
         await sendRoundStatusNotifications(iki_id, 'active');
         await activateMembers(iki_id);
+        await notifyMembersRoundActivated(iki_id);
 
-        // Auto-run loan prediction for this round
+        // Schedule loan prediction for active round
+        activeRoundsForLoanPrediction.add(`${iki_id}_${round.round_id}`);
         try {
-          await loanPredictionRoutes(iki_id, round.round_id);
+          await loanPredictionDataForRound(iki_id, round.round_id);
         } catch (err) {
-          console.error('Error during loanPredictionRoutes call:', err);
+          console.error('Error during loanPredictionDataForRound call:', err);
         }
 
         lastNotifiedStatus[round.round_id] = 'active';
       }
-    } else if (currentStatus === 'active' && now > endDate) {
+    }
+    // --- NEW LOGIC INJECTION END ---
+
+    else if (currentStatus === 'active' && now > endDate) {
       // Transition from active -> completed
       const updated = await updateRoundStatus(iki_id, round.round_id, 'completed');
       if (updated && lastStatus !== 'completed') {
         await sendRoundStatusNotifications(iki_id, 'completed');
         await completeMembers(iki_id);
+
+        // Remove from active loan prediction rounds
+        activeRoundsForLoanPrediction.delete(`${iki_id}_${round.round_id}`);
+
         lastNotifiedStatus[round.round_id] = 'completed';
       }
     } else if (currentStatus === 'upcoming') {
@@ -332,8 +423,15 @@ async function processRoundsForIkimina(iki_id) {
         await waitingMembers(iki_id);
         lastNotifiedStatus[round.round_id] = 'upcoming';
       }
+      // Remove from active rounds if any (just in case)
+      activeRoundsForLoanPrediction.delete(`${iki_id}_${round.round_id}`);
+    } else if (currentStatus === 'active') {
+      // Round still active but no status change, ensure loan prediction runs (without notification)
+      activeRoundsForLoanPrediction.add(`${iki_id}_${round.round_id}`);
+    } else {
+      // Other statuses, ensure round not tracked for loan prediction
+      activeRoundsForLoanPrediction.delete(`${iki_id}_${round.round_id}`);
     }
-    // No repeated notifications for completed rounds
   }
 }
 
@@ -362,6 +460,18 @@ async function updateRoundStatus(iki_id, round_id, newStatus) {
   }
 }
 
+// Run loanPredictionDataForRound for all active rounds tracked
+async function runLoanPredictionForActiveRounds() {
+  for (const key of activeRoundsForLoanPrediction) {
+    const [iki_id, round_id] = key.split('_');
+    try {
+      await loanPredictionDataForRound(parseInt(iki_id), parseInt(round_id));
+    } catch (err) {
+      console.error(`Error running loanPredictionDataForRound for ikimina ${iki_id} round ${round_id}:`, err);
+    }
+  }
+}
+
 // Main scheduler function running every interval
 async function scheduler() {
   try {
@@ -374,12 +484,21 @@ async function scheduler() {
       await processRoundsForIkimina(iki_id);
       await updateSlotStatusesForIkimina(iki_id);
     }
+
+    // Run loan prediction for all active rounds after processing
+    await runLoanPredictionForActiveRounds();
   } catch (err) {
     console.error('Scheduler error:', err);
   }
 }
 
 // Start scheduler
-console.log('Round Status Scheduler started. Checking every 60 seconds.');
-scheduler();
-setInterval(scheduler, CHECK_INTERVAL);
+(async () => {
+  console.log('Round Status Scheduler started. Checking every 60 seconds.');
+
+  // Run initial scheduler to setup everything and loan prediction on start
+  await scheduler();
+
+  // Set interval to run scheduler every 1 minute
+  setInterval(scheduler, CHECK_INTERVAL);
+})();
