@@ -512,4 +512,72 @@ router.delete('/delete/:member_id', async (req, res) => {
   }
 });
 
+
+
+router.get('/allmembersInSector/:sad_id', async (req, res) => {
+  const { sad_id } = req.params;
+
+  try {
+    await poolConnect;
+    const result = await pool.request()
+      .input('sad_id', sql.Int, sad_id)
+      .query(`
+        SELECT 
+          ik.iki_id, ik.iki_name, ik.iki_email, ik.iki_username,
+          m.member_id, m.member_names, m.member_phone_number, m.member_type_id,
+          mt.member_type
+        FROM dbo.frequency_category_info fci
+        JOIN dbo.ikimina_info ik ON fci.f_id = ik.f_id
+        LEFT JOIN dbo.members_info m ON ik.iki_id = m.iki_id
+        LEFT JOIN dbo.member_type_info mt ON m.member_type_id = mt.member_type_id
+        WHERE fci.sad_id = @sad_id
+        ORDER BY ik.iki_name, m.member_names
+      `);
+
+    const rows = result.recordset;
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'No data found for this admin' });
+    }
+
+    const adminInfo = {
+      sad_id: rows[0].sad_id,       // Only if you selected sad_id (you are not selecting in query!)
+      sad_names: rows[0].sad_names, // same for sad_names
+      sad_email: rows[0].sad_email,
+      ikimina: [],
+    };
+
+    const ikiminaMap = new Map();
+
+    for (const row of rows) {
+      if (!ikiminaMap.has(row.iki_id)) {
+        ikiminaMap.set(row.iki_id, {
+          iki_id: row.iki_id,
+          iki_name: row.iki_name,
+          iki_email: row.iki_email,
+          iki_username: row.iki_username,
+          members: [],
+        });
+      }
+      if (row.member_id) {
+        ikiminaMap.get(row.iki_id).members.push({
+          member_id: row.member_id,
+          member_names: row.member_names,
+          member_phone_number: row.member_phone_number,
+          member_type: row.member_type || 'N/A',  // <=== add member_type here
+        });
+      }
+    }
+
+    adminInfo.ikimina = Array.from(ikiminaMap.values());
+
+    res.json(adminInfo);
+  } catch (error) {
+    console.error('Error fetching admin ikimina members:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
 module.exports = router;

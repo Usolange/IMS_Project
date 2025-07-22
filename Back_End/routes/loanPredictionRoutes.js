@@ -64,6 +64,7 @@ router.get('/modalInputData/:member_id', async (req, res) => {
       SELECT TOP (1)
         id,
         member_id,
+         round_id, 
         saving_frequency,
         saving_times_per_period,
         total_saving_cycles,
@@ -74,7 +75,7 @@ router.get('/modalInputData/:member_id', async (req, res) => {
         member_Join_Year,
         recent_loan_payment_status,
         saving_status,
-        has_guardian,
+        has_guardian
       FROM ims_db.dbo.loan_prediction_data
       WHERE member_id = @member_id AND round_id = @round_id
       ORDER BY id DESC
@@ -123,7 +124,6 @@ router.get('/predictedAllowedLoan/:member_id', async (req, res) => {
   if (!member_id) return res.status(400).json({ message: 'Invalid member ID' });
 
   try {
-    // 1. Get modal-ready input data
     const modalInputRes = await axios.get(`http://localhost:5000/api/loanPredictionRoutes/modalInputData/${member_id}`);
     if (!modalInputRes.data.success) {
       return res.status(404).json({ message: 'Failed to get modal input data' });
@@ -131,17 +131,31 @@ router.get('/predictedAllowedLoan/:member_id', async (req, res) => {
 
     const inputData = modalInputRes.data.data;
 
-    // 2. Send to Python model
-    const predictionRes = await axios.post('http://localhost:5001/predict-loan', inputData);
-    const allowedLoan = predictionRes.data?.prediction ?? 0;
+    // 🚫 Do not convert to 'daily', 'weekly', etc. Keep integer values as is
+    const preparedData = {
+      saving_times_per_period: Number(inputData.saving_times_per_period),
+      saving_frequency: Number(inputData.saving_frequency), // 1=daily, 2=weekly, 3=monthly
+      total_current_saving: Number(inputData.total_current_saving),
+      completed_saving_cycles: Number(inputData.completed_saving_cycles),
+      user_savings_made: Number(inputData.user_savings_made),
+      has_guardian: inputData.has_guardian ? 1 : 0,
+      recent_loan_payment_status: Number(inputData.recent_loan_payment_status), // 1=Poor, ..., 5=Excellent
+      user_joined_year: Number(inputData.member_Join_Year),
+      ikimina_created_year: Number(inputData.ikimina_created_year)
+    };
+
+    // 🔁 Send to Python model
+    const predictionRes = await axios.post('http://localhost:5001/predict-loan', preparedData);
+    const allowedLoan = predictionRes.data?.allowed_loan ?? 0;
 
     return res.json({ allowedLoan });
 
   } catch (error) {
-    console.error('Live loan prediction failed:', error.message);
+    console.error('Live loan prediction failed:', error.response?.data || error.message);
     return res.status(500).json({ message: 'Failed to get prediction from model' });
   }
 });
+
 
 
 // 1. Get all loans for a member

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import '../../CSS/adminDashboard.css';
 
 export default function MemberDashboard() {
   const [summary, setSummary] = useState(null);
@@ -18,7 +17,6 @@ export default function MemberDashboard() {
       setError('User info missing. Please log in again.');
       return;
     }
-
     fetchSummary(memberId, ikiId);
   }, [memberId, ikiId]);
 
@@ -52,63 +50,121 @@ export default function MemberDashboard() {
     XLSX.writeFile(wb, 'Saving_Summary.xlsx');
   };
 
-  if (loading) return <p className="dashboard-loading">Loading summary...</p>;
-  if (error) return <div className="dashboard-error">{error}</div>;
+  const styles = {
+    container: {
+      maxWidth: 600,
+      margin: '2rem auto',
+      background: '#fff',
+      borderRadius: 8,
+      padding: '1.5rem 2rem',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      color: '#1e293b',
+    },
+    title: {
+      fontSize: '1.8rem',
+      fontWeight: '700',
+      marginBottom: '1rem',
+      color: '#0c4a6e',
+      textAlign: 'center',
+    },
+    list: {
+      listStyleType: 'none',
+      paddingLeft: 0,
+      marginBottom: '1.5rem',
+    },
+    listItem: {
+      fontSize: '1rem',
+      marginBottom: '0.6rem',
+      paddingBottom: '0.3rem',
+      borderBottom: '1px solid #e2e8f0',
+      display: 'flex',
+      justifyContent: 'space-between',
+      color: '#334155',
+    },
+    listItemStrong: {
+      color: '#1e40af',
+      fontWeight: '600',
+    },
+    actions: {
+      textAlign: 'center',
+    },
+    exportBtn: {
+      backgroundColor: '#2563eb',
+      color: 'white',
+      padding: '0.6rem 1.2rem',
+      fontSize: '1rem',
+      fontWeight: '600',
+      border: 'none',
+      borderRadius: 6,
+      cursor: 'pointer',
+      userSelect: 'none',
+      transition: 'background-color 0.3s ease',
+    },
+    exportBtnDisabled: {
+      backgroundColor: '#94a3b8',
+      cursor: 'not-allowed',
+    },
+    loadingError: {
+      maxWidth: 600,
+      margin: '3rem auto',
+      fontSize: '1.1rem',
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    errorText: {
+      color: '#dc2626',
+    },
+  };
+
+  if (loading) return <p style={styles.loadingError}>Loading summary...</p>;
+  if (error) return <div style={{ ...styles.loadingError, ...styles.errorText }}>{error}</div>;
   if (!summary) return null;
 
   const { aggregates, slots } = summary;
 
   return (
-    <div className="dashboard-container">
-      <h2 className="dashboard-title">💰 My Saving Overview</h2>
+    <div style={styles.container}>
+      <h2 style={styles.title}>My Saving Overview</h2>
 
-      <ul className="dashboard-summary-list">
-        <li><strong>Total Saved:</strong> RWF {aggregates.total_saved_amount ?? 0}</li>
-        <li><strong>Completed Slots:</strong> {aggregates.slots_completed} / {aggregates.total_slots}</li>
-        <li><strong>Penalties Paid:</strong> RWF {aggregates.total_penalties_paid ?? 0}</li>
-        <li><strong>Penalties Unpaid:</strong> RWF {aggregates.total_penalties_unpaid ?? 0}</li>
-        <li><strong>Average Saving:</strong> RWF {aggregates.average_saving_amount?.toFixed(2) ?? 0}</li>
-        <li><strong>Last Saving Date:</strong> {aggregates.most_recent_saving_at ? new Date(aggregates.most_recent_saving_at).toLocaleString() : '—'}</li>
-        <li><strong>Next Upcoming Slot:</strong> {aggregates.next_upcoming_slot_date ?? '—'}</li>
+      <ul style={styles.list}>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Total Saved:</strong> RWF {aggregates.total_saved_amount ?? 0}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Completed Slots:</strong> {aggregates.slots_completed} / {aggregates.total_slots}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Penalties Paid:</strong> RWF {aggregates.total_penalties_paid ?? 0}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Penalties Unpaid:</strong> RWF {aggregates.total_penalties_unpaid ?? 0}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Average Saving:</strong> RWF {aggregates.average_saving_amount?.toFixed(2) ?? 0}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Last Saving Date:</strong> {aggregates.most_recent_saving_at ? new Date(aggregates.most_recent_saving_at).toLocaleString() : '—'}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Next Upcoming Slot:</strong> {aggregates.next_upcoming_slot_date ?? '—'}
+        </li>
       </ul>
 
-      <div className="dashboard-actions">
+      <div style={styles.actions}>
         <button
-          className="dashboard-export-btn"
+          style={slots.length ? styles.exportBtn : { ...styles.exportBtn, ...styles.exportBtnDisabled }}
           onClick={exportToExcel}
           disabled={!slots.length}
+          onMouseOver={e => {
+            if (slots.length) e.currentTarget.style.backgroundColor = '#1d4ed8';
+          }}
+          onMouseOut={e => {
+            if (slots.length) e.currentTarget.style.backgroundColor = '#2563eb';
+          }}
         >
-          📥 Export Recent Slots
+          📥 Export Recent Savings
         </button>
-      </div>
-
-      <h3>🕓 Recent Saving Activities</h3>
-
-      <div className="table-wrapper">
-        <table className="dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Saved Amount</th>
-              <th>Status</th>
-              <th>Penalty</th>
-              <th>Penalty Paid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {slots.slice(-5).reverse().map((slot) => (
-              <tr key={slot.slot_id}>
-                <td>{new Date(slot.slot_date).toLocaleDateString()}</td>
-                <td>{slot.slot_time?.slice(0, 5)}</td>
-                <td>{slot.saved_amount ? `RWF ${slot.saved_amount}` : '—'}</td>
-                <td>{slot.slot_status}</td>
-                <td>{slot.penalty_amount ? `RWF ${slot.penalty_amount}` : '—'}</td>
-                <td>{slot.penalty_paid ? '✔ Yes' : 'No'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );

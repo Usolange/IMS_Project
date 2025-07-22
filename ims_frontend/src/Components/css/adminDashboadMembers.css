@@ -1,0 +1,113 @@
+/* General layout */
+.dashboard-container {
+  padding: 2rem;
+  background-color: #f4f7fb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  color: #333;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2b6cb0;
+  margin-bottom: 1rem;
+  border-left: 6px solid #2b6cb0;
+  padding-left: 12px;
+}
+
+/* Search + Export section */
+.dashboard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-search {
+  padding: 10px 14px;
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.dashboard-export-btn {
+  background-color: #2f855a;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 15px;
+  border: none;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.dashboard-export-btn:hover {
+  background-color: #276749;
+}
+
+/* Table styles */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 15px;
+}
+
+.dashboard-table th {
+  background-color: #ebf8ff;
+  color: #2c5282;
+  font-weight: 600;
+}
+
+/* Section for each Ikimina */
+.ikimina-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #cbd5e0;
+}
+
+.ikimina-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.ikimina-section p {
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 14px;
+}
+
+/* Empty states & errors */
+.no-members,
+.no-data,
+.dashboard-error,
+.dashboard-loading {
+  font-style: italic;
+  color: #a0aec0;
+  margin-top: 1rem;
+}

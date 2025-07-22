@@ -25,9 +25,6 @@ const links = [
       { to: '/savingManagementPage/rounds', label: 'Manage Rounds', icon: RotateCw },
       { to: '/savingManagementPage/slots', label: 'Manage Slots', icon: LayoutGrid },
       { to: '/savingManagementPage/rules', label: 'Saving Rules', icon: SlidersHorizontal },
-      { to: '/savingManagementPage/stats', label: 'Statistics', icon: BarChart2 },
-      { to: '/savingManagementPage/activities', label: 'Activities', icon: ListChecks },
-      { to: '/savingManagementPage/penalties', label: 'Penalties', icon: AlertTriangle }
     ]
   },
   { to: '/penaltyManagement', icon: FaExclamationTriangle, label: 'Penalty Management' },

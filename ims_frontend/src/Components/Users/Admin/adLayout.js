@@ -80,28 +80,13 @@ export default function Layout() {
         </NavLink>
       </li>
       <li>
-        <NavLink to="/MemberManager" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
+        <NavLink to="/AllMembersInSector" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
           <FaUsers />Member Management
         </NavLink>
       </li>
       <li>
         <NavLink to="/report" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
           <FaChartBar />Reports
-        </NavLink>
-      </li>
-      <li>
-        <NavLink to="/members" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
-          <FaUserFriends />Members
-        </NavLink>
-      </li>
-      <li>
-        <NavLink to="/loans" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
-          <FaMoneyBill />Loans
-        </NavLink>
-      </li>
-      <li>
-        <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
-          <FaCog />Settings
         </NavLink>
       </li>
     </ul>

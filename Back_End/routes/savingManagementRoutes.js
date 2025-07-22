@@ -240,6 +240,38 @@ router.get('/slotDetails/:slot_id/:member_id', async (req, res) => {
   }
 });
 
+router.get('/allMemberSavings/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+
+  try {
+    await poolConnect;
+    const result = await pool.request()
+      .input('iki_id', sql.Int, iki_id)
+      .query(`
+        SELECT 
+         SELECT 
+  m.member_id,
+  m.member_names,
+  m.member_phone_number,
+  ISNULL(SUM(s.saved_amount), 0) AS total_savings,
+  ISNULL(COUNT(CASE WHEN s.penalty_applied = 1 THEN 1 END), 0) AS total_penalties,
+  ISNULL(SUM(l.approved_amount), 0) AS total_approved_loans,
+  ISNULL(SUM(CASE WHEN l.status IN ('approved', 'disbursed') THEN l.approved_amount ELSE 0 END), 0) AS active_loans
+FROM dbo.members_info m
+LEFT JOIN dbo.member_saving_activities s ON m.member_id = s.member_id
+LEFT JOIN dbo.loans l ON m.member_id = l.member_id
+WHERE m.iki_id = @iki_id
+GROUP BY m.member_id, m.member_names, m.member_phone_number
+ORDER BY total_savings DESC;
+
+      `);
+
+    res.json({ success: true, data: result.recordset });
+  } catch (error) {
+    console.error('Error fetching member savings:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 
 async function getMemberPhone(member_id) {
@@ -762,134 +794,134 @@ router.post('/payPenalty', async (req, res) => {
 // });
 
 // === Pay Penalty Route with Real Payment Integration ===
-router.post('/payPenalty', async (req, res) => {
-  await poolConnect;
-  const transaction = new sql.Transaction(pool);
-  const { slot_id, member_id, phone } = req.body;
+// router.post('/payPenalty', async (req, res) => {
+//   await poolConnect;
+//   const transaction = new sql.Transaction(pool);
+//   const { slot_id, member_id, phone } = req.body;
 
-  if (!slot_id || !member_id) {
-    return res.status(400).json({ message: 'Missing required fields: slot_id and member_id.' });
-  }
+//   if (!slot_id || !member_id) {
+//     return res.status(400).json({ message: 'Missing required fields: slot_id and member_id.' });
+//   }
 
-  // Validate phone if provided
-  if (phone && !/^\d{10,15}$/.test(phone)) {
-    return res.status(400).json({ message: 'Phone number must be 10 to 15 digits.' });
-  }
-  const phoneToUse = phone?.startsWith('25') ? phone : phone ? `25${phone}` : null;
+//   // Validate phone if provided
+//   if (phone && !/^\d{10,15}$/.test(phone)) {
+//     return res.status(400).json({ message: 'Phone number must be 10 to 15 digits.' });
+//   }
+//   const phoneToUse = phone?.startsWith('25') ? phone : phone ? `25${phone}` : null;
 
-  try {
-    // Check unpaid penalty exists
-    const checkResult = await pool.request()
-      .input('slot_id', sql.Int, slot_id)
-      .input('member_id', sql.Int, member_id)
-      .query(`
-        SELECT * FROM penalty_logs 
-        WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
-      `);
+//   try {
+//     // Check unpaid penalty exists
+//     const checkResult = await pool.request()
+//       .input('slot_id', sql.Int, slot_id)
+//       .input('member_id', sql.Int, member_id)
+//       .query(`
+//         SELECT * FROM penalty_logs 
+//         WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
+//       `);
 
-    if (checkResult.recordset.length === 0) {
-      return res.status(404).json({ message: 'No unpaid penalty found for this member and slot.' });
-    }
+//     if (checkResult.recordset.length === 0) {
+//       return res.status(404).json({ message: 'No unpaid penalty found for this member and slot.' });
+//     }
 
-    const penaltyRecord = checkResult.recordset[0];
-    const penaltyAmount = penaltyRecord.penalty_amount;
+//     const penaltyRecord = checkResult.recordset[0];
+//     const penaltyAmount = penaltyRecord.penalty_amount;
 
-    // Fetch member contact details
-    const memberInfoResult = await pool.request()
-      .input('member_id', sql.Int, member_id)
-      .query(`
-        SELECT member_phone_number, member_email, member_names 
-        FROM Members_info 
-        WHERE member_id = @member_id
-      `);
+//     // Fetch member contact details
+//     const memberInfoResult = await pool.request()
+//       .input('member_id', sql.Int, member_id)
+//       .query(`
+//         SELECT member_phone_number, member_email, member_names 
+//         FROM Members_info 
+//         WHERE member_id = @member_id
+//       `);
 
-    if (memberInfoResult.recordset.length === 0) {
-      return res.status(404).json({ message: 'Member not found.' });
-    }
+//     if (memberInfoResult.recordset.length === 0) {
+//       return res.status(404).json({ message: 'Member not found.' });
+//     }
 
-    const { member_phone_number, member_email, member_names } = memberInfoResult.recordset[0];
+//     const { member_phone_number, member_email, member_names } = memberInfoResult.recordset[0];
 
-    // Determine phone to charge: priority - provided phone in body, else member phone from DB
-    const finalPhone = phoneToUse || (member_phone_number?.startsWith('25') ? member_phone_number : `25${member_phone_number}`);
+//     // Determine phone to charge: priority - provided phone in body, else member phone from DB
+//     const finalPhone = phoneToUse || (member_phone_number?.startsWith('25') ? member_phone_number : `25${member_phone_number}`);
 
-    // Initiate MoMo payment
-    let momoRefId;
-    try {
-      momoRefId = await requestPayment({
-        amount: penaltyAmount,
-        phone: finalPhone,
-        externalId: `penalty_${slot_id}_${member_id}`,
-        payerMessage: 'Ikimina penalty payment',
-        payeeNote: 'Penalty payment for Ikimina saving slot',
-      });
-    } catch (paymentError) {
-      return res.status(500).json({
-        message: 'Failed to initiate MoMo payment.',
-        error: paymentError.message,
-      });
-    }
+//     // Initiate MoMo payment
+//     let momoRefId;
+//     try {
+//       momoRefId = await requestPayment({
+//         amount: penaltyAmount,
+//         phone: finalPhone,
+//         externalId: `penalty_${slot_id}_${member_id}`,
+//         payerMessage: 'Ikimina penalty payment',
+//         payeeNote: 'Penalty payment for Ikimina saving slot',
+//       });
+//     } catch (paymentError) {
+//       return res.status(500).json({
+//         message: 'Failed to initiate MoMo payment.',
+//         error: paymentError.message,
+//       });
+//     }
 
-    // Poll payment status (max 10 tries, 3s interval)
-    let status = 'PENDING';
-    let attempts = 0;
-    while (status === 'PENDING' && attempts < 10) {
-      await new Promise((r) => setTimeout(r, 3000));
-      try {
-        const result = await getPaymentStatus(momoRefId);
-        status = result.status;
-      } catch (e) {
-        return res.status(500).json({ message: 'Error checking payment status.', error: e.message });
-      }
-      attempts++;
-    }
+//     // Poll payment status (max 10 tries, 3s interval)
+//     let status = 'PENDING';
+//     let attempts = 0;
+//     while (status === 'PENDING' && attempts < 10) {
+//       await new Promise((r) => setTimeout(r, 3000));
+//       try {
+//         const result = await getPaymentStatus(momoRefId);
+//         status = result.status;
+//       } catch (e) {
+//         return res.status(500).json({ message: 'Error checking payment status.', error: e.message });
+//       }
+//       attempts++;
+//     }
 
-    if (status !== 'SUCCESSFUL') {
-      return res.status(400).json({ message: `Payment was not successful. Status: ${status}` });
-    }
+//     if (status !== 'SUCCESSFUL') {
+//       return res.status(400).json({ message: `Payment was not successful. Status: ${status}` });
+//     }
 
-    // Payment succeeded - update penalty_logs in transaction
-    await transaction.begin();
+//     // Payment succeeded - update penalty_logs in transaction
+//     await transaction.begin();
 
-    const paidAt = dayjs().tz('Africa/Kigali').format('YYYY-MM-DD HH:mm:ss');
+//     const paidAt = dayjs().tz('Africa/Kigali').format('YYYY-MM-DD HH:mm:ss');
 
-    await transaction.request()
-      .input('paid_at', sql.DateTime, paidAt)
-      .input('momo_ref_id', sql.UniqueIdentifier, momoRefId)
-      .input('slot_id', sql.Int, slot_id)
-      .input('member_id', sql.Int, member_id)
-      .query(`
-        UPDATE penalty_logs 
-        SET is_paid = 1, paid_at = @paid_at, momo_reference_id = @momo_ref_id 
-        WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
-      `);
+//     await transaction.request()
+//       .input('paid_at', sql.DateTime, paidAt)
+//       .input('momo_ref_id', sql.UniqueIdentifier, momoRefId)
+//       .input('slot_id', sql.Int, slot_id)
+//       .input('member_id', sql.Int, member_id)
+//       .query(`
+//         UPDATE penalty_logs 
+//         SET is_paid = 1, paid_at = @paid_at, momo_reference_id = @momo_ref_id 
+//         WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
+//       `);
 
-    await transaction.commit();
+//     await transaction.commit();
 
-    // Send notifications in parallel
-    const message = `Hello ${member_names}, your penalty for slot ${slot_id} has been paid successfully. Thank you!`;
-    const [smsResult, emailResult] = await Promise.allSettled([
-      sendCustomSms(finalPhone, message),
-      sendCustomEmail(member_email, 'Penalty Paid', message),
-    ]);
+//     // Send notifications in parallel
+//     const message = `Hello ${member_names}, your penalty for slot ${slot_id} has been paid successfully. Thank you!`;
+//     const [smsResult, emailResult] = await Promise.allSettled([
+//       sendCustomSms(finalPhone, message),
+//       sendCustomEmail(member_email, 'Penalty Paid', message),
+//     ]);
 
-    return res.status(200).json({
-      message: `Penalty for ${member_names} has been paid successfully with MoMo and notifications sent.`,
-      smsSent: smsResult.status === 'fulfilled',
-      emailSent: emailResult.status === 'fulfilled',
-      smsError: smsResult.status === 'rejected' ? smsResult.reason?.message : null,
-      emailError: emailResult.status === 'rejected' ? emailResult.reason?.message : null,
-    });
+//     return res.status(200).json({
+//       message: `Penalty for ${member_names} has been paid successfully with MoMo and notifications sent.`,
+//       smsSent: smsResult.status === 'fulfilled',
+//       emailSent: emailResult.status === 'fulfilled',
+//       smsError: smsResult.status === 'rejected' ? smsResult.reason?.message : null,
+//       emailError: emailResult.status === 'rejected' ? emailResult.reason?.message : null,
+//     });
 
-  } catch (error) {
-    if (transaction._aborted !== true) {
-      try {
-        await transaction.rollback();
-      } catch {}
-    }
-    console.error('❌ Error processing penalty payment:', error);
-    return res.status(500).json({ message: 'Internal server error.', error: error.message });
-  }
-});
+//   } catch (error) {
+//     if (transaction._aborted !== true) {
+//       try {
+//         await transaction.rollback();
+//       } catch {}
+//     }
+//     console.error('❌ Error processing penalty payment:', error);
+//     return res.status(500).json({ message: 'Internal server error.', error: error.message });
+//   }
+// });
 
 router.post('/logNotification', async (req, res) => {
   const { slot_id, member_id } = req.body;
@@ -940,139 +972,8 @@ router.post('/logNotification', async (req, res) => {
 
   } catch (err) {
     console.error('logNotification error:', err);
-    return res.status(500).json({ message: 'Failed to log notification.', error: err.message });
   }
 });
-
-// router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
-//   const { memberId, ikiId } = req.params;
-
-//   console.log('Received request for memberId:', memberId, 'ikiId:', ikiId);
-
-//   if (!memberId || !ikiId) {
-//     return res.status(400).json({ error: 'memberId and ikiId are required' });
-//   }
-
-//   try {
-//     await poolConnect;
-
-//     const request = pool.request();
-//     request.input('memberId', sql.Int, memberId);
-//     request.input('ikiId', sql.Int, ikiId);
-//     request.input('now', sql.DateTime, new Date());
-
-//     const query = `
-//     WITH MemberSlots AS (
-//       SELECT
-//         s.slot_id,
-//         s.slot_date,
-//         s.slot_time,
-//         s.frequency_category,
-//         s.slot_status,
-//         s.round_id
-//       FROM ikimina_saving_slots s
-//       WHERE s.iki_id = @ikiId
-//     ),
-//     MemberSavings AS (
-//       SELECT
-//         sa.save_id,
-//         sa.slot_id,
-//         sa.saved_amount,
-//         sa.saved_at,
-//         sa.penalty_applied,
-//         sa.is_late,
-//         sa.phone_used,
-//         sa.momo_reference_id
-//       FROM member_saving_activities sa
-//       WHERE sa.member_id = @memberId
-//     ),
-//     MemberPenalties AS (
-//       SELECT
-//         p.penalty_id,
-//         p.slot_id,
-//         p.penalty_type,
-//         p.penalty_amount,
-//         p.is_paid,
-//         p.paid_at
-//       FROM penalty_logs p
-//       WHERE p.member_id = @memberId AND p.iki_id = @ikiId
-//     ),
-//     SlotsWithSavingsAndPenalties AS (
-//       SELECT
-//         ms.slot_id,
-//         ms.slot_date,
-//         ms.slot_time,
-//         ms.frequency_category,
-//         ms.slot_status,
-//         ms.round_id,
-//         COALESCE(sa.saved_amount, 0) AS saved_amount,
-//         sa.saved_at,
-//         CASE WHEN sa.save_id IS NOT NULL THEN 1 ELSE 0 END AS is_saved,
-//         p.penalty_amount,
-//         p.is_paid AS penalty_paid
-//       FROM MemberSlots ms
-//       LEFT JOIN MemberSavings sa ON ms.slot_id = sa.slot_id
-//       LEFT JOIN MemberPenalties p ON ms.slot_id = p.slot_id
-//     )
-//     SELECT
-//       s.slot_id,
-//       s.slot_date,
-//       s.slot_time,
-//       s.frequency_category,
-//       s.slot_status,
-//       s.round_id,
-//       s.saved_amount,
-//       s.saved_at,
-//       s.is_saved,
-//       s.penalty_amount,
-//       s.penalty_paid,
-
-//       (SELECT SUM(saved_amount) FROM SlotsWithSavingsAndPenalties) AS total_saved_amount,
-//       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS slots_completed,
-//       (SELECT COUNT(*) FROM SlotsWithSavingsAndPenalties) AS total_slots,
-//       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE penalty_paid = 1) AS total_penalties_paid,
-//       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE (penalty_paid = 0 OR penalty_paid IS NULL) AND penalty_amount > 0) AS total_penalties_unpaid,
-//       (SELECT AVG(NULLIF(saved_amount, 0)) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS average_saving_amount,
-//       (SELECT MAX(saved_at) FROM SlotsWithSavingsAndPenalties WHERE saved_at IS NOT NULL) AS most_recent_saving_at,
-//       (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date
-//     FROM SlotsWithSavingsAndPenalties s
-//     ORDER BY s.slot_date ASC;
-//     `;
-
-//     const result = await request.query(query);
-
-//     if (result.recordset.length === 0) {
-//       return res.status(404).json({ error: 'No saving slots found for this member and iki' });
-//     }
-
-//     const aggregates = {
-//       total_saved_amount: result.recordset[0].total_saved_amount,
-//       slots_completed: result.recordset[0].slots_completed,
-//       total_slots: result.recordset[0].total_slots,
-//       total_penalties_paid: result.recordset[0].total_penalties_paid,
-//       total_penalties_unpaid: result.recordset[0].total_penalties_unpaid,
-//       average_saving_amount: result.recordset[0].average_saving_amount,
-//       most_recent_saving_at: result.recordset[0].most_recent_saving_at,
-//       next_upcoming_slot_date: result.recordset[0].next_upcoming_slot_date,
-//     };
-
-//     const slots = result.recordset.map(({ 
-//       total_saved_amount, slots_completed, total_slots, 
-//       total_penalties_paid, total_penalties_unpaid, 
-//       average_saving_amount, most_recent_saving_at, 
-//       next_upcoming_slot_date, ...slot 
-//     }) => slot);
-
-//     console.log('Sending member saving summary data:', { slots, aggregates });
-
-//     res.json({ slots, aggregates });
-//   } catch (error) {
-//     console.error('Error fetching member saving summary:', error);
-//     res.status(500).json({ error: 'Server error' });
-//   }
-// });
-
-
 
 router.get('/memberRounds/:memberId/:ikiId', async (req, res) => {
   const { memberId, ikiId } = req.params;
@@ -1242,6 +1143,142 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching member saving summary:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// 1. Summary Data for All Members in Ikimina
+router.get('/ikimina/:iki_id/summary', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT 
+        m.member_id,
+        m.member_names,
+        m.member_phone_number,
+        ISNULL(SUM(s.saved_amount), 0) AS total_savings,
+        ISNULL(COUNT(CASE WHEN s.penalty_applied = 1 THEN 1 END), 0) AS total_penalties,
+        ISNULL(SUM(l.approved_amount), 0) AS total_approved_loans,
+        ISNULL(SUM(CASE WHEN l.status IN ('approved', 'disbursed') THEN l.approved_amount ELSE 0 END), 0) AS active_loans
+      FROM dbo.members_info m
+      LEFT JOIN dbo.member_saving_activities s ON m.member_id = s.member_id
+      LEFT JOIN dbo.loans l ON m.member_id = l.member_id
+      WHERE m.iki_id = @iki_id
+      GROUP BY m.member_id, m.member_names, m.member_phone_number
+      ORDER BY total_savings DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching summary:', err);
+    res.status(500).json({ message: 'Failed to fetch summary' });
+  }
+});
+
+// 2. Saving Activities Table
+router.get('/savings/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT TOP 1000 s.*
+      FROM dbo.member_saving_activities s
+      JOIN dbo.members_info m ON m.member_id = s.member_id
+      WHERE m.iki_id = @iki_id
+      ORDER BY s.saved_at DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching savings:', err);
+    res.status(500).json({ message: 'Failed to fetch saving activities' });
+  }
+});
+
+// 3. Loan Interest
+router.get('/loan-interest/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT TOP 1000 li.*
+      FROM dbo.loan_interest li
+      JOIN dbo.loans l ON l.loan_id = li.loan_id
+      JOIN dbo.members_info m ON m.member_id = l.member_id
+      WHERE m.iki_id = @iki_id
+      ORDER BY li.calculated_on_date DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching interest:', err);
+    res.status(500).json({ message: 'Failed to fetch loan interest' });
+  }
+});
+
+// 4. Loan Repayments
+router.get('/loan-repayments/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT TOP 1000 lr.*
+      FROM dbo.loan_repayments lr
+      JOIN dbo.members_info m ON m.member_id = lr.member_id
+      WHERE m.iki_id = @iki_id
+      ORDER BY lr.payment_date DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching repayments:', err);
+    res.status(500).json({ message: 'Failed to fetch loan repayments' });
+  }
+});
+
+// 5. Loans
+router.get('/loans/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT TOP 1000 l.*
+      FROM dbo.loans l
+      JOIN dbo.members_info m ON m.member_id = l.member_id
+      WHERE m.iki_id = @iki_id
+      ORDER BY l.created_at DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching loans:', err);
+    res.status(500).json({ message: 'Failed to fetch loans' });
+  }
+});
+
+// 6. Saving Slots
+router.get('/saving-slots/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+    const result = await request.query(`
+      SELECT TOP 1000 *
+      FROM dbo.ikimina_saving_slots
+      WHERE iki_id = @iki_id
+      ORDER BY slot_date DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching slots:', err);
+    res.status(500).json({ message: 'Failed to fetch saving slots' });
   }
 });
 

@@ -32,6 +32,8 @@ import LocationManager from './Components/Users/Admin/LocationManagement/Locatio
 import AddLocation from './Components/Users/Admin/LocationManagement/AddLocation';
 import IkiminaManagement from './Components/Users/Admin/IkiminaManagement/IkiminaManagement';
 import AllIkiminaPage from './Components/Users/Admin/IkiminaManagement/AllIkiminaPage';
+import AllMembers from './Components/Users/Admin/IkiminaManagement/Members';
+
 
 import IkLayout from './Components/Users/Ikimina/ikLayout';
 import IkiminaDashboard from './Components/Users/Ikimina/ikiminaDashboard';
@@ -80,6 +82,8 @@ export default function App() {
         <Route path="/IkiminaManagement" element={<RoleProtectedRoute allowedRoles={['admin']}><IkiminaManagement /></RoleProtectedRoute>} />
         <Route path="/AllIkiminaPage" element={<RoleProtectedRoute allowedRoles={['admin']}><AllIkiminaPage /></RoleProtectedRoute>} />
         <Route path="/AvailableDailySchedules" element={<RoleProtectedRoute allowedRoles={['admin']}><AvailableDailySchedules /></RoleProtectedRoute>} />
+        <Route path="/AllMembersInSector" element={<RoleProtectedRoute allowedRoles={['admin']}><AllMembers /></RoleProtectedRoute>} />
+
       </Route>
 
       {/* Ikimina Layout */}
