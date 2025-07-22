@@ -1,0 +1,123 @@
+/* LoanDashboard.css */
+
+/* Container */
+.loan-dashboard-container {
+  width: 100%;
+  min-width: fit-content;
+  padding: 20px;
+  background: #fefefe;
+  border-radius: 10px;
+  color: #2c3e50;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Title */
+.loan-dashboard-container h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #117a65;
+  user-select: none;
+}
+
+/* Error text */
+.loan-dashboard-error {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+/* Table styles */
+.loan-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px; /* triggers horizontal scroll if container narrower */
+  font-size: 14px;
+  background-color: #fff;
+  table-layout: auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Table header */
+.loan-dashboard-table thead th {
+  background-color: #117a65;
+  color: white;
+  font-weight: bold;
+  text-align: left;
+  padding: 12px 10px;
+  border: 1px solid #0e5e4a;
+  white-space: nowrap;
+}
+
+/* Table body cells */
+.loan-dashboard-table tbody td {
+  padding: 10px 8px;
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  vertical-align: middle;
+}
+
+/* Alternate row background */
+.loan-dashboard-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+.loan-dashboard-table tbody tr:hover {
+  background-color: #e8f8f5;
+  transition: background-color 0.2s ease-in-out;
+  cursor: default;
+}
+
+/* Placeholder for empty cells */
+.loan-dashboard-table tbody td:empty::before {
+  content: '—';
+  color: #bbb;
+}
+
+/* Request Loan Button */
+.loan-dashboard-request-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #0a7cff;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.loan-dashboard-request-btn:hover {
+  background-color: #085ecf;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loan-dashboard-table {
+    min-width: 100%;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loan-dashboard-container {
+    padding: 10px;
+  }
+
+  .loan-dashboard-request-btn {
+    width: 100%;
+    font-size: 15px;
+  }
+}

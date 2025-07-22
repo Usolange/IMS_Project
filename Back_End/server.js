@@ -1,10 +1,11 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const db = require('./config/db');
 
 // Import routes
-const loanPredictionRoutes = require('./routes/loanPredictionRoutes');
+const loanPredictionDataForRound = require('./routes/loanPredictionDataForRound');
 const DailyTimeRoutes = require('./routes/dailyTimeRoutes');
 const frequencyCategoryRoutes = require('./routes/frequencyCategoryRoutes');
 const gudianMembersRoutes = require('./routes/gudianMembersRoutes');
@@ -21,7 +22,7 @@ const ikiminaRoundRoutes = require('./routes/ikiminaRoundRoutes');
 const savingManagementRoutes = require('./routes/savingManagementRoutes');
 const slotsManagementRoutes = require('./routes/slotsManagementRoutes');
 const savingRulesRoutes = require('./routes/savingRulesRoutes');
-
+const loanPredictionRoutes = require('./routes/loanPredictionRoutes');
 
 
 dotenv.config();
@@ -49,8 +50,8 @@ app.use(cors({
 // Middleware to parse JSON
 app.use(express.json());
 
-// Import and run scheduler (do NOT use as middleware)
-// require('./routes/roundStatusScheduler');
+// Import and run scheduler
+require('./routes/roundStatusScheduler');
 
 // Register routes
 app.use('/api/userLoginRoutes', userLoginRoutes);
@@ -65,11 +66,13 @@ app.use('/api/MonthlyTimeRoutes', MonthlyTimeRoutes);
 app.use('/api/memberTypeRoutes', memberTypeRoutes);
 app.use('/api/gudianMembersRoutes', gudianMembersRoutes);
 app.use('/api/membersInfoRoutes', membersInfoRoutes);
-app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
 app.use('/api/ikiminaRoundRoutes', ikiminaRoundRoutes);
 app.use('/api/savingManagementRoutes', savingManagementRoutes);
 app.use('/api/slotsManagementRoutes', slotsManagementRoutes);
 app.use('/api/savingRulesRoutes', savingRulesRoutes);
+app.use('/api/loanPredictionDataForRound', loanPredictionDataForRound);
+app.use('/api/loanPredictionRoutes', loanPredictionRoutes);
+
 
 // Start the server
 app.listen(PORT, () => {

@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './Components/Profile/HomePage';
 import Register from './Components/Profile/Register';
 import ForgotPassword from './Components/Profile/ForgotPassword';
+import ResetPasswordModal from './Components/Profile/ResetPasswordModal';
+import ResetPasswordPage from './Components/Profile/ResetPasswordPage';
+
 import Profile from './Components/Profile/Profile';
 
 import GuestLayout from './Components/Users/Guests/files/GuestLayout';
@@ -37,6 +40,7 @@ import SavingRulesForm from './Components/Users/Ikimina/SavingManagement/SavingR
 import RoundManagement from './Components/Users/Ikimina/SavingManagement/RoundManagement';
 import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager';
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
+
 
 import MeLayout from './Components/Users/Members/meLayout';
 import MemberDashboard from './Components/Users/Members/MemberDashboard';
@@ -99,6 +103,7 @@ export default function App() {
         <Route path="/memberDashboard" element={<RoleProtectedRoute allowedRoles={['member']}><MemberDashboard /></RoleProtectedRoute>} />
         <Route path="/memberSavingManager" element={<RoleProtectedRoute allowedRoles={['member']}><MemberSavingManager /></RoleProtectedRoute>} />
         <Route path="/loanManager" element={<RoleProtectedRoute allowedRoles={['member']}><LoanManager /></RoleProtectedRoute>} />
+
       </Route>
 
       {/* Unauthorized */}

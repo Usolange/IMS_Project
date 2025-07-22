@@ -95,7 +95,7 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
     const result = await request.query(query);
     const rawSlots = result.recordset;
 
-    console.log('🟦 [DEBUG] Raw fetched slots:', rawSlots);
+    
 
     const rulesQuery = `
       SELECT TOP 1 saving_ratio, time_limit_minutes 
@@ -180,7 +180,6 @@ router.get('/memberSlots/:member_id/:iki_id', async (req, res) => {
       };
     });
 
-    console.log('✅ [DEBUG] Processed slot results:', processedSlots);
 
     res.status(200).json(processedSlots);
   } catch (error) {
@@ -229,9 +228,6 @@ router.get('/slotDetails/:slot_id/:member_id', async (req, res) => {
       { name: 'slot_id', type: sql.Int, value: slot_id },
       { name: 'member_id', type: sql.Int, value: member_id }
     ]);
-
-    // Log the result to check the data returned from the database
-    console.log('Slot details result:', result);
 
     if (result.length === 0) {
       return res.status(404).json({ message: 'Slot not found' });
@@ -574,7 +570,6 @@ router.post('/payPenalty', async (req, res) => {
     const emailSent = emailResult.status === 'fulfilled';
     const emailError = emailSent ? null : emailResult.reason.message;
 
-    console.log(`✅ Penalty paid for member ${member_id}. SMS sent: ${smsSent}, Email sent: ${emailSent}`);
 
     res.status(200).json({
       message: `Penalty for ${member_names} has been paid successfully and notifications sent.`,
@@ -1082,8 +1077,6 @@ router.post('/logNotification', async (req, res) => {
 router.get('/memberRounds/:memberId/:ikiId', async (req, res) => {
   const { memberId, ikiId } = req.params;
 
-  console.log('GET /memberRounds called with:', { memberId, ikiId });
-
   if (!memberId || !ikiId) {
     console.warn('Missing memberId or ikiId');
     return res.status(400).json({ error: 'memberId and ikiId are required' });
@@ -1104,7 +1097,6 @@ router.get('/memberRounds/:memberId/:ikiId', async (req, res) => {
 
     const result = await request.query(roundsQuery);
 
-    console.log('Rounds fetched:', result.recordset);
 
     res.json({ rounds: result.recordset });
   } catch (error) {
@@ -1117,8 +1109,6 @@ router.get('/memberRounds/:memberId/:ikiId', async (req, res) => {
 router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
   const { memberId, ikiId } = req.params;
   let { roundIds } = req.query;
-
-  console.log('GET /memberSavingSummary called with:', { memberId, ikiId, roundIds });
 
   if (!memberId || !ikiId) {
     console.warn('Missing memberId or ikiId');
@@ -1136,7 +1126,6 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
     let roundFilterClause = '';
     if (roundIds) {
       const roundsArray = roundIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-      console.log('Parsed roundIds:', roundsArray);
       if (roundsArray.length > 0) {
         const roundParams = roundsArray.map((id, idx) => `@roundId${idx}`).join(',');
         roundsArray.forEach((id, idx) => request.input(`roundId${idx}`, sql.Int, id));
@@ -1225,10 +1214,7 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
 
     const result = await request.query(query);
 
-    console.log('Member saving summary fetched:', {
-      totalRecords: result.recordset.length,
-      firstRecord: result.recordset[0] || null,
-    });
+   
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: 'No saving slots found for this member, iki, and selected rounds' });
@@ -1251,8 +1237,6 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       average_saving_amount, most_recent_saving_at, 
       next_upcoming_slot_date, ...slot 
     }) => slot);
-
-    console.log('Slots returned:', slots.length);
 
     res.json({ slots, aggregates });
   } catch (error) {
