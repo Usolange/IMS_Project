@@ -10,7 +10,6 @@ async function runQuery(query, params = []) {
   return result.recordset;
 }
 
-// helper function for parsing and validating IDs
 function parseId(id) {
   const parsed = parseInt(id, 10);
   if (isNaN(parsed)) throw new Error('Invalid ID parameter');
@@ -21,8 +20,6 @@ function parseId(id) {
 router.get('/ikiminaInfo/:iki_id', async (req, res) => {
   try {
     const iki_id = parseId(req.params.iki_id);
-
-    // TODO: Add auth check here to verify user can access this iki_id
 
     const query = `
       SELECT iki_id, iki_name, iki_email, iki_username, location_id, f_id
@@ -45,12 +42,11 @@ router.get('/ikiminaInfo/:iki_id', async (req, res) => {
   }
 });
 
-//  Helper log
 const log = (label, data) => {
   console.log(`[${label}]`, typeof data === 'object' ? JSON.stringify(data, null, 2) : data);
 };
 
-// ✅ GET Rules for Selected Round
+// GET Rules for Selected Round (include interest_rate_percent)
 router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
   try {
     const iki_id = parseId(req.params.iki_id);
@@ -64,7 +60,7 @@ router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
       .input('iki_id', sql.Int, iki_id)
       .input('round_id', sql.Int, round_id)
       .query(`
-        SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes
+        SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes, interest_rate_percent
         FROM ikimina_saving_rules
         WHERE iki_id = @iki_id AND round_id = @round_id
       `);
@@ -83,7 +79,7 @@ router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
   }
 });
 
-// ✅ GET Active Round and Rules (selectRules)
+// GET Active Round and Rules (selectRules) with interest_rate_percent
 router.get('/selectRules/:iki_id', async (req, res) => {
   try {
     const iki_id = parseId(req.params.iki_id);
@@ -108,7 +104,7 @@ router.get('/selectRules/:iki_id', async (req, res) => {
     log('selectRules ✅ Active Round Found', round);
 
     const rulesQuery = `
-      SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes
+      SELECT saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes, interest_rate_percent
       FROM ikimina_saving_rules
       WHERE iki_id = @iki_id AND round_id = @round_id`;
 
@@ -132,7 +128,7 @@ router.get('/selectRules/:iki_id', async (req, res) => {
   }
 });
 
-// ✅ GET Completed Rounds
+// GET Completed Rounds
 router.get('/completedRounds/:iki_id', async (req, res) => {
   try {
     const iki_id = parseId(req.params.iki_id);
@@ -157,7 +153,7 @@ router.get('/completedRounds/:iki_id', async (req, res) => {
   }
 });
 
-// ✅ GET Upcoming Rounds
+// GET Upcoming Rounds
 router.get('/upcomingRounds/:iki_id', async (req, res) => {
   try {
     const iki_id = parseId(req.params.iki_id);
@@ -182,16 +178,16 @@ router.get('/upcomingRounds/:iki_id', async (req, res) => {
   }
 });
 
-
-// newRules  route
+// newRules route (insert or update with interest_rate_percent)
 router.put('/newRules/:iki_id', async (req, res) => {
-  const { iki_id } = req.params;
+  const iki_id = parseId(req.params.iki_id);
   const {
     round_id,
     saving_ratio,
     time_delay_penalty,
     date_delay_penalty,
     time_limit_minutes,
+    interest_rate_percent,
   } = req.body;
 
   if (
@@ -199,13 +195,14 @@ router.put('/newRules/:iki_id', async (req, res) => {
     saving_ratio === undefined ||
     time_delay_penalty === undefined ||
     date_delay_penalty === undefined ||
-    time_limit_minutes === undefined
+    time_limit_minutes === undefined ||
+    interest_rate_percent === undefined
   ) {
-    return res.status(400).json({ error: 'All fields (including round_id) are required.' });
+    return res.status(400).json({ error: 'All fields (including round_id and interest_rate_percent) are required.' });
   }
 
   try {
-    await poolConnect; // ensures pool is ready
+    await poolConnect;
 
     // Check round status
     const roundResult = await pool.request()
@@ -220,7 +217,7 @@ router.put('/newRules/:iki_id', async (req, res) => {
       return res.status(404).json({ message: 'Round not found for this ikimina.' });
     }
 
-    const roundStatus = roundResult.recordset[0].status;
+    const roundStatus = roundResult.recordset[0].round_status;
     if (roundStatus === 'active' || roundStatus === 'completed') {
       return res.status(403).json({ message: `Cannot edit rules for '${roundStatus}' round.` });
     }
@@ -241,6 +238,7 @@ router.put('/newRules/:iki_id', async (req, res) => {
         .input('time_delay_penalty', sql.Decimal(10, 2), time_delay_penalty)
         .input('date_delay_penalty', sql.Decimal(10, 2), date_delay_penalty)
         .input('time_limit_minutes', sql.Int, time_limit_minutes)
+        .input('interest_rate_percent', sql.Decimal(5, 2), interest_rate_percent)
         .input('iki_id', sql.Int, iki_id)
         .input('round_id', sql.Int, round_id)
         .query(`
@@ -248,7 +246,8 @@ router.put('/newRules/:iki_id', async (req, res) => {
           SET saving_ratio = @saving_ratio,
               time_delay_penalty = @time_delay_penalty,
               date_delay_penalty = @date_delay_penalty,
-              time_limit_minutes = @time_limit_minutes
+              time_limit_minutes = @time_limit_minutes,
+              interest_rate_percent = @interest_rate_percent
           WHERE iki_id = @iki_id AND round_id = @round_id
         `);
       return res.status(200).json({ message: 'Saving rules updated successfully.' });
@@ -261,10 +260,11 @@ router.put('/newRules/:iki_id', async (req, res) => {
         .input('time_delay_penalty', sql.Decimal(10, 2), time_delay_penalty)
         .input('date_delay_penalty', sql.Decimal(10, 2), date_delay_penalty)
         .input('time_limit_minutes', sql.Int, time_limit_minutes)
+        .input('interest_rate_percent', sql.Decimal(5, 2), interest_rate_percent)
         .query(`
           INSERT INTO ikimina_saving_rules
-          (iki_id, round_id, saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes)
-          VALUES (@iki_id, @round_id, @saving_ratio, @time_delay_penalty, @date_delay_penalty, @time_limit_minutes)
+          (iki_id, round_id, saving_ratio, time_delay_penalty, date_delay_penalty, time_limit_minutes, interest_rate_percent)
+          VALUES (@iki_id, @round_id, @saving_ratio, @time_delay_penalty, @date_delay_penalty, @time_limit_minutes, @interest_rate_percent)
         `);
       return res.status(201).json({ message: 'Saving rules created successfully.' });
     }

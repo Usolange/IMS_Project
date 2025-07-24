@@ -1108,14 +1108,26 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       (SELECT ISNULL(SUM(penalty_amount),0) FROM SlotsWithSavingsAndPenalties WHERE (penalty_paid = 0 OR penalty_paid IS NULL) AND penalty_amount > 0) AS total_penalties_unpaid,
       (SELECT AVG(NULLIF(saved_amount, 0)) FROM SlotsWithSavingsAndPenalties WHERE is_saved = 1) AS average_saving_amount,
       (SELECT MAX(saved_at) FROM SlotsWithSavingsAndPenalties WHERE saved_at IS NOT NULL) AS most_recent_saving_at,
-      (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date
+      (SELECT TOP 1 slot_date FROM SlotsWithSavingsAndPenalties WHERE slot_date > CONVERT(date, @now) ORDER BY slot_date ASC) AS next_upcoming_slot_date,
+
+      -- New counts for member and group completed slots
+      (SELECT COUNT(DISTINCT sa.slot_id)
+       FROM member_saving_activities sa
+       JOIN ikimina_saving_slots s2 ON sa.slot_id = s2.slot_id
+       WHERE sa.member_id = @memberId AND s2.iki_id = @ikiId AND s2.slot_date <= CONVERT(date, @now)
+      ) AS member_completed_slots,
+
+      (SELECT COUNT(DISTINCT sa.slot_id)
+       FROM member_saving_activities sa
+       JOIN ikimina_saving_slots s2 ON sa.slot_id = s2.slot_id
+       WHERE s2.iki_id = @ikiId AND s2.slot_date <= CONVERT(date, @now)
+      ) AS group_completed_slots
+
     FROM SlotsWithSavingsAndPenalties s
     ORDER BY s.slot_date ASC;
     `;
 
     const result = await request.query(query);
-
-   
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: 'No saving slots found for this member, iki, and selected rounds' });
@@ -1130,13 +1142,15 @@ router.get('/memberSavingSummary/:memberId/:ikiId', async (req, res) => {
       average_saving_amount: result.recordset[0].average_saving_amount,
       most_recent_saving_at: result.recordset[0].most_recent_saving_at,
       next_upcoming_slot_date: result.recordset[0].next_upcoming_slot_date,
+      member_completed_slots: result.recordset[0].member_completed_slots,
+      group_completed_slots: result.recordset[0].group_completed_slots,
     };
 
     const slots = result.recordset.map(({ 
       total_saved_amount, slots_completed, total_slots, 
       total_penalties_paid, total_penalties_unpaid, 
       average_saving_amount, most_recent_saving_at, 
-      next_upcoming_slot_date, ...slot 
+      next_upcoming_slot_date, member_completed_slots, group_completed_slots, ...slot 
     }) => slot);
 
     res.json({ slots, aggregates });

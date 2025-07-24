@@ -149,6 +149,14 @@ export default function MemberDashboard() {
         <li style={styles.listItem}>
           <strong style={styles.listItemStrong}>Next Upcoming Slot:</strong> {aggregates.next_upcoming_slot_date ?? '—'}
         </li>
+
+        {/* NEW ITEMS */}
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>My Completed Saving Slots:</strong> {aggregates.member_completed_slots ?? 0}
+        </li>
+        <li style={styles.listItem}>
+          <strong style={styles.listItemStrong}>Group Completed Saving Slots:</strong> {aggregates.group_completed_slots ?? 0}
+        </li>
       </ul>
 
       <div style={styles.actions}>

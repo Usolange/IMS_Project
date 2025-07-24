@@ -84,11 +84,11 @@ export default function Layout() {
           <FaUsers />Member Management
         </NavLink>
       </li>
-      <li>
+      {/* <li>
         <NavLink to="/report" className={({ isActive }) => isActive ? 'nav-linkadmin active' : 'nav-linkadmin'}>
           <FaChartBar />Reports
         </NavLink>
-      </li>
+      </li> */}
     </ul>
   </nav>
 </aside>

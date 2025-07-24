@@ -39,6 +39,7 @@ import IkLayout from './Components/Users/Ikimina/ikLayout';
 import IkiminaDashboard from './Components/Users/Ikimina/ikiminaDashboard';
 import MemberManagementPage from './Components/Users/Ikimina/MemberManagement/MemberManagementPage';
 import SavingRulesForm from './Components/Users/Ikimina/SavingManagement/SavingRulesForm';
+import SavingDashboardPage from './Components/Users/Ikimina/SavingManagement/SavingDashboardPage';
 import RoundManagement from './Components/Users/Ikimina/SavingManagement/RoundManagement';
 import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager';
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
@@ -96,11 +97,13 @@ export default function App() {
         </Route>
 
         <Route path="/savingManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><SavingManagementPage /></RoleProtectedRoute>}>
+         <Route index element={<SavingDashboardPage />} />
           <Route path="rules" element={<SavingRulesForm />} />
           <Route path="rounds" element={<RoundManagement />} />
           <Route path="slots" element={<SlotManager />} />
         </Route>
       </Route>
+
 
       {/* Member Layout */}
       <Route element={<MeLayout />}>
