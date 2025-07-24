@@ -13,21 +13,26 @@ async function runQuery(query, params = []) {
   return result.recordset;
 }
 
-async function evaluateRecentLoanStatus(member_id) {
-  // console.log(`Evaluating recent loan status for member_id=${member_id}`);
+const statusMap = {
+  NoLoans: 0,
+  Poor: 1,
+  Bad: 2,
+  Good: 3,
+  Better: 4,
+  Excellent: 5
+};
 
+async function evaluateRecentLoanStatus(member_id) {
   const loans = await runQuery(`
     SELECT l.loan_id, l.due_date
     FROM dbo.loans l
     JOIN dbo.ikimina_rounds r ON l.round_id = r.round_id
     WHERE l.member_id = @member_id
-      AND l.status IN ('approved', 'disbursed')
+      AND l.status IN ('approved', 'disbursed', 'repaid')
       AND r.round_status IN ('active', 'completed')
   `, [{ name: 'member_id', type: sql.Int, value: member_id }]);
 
-  // console.log(`Found ${loans.length} loans for member_id=${member_id}`);
-
-  if (!loans.length) return 'NoLoans';
+  if (!loans.length) return statusMap.NoLoans;  // Return 0 for no loans
 
   let totalLoans = 0;
   let totalScore = 0;
@@ -48,8 +53,8 @@ async function evaluateRecentLoanStatus(member_id) {
       WHERE loan_id = @loan_id
     `, [{ name: 'loan_id', type: sql.Int, value: loan_id }]);
 
-    let onTimeRepayments = repayments.filter(r => new Date(r.payment_date) <= new Date(due_date)).length;
-    let onTimeInterests = interests.filter(i => {
+    const onTimeRepayments = repayments.filter(r => new Date(r.payment_date) <= new Date(due_date)).length;
+    const onTimeInterests = interests.filter(i => {
       const status = i.timing_status?.toLowerCase();
       return status === 'on time' || status === 'early';
     }).length;
@@ -58,34 +63,23 @@ async function evaluateRecentLoanStatus(member_id) {
     const totalOnTime = onTimeRepayments + onTimeInterests;
     const ratio = totalPayments > 0 ? totalOnTime / totalPayments : 0;
 
-    let score = 1;
-    if (ratio === 1) score = 5;
-    else if (ratio >= 0.8) score = 4;
-    else if (ratio >= 0.6) score = 3;
-    else if (ratio >= 0.4) score = 2;
+    let score = 1; // default Poor
+    if (ratio === 1) score = 5;          // Excellent
+    else if (ratio >= 0.8) score = 4;    // Better
+    else if (ratio >= 0.6) score = 3;    // Good
+    else if (ratio >= 0.4) score = 2;    // Bad
 
     totalScore += score;
   }
 
   const averageScore = totalScore / totalLoans;
-  // console.log(`Average loan repayment score for member_id=${member_id}: ${averageScore}`);
 
-  if (averageScore >= 4.5) return 'Excellent';
-  if (averageScore >= 3.5) return 'Better';
-  if (averageScore >= 2.5) return 'Good';
-  if (averageScore >= 1.5) return 'Bad';
-  return 'Poor';
+  if (averageScore >= 4.5) return statusMap.Excellent;
+  if (averageScore >= 3.5) return statusMap.Better;
+  if (averageScore >= 2.5) return statusMap.Good;
+  if (averageScore >= 1.5) return statusMap.Bad;
+  return statusMap.Poor;
 }
-
-// Status to int mapping
-const statusMap = {
-  'noloans': 0,
-  'poor': 1,
-  'bad': 2,
-  'good': 3,
-  'better': 4,
-  'excellent': 5
-};
 
 async function loanPredictionDataForRound(iki_id, round_id) {
   try {
@@ -223,7 +217,7 @@ async function loanPredictionDataForRound(iki_id, round_id) {
         const savingStatusInt = statusMap[savingStatusStr.toLowerCase()] ?? 1;
 
         const loanStatus = await evaluateRecentLoanStatus(member_id);
-        const recentLoanStatusInt = statusMap[loanStatus.toLowerCase()] ?? 0;
+      const recentLoanStatusInt = loanStatus;
         const joinedYear = new Date(joined_at).getFullYear();
         const inputData = {
           member_id,

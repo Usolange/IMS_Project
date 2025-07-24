@@ -29,6 +29,18 @@ final_features = [
 app = Flask(__name__)
 CORS(app)
 
+def map_backend_status_to_model(status_code):
+    # Map backend codes (0 to 5) to model codes (0 to 4)
+    mapping = {
+        0: 0,  # NoLoans or Poor -> Poor
+        1: 0,  # Poor -> Poor
+        2: 1,  # Bad -> Bad
+        3: 2,  # Good -> Good
+        4: 3,  # Better -> Better
+        5: 4   # Excellent -> Excellent
+    }
+    return mapping.get(status_code, 0)  # Default to Poor if unknown
+
 @app.route('/predict-loan', methods=['POST'])
 def predict_loan():
     data = request.get_json()
@@ -44,7 +56,7 @@ def predict_loan():
             'user_joined_year',
             'has_guardian',
             'saving_frequency',          # expected as int: 1=daily, 2=weekly, 3=monthly
-            'recent_loan_payment_status' # expected as int code: 0=Poor ... 4=Excellent
+            'recent_loan_payment_status' # expected as int code: 0 to 5 backend codes
         ]
         for field in required_fields:
             if field not in data:
@@ -61,8 +73,11 @@ def predict_loan():
             'SavingFrequency_monthly': 1 if saving_frequency == 3 else 0,
         }
 
+        # Map backend recent loan payment status to model status
+        backend_status = int(data['recent_loan_payment_status'])
+        recent_status = map_backend_status_to_model(backend_status)
+
         # One-hot encoding for RecentLoanPaymentStatus (0=Poor ... 4=Excellent)
-        recent_status = int(data['recent_loan_payment_status'])
         recent_status_onehot = {
             'RecentLoanPaymentStatus_Poor': 1 if recent_status == 0 else 0,
             'RecentLoanPaymentStatus_Bad': 1 if recent_status == 1 else 0,
@@ -98,6 +113,7 @@ def predict_loan():
 
     except Exception as e:
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)

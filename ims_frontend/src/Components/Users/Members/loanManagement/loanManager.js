@@ -51,7 +51,7 @@ function LoanDashboard() {
         setError('');
 
         const [loansRes, allowedLoanRes, ikiminaRes, roundRes, moneyRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/loanPredictionRoutes/selectLoans/${memberId}`),
+          axios.get(`http://localhost:5000/api/LoanManagementRoutes/selectLoans/${memberId}`),
           axios.get(`http://localhost:5000/api/loanPredictionRoutes/predictedAllowedLoan/${memberId}`),
           axios.get(`http://localhost:5000/api/LoanManagementRoutes/ikimina/info?member_id=${memberId}`),
           axios.get(`http://localhost:5000/api/LoanManagementRoutes/ikimina_rounds/active?member_id=${memberId}`),
@@ -127,7 +127,13 @@ function LoanDashboard() {
               <LoanRow
                 key={loan.loan_id}
                 loan={loan}
-                onPay={() => setPayModal({ visible: true, loan })}
+                onPay={() => {
+                  if (loan.loan_id && loan.loan_id > 0) {
+                    setPayModal({ visible: true, loan });
+                  } else {
+                    alert('Invalid Loan ID');
+                  }
+                }}
               />
             ))}
           </tbody>
@@ -176,8 +182,8 @@ function LoanRow({ loan, onPay }) {
       try {
         setLoadingDetails(true);
         const [interestRes, repayRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/loanPredictionRoutes/loanInterest/${loan.loan_id}`),
-          axios.get(`http://localhost:5000/api/loanPredictionRoutes/loanRepayments/${loan.loan_id}`),
+          axios.get(`http://localhost:5000/api/LoanManagementRoutes/loanInterest/${loan.loan_id}`),
+          axios.get(`http://localhost:5000/api/LoanManagementRoutes/loanRepayments/${loan.loan_id}`),
         ]);
         setInterestPaid(
           interestRes.data.interests.filter(i => i.is_paid).reduce((s, i) => s + i.interest_amount, 0)
@@ -195,7 +201,8 @@ function LoanRow({ loan, onPay }) {
     fetchDetails();
   }, [loan.loan_id]);
 
-  const isFullyPaid = loan.total_repayable <= (interestPaid + amountRepaid);
+  // Use loan status to determine if fully paid
+  const isFullyPaid = loan.status.toLowerCase() === 'repaid';
 
   const formatAmount = amount =>
     amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '-';
