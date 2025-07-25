@@ -176,10 +176,10 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
     }
 
     // Disable submit if round status is not 'upcoming'
-    if (selectedRoundStatus !== 'upcoming') {
-      setError('You can only update rules for upcoming rounds.');
-      return;
-    }
+   if (selectedRoundStatus === 'completed' || selectedRoundStatus === 'active') {
+  setError('You can only update rules for upcoming or draft rounds.');
+  return;
+}
 
     const payload = {
       iki_id,
@@ -214,8 +214,9 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
     }
   };
 
-  // Disable form inputs if round status is not upcoming
-  const isDisabled = selectedRoundStatus !== 'upcoming';
+// Disable form inputs if round status is 'completed' or 'active'
+const isDisabled = selectedRoundStatus === 'completed' || selectedRoundStatus === 'active';
+
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto">

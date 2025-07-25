@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import isBetween from 'dayjs/plugin/isBetween';
-import MemberSavingSummary from './MemberSavingSummary';
 
 import '../../../CSS/MemberSavingManager.css';
 
