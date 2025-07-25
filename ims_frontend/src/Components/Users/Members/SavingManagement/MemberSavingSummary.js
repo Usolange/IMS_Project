@@ -51,7 +51,7 @@ export default function MemberSavingSummary() {
   const fetchSummaryWithRounds = async (memberId, ikiId, roundId) => {
     setLoading(true);
     try {
-      const url = `http://localhost:5000/api/memberSavingSummary/${memberId}/${ikiId}`;
+      const url = `http://localhost:5000/api/savingManagementRoutes/memberSavingSummary/${memberId}/${ikiId}`;
       const params = {};
       if (roundId && roundId !== 'all') {
         params.roundIds = roundId; // pass roundIds param for backend filter
