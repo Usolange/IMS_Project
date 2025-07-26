@@ -79,6 +79,28 @@ router.get('/getRulesForSelectedRound/:iki_id/:round_id', async (req, res) => {
   }
 });
 
+// GET round status info
+router.get('/roundInfo/:iki_id/:round_id', async (req, res) => {
+  const { iki_id, round_id } = req.params;
+
+  try {
+    const [result] = await db.query(
+      `SELECT round_status FROM round WHERE f_ikimina_id = ? AND round_id = ?`,
+      [iki_id, round_id]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Round not found for this Ikimina.' });
+    }
+
+    res.json({ round_status: result[0].round_status });
+  } catch (err) {
+    console.error('Error fetching round info:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 // GET Active Round and Rules (selectRules) with interest_rate_percent
 router.get('/selectRules/:iki_id', async (req, res) => {
   try {
@@ -272,6 +294,201 @@ router.put('/newRules/:iki_id', async (req, res) => {
   } catch (error) {
     console.error('Error saving rules:', error);
     return res.status(500).json({ error: 'Server error while saving rules.' });
+  }
+});
+
+// Get penalties for ikimina, filtered by round (all, current, or specific)
+router.get('/forikimina/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  const { round_id, mode } = req.query;
+
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+
+    let query = `
+      SELECT
+        pl.penalty_id,
+        pl.save_id,
+        pl.member_id,
+        mi.member_names,
+        pl.iki_id,
+        pl.slot_id,
+        pl.penalty_type,
+        pl.penalty_amount,
+        pl.rule_time_limit_minutes,
+        pl.actual_saving_time,
+        pl.allowed_time_limit,
+        pl.saving_date,
+        pl.created_at,
+        pl.is_paid,
+        pl.paid_at,
+        ir.round_id,
+        ir.round_number,
+        ir.round_year,
+        ir.round_status
+      FROM [ims_db].[dbo].[penalty_logs] pl
+      INNER JOIN [ims_db].[dbo].[members_info] mi ON pl.member_id = mi.member_id
+      INNER JOIN [ims_db].[dbo].[ikimina_rounds] ir 
+        ON pl.iki_id = ir.iki_id
+        AND pl.saving_date BETWEEN ir.start_date AND ir.end_date
+      WHERE pl.iki_id = @iki_id
+    `;
+
+    if (mode === 'current') {
+      query += ` AND ir.round_status IN ('active', 'completed')`;
+    } else if (round_id) {
+      request.input('round_id', sql.Int, round_id);
+      query += ` AND ir.round_id = @round_id`;
+    }
+
+    query += ` ORDER BY pl.saving_date DESC`;
+
+    const result = await request.query(query);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching penalty logs:', err);
+    res.status(500).json({ error: 'Failed to load penalty logs' });
+  }
+});
+
+// Get all rounds for dropdown
+router.get('/rounds/forikimina/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+
+  try {
+    await poolConnect;
+    const request = pool.request();
+    request.input('iki_id', sql.Int, iki_id);
+
+    const result = await request.query(`
+      SELECT round_id, round_number, round_year, round_status
+      FROM [ims_db].[dbo].[ikimina_rounds]
+      WHERE iki_id = @iki_id
+      ORDER BY round_year, round_number
+    `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching rounds:', err);
+    res.status(500).json({ error: 'Failed to load rounds' });
+  }
+});
+
+
+router.get('/loans/forikimina/:iki_id', async (req, res) => {
+  const { iki_id } = req.params;
+  const { round_id, mode } = req.query;
+
+  try {
+    await poolConnect;
+    const request = pool.request();
+
+    request.input('iki_id', sql.Int, iki_id);
+
+    let whereClause = 'WHERE l.iki_id = @iki_id';
+    if (mode === 'current') {
+      whereClause += " AND ir.round_status IN ('active', 'completed')";
+    }
+    if (round_id && round_id !== 'all') {
+      request.input('round_id', sql.Int, round_id);
+      whereClause += ' AND l.round_id = @round_id';
+    }
+
+    const query = `
+      SELECT
+        l.loan_id,
+        l.member_id,
+        mi.member_names,
+        l.iki_id,
+        l.requested_amount,
+        l.approved_amount,
+        l.interest_rate,
+        l.total_repayable,
+        l.status AS loan_status,
+        l.request_date,
+        l.approval_date,
+        l.disbursed_date,
+        l.due_date,
+        l.repayment_completed_date,
+        l.phone_disbursed_to,
+        l.round_id,
+
+        lpd.saving_frequency,
+        lpd.saving_times_per_period,
+        lpd.total_saving_cycles,
+        lpd.completed_saving_cycles,
+        lpd.user_savings_made,
+        lpd.total_current_saving,
+        lpd.ikimina_created_year,
+        lpd.coverd_rounds,
+        lpd.member_round,
+        lpd.recent_loan_payment_status,
+        lpd.saving_status,
+        lpd.has_guardian,
+        lpd.member_Join_Year,
+
+        lb.latest_remaining_balance,
+        lb.latest_interest_added,
+        lb.latest_interest_applied_date,
+
+        rp.latest_repayment_id,
+        rp.latest_amount_paid,
+        rp.latest_payment_method,
+        rp.latest_phone_used,
+        rp.latest_payment_date,
+        rp.latest_is_full_payment,
+        rp.latest_payment_status,
+        rp.latest_timing_status,
+
+        ir.round_number,
+        ir.round_year,
+        ir.round_status
+
+      FROM [ims_db].[dbo].[loans] l
+
+      INNER JOIN [ims_db].[dbo].[members_info] mi ON l.member_id = mi.member_id
+      INNER JOIN [ims_db].[dbo].[ikimina_rounds] ir ON l.round_id = ir.round_id
+
+      LEFT JOIN [ims_db].[dbo].[loan_prediction_data] lpd
+        ON l.member_id = lpd.member_id
+        AND l.round_id = lpd.round_id
+
+      OUTER APPLY (
+        SELECT TOP 1
+          lb.remaining_balance AS latest_remaining_balance,
+          lb.interest_added AS latest_interest_added,
+          lb.interest_applied_date AS latest_interest_applied_date
+        FROM [ims_db].[dbo].[loan_balance_history] lb
+        WHERE lb.loan_id = l.loan_id
+        ORDER BY lb.created_at DESC
+      ) lb
+
+      OUTER APPLY (
+        SELECT TOP 1
+          rp.repayment_id AS latest_repayment_id,
+          rp.amount_paid AS latest_amount_paid,
+          rp.payment_method AS latest_payment_method,
+          rp.phone_used AS latest_phone_used,
+          rp.payment_date AS latest_payment_date,
+          rp.is_full_payment AS latest_is_full_payment,
+          rp.payment_status AS latest_payment_status,
+          rp.timing_status AS latest_timing_status
+        FROM [ims_db].[dbo].[loan_repayments] rp
+        WHERE rp.loan_id = l.loan_id
+        ORDER BY rp.created_at DESC
+      ) rp
+
+      ${whereClause}
+      ORDER BY l.request_date DESC
+    `;
+
+    const result = await request.query(query);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching loans for ikimina:', err);
+    res.status(500).json({ error: 'Failed to load loans' });
   }
 });
 

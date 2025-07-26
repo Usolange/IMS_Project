@@ -11,9 +11,9 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
   });
 
   const [ikiminaInfo, setIkiminaInfo] = useState(null);
-  const [upcomingRounds, setUpcomingRounds] = useState([]);
+  const [rounds, setRounds] = useState([]);
   const [selectedRoundId, setSelectedRoundId] = useState('');
-  const [selectedRoundStatus, setSelectedRoundStatus] = useState(''); // new state for status
+  const [selectedRoundStatus, setSelectedRoundStatus] = useState('');
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -44,98 +44,90 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
 
   useEffect(() => {
     if (!iki_id || !headers.Authorization) return;
-
     fetchIkiminaInfo();
-    fetchUpcomingRounds();
+    fetchAllRounds();
   }, [iki_id, headers]);
 
-  // Fetch status when a round is selected
   useEffect(() => {
     if (!selectedRoundId) {
       setSelectedRoundStatus('');
-      setRules({
-        saving_ratio: '',
-        time_delay_penalty: '',
-        date_delay_penalty: '',
-        time_limit_minutes: '',
-        interest_rate_percent: '',
-      });
+      resetForm();
       setMessage('');
       setError('');
       return;
     }
 
-    // Find the selected round's status from upcomingRounds (or fetch separately if needed)
-    // For upcomingRounds, if you have only upcoming rounds here, you may want to fetch all rounds including active/completed to find status.
-    // But let's assume you have access to the round status in your rounds data (else, fetch from backend)
-
-    // Example: Find round status from rounds list
-    // You can keep a separate allRounds state if needed.
-
-    // For demonstration, let's fetch round info from backend:
-    fetchRoundInfo(selectedRoundId);
-
+    fetchRoundStatus(selectedRoundId);
     fetchSavingRules(selectedRoundId);
   }, [selectedRoundId]);
 
-  const fetchRoundInfo = async (roundId) => {
-    try {
-      // Assuming you have an endpoint to get round info by id and iki_id
-      const res = await axios.get(
-        `http://localhost:5000/api/savingRulesRoutes/roundInfo/${iki_id}/${roundId}`,
-        { headers }
-      );
-      setSelectedRoundStatus(res.data.round_status); // e.g. 'upcoming', 'active', 'completed'
-    } catch (err) {
-      setSelectedRoundStatus('');
-      console.error('Failed to fetch round info:', err);
-    }
+  const resetForm = () => {
+    setRules({
+      saving_ratio: '',
+      time_delay_penalty: '',
+      date_delay_penalty: '',
+      time_limit_minutes: '',
+      interest_rate_percent: '',
+    });
   };
 
   const fetchIkiminaInfo = async () => {
-    setError('');
-    setMessage('');
     try {
       const res = await axios.get(
         `http://localhost:5000/api/savingRulesRoutes/ikiminaInfo/${iki_id}`,
         { headers }
       );
       setIkiminaInfo(res.data);
-    } catch (err) {
+    } catch {
       setIkiminaInfo(null);
       setError('Failed to load Ikimina information.');
     }
   };
 
-  const fetchUpcomingRounds = async () => {
-    setError('');
-    setMessage('');
+  const fetchAllRounds = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/savingRulesRoutes/upcomingRounds/${iki_id}`,
+        `http://localhost:5000/api/savingRulesRoutes/rounds/forikimina/${iki_id}`,
         { headers }
       );
-      setUpcomingRounds(res.data);
+      setRounds(res.data);
       if (res.data.length === 1) {
         setSelectedRoundId(res.data[0].round_id);
       }
     } catch (err) {
       if (err.response?.status === 404) {
-        setError('No upcoming rounds are scheduled.');
+        setError('No rounds available.');
       } else {
-        setError('Error retrieving upcoming rounds.');
+        setError('Error retrieving rounds.');
       }
     }
   };
 
+  const fetchRoundStatus = async (roundId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/savingRulesRoutes/roundInfo/${iki_id}/${roundId}`,
+        { headers }
+      );
+      setSelectedRoundStatus(res.data.round_status?.toLowerCase()); // Normalize to lowercase
+    } catch {
+      setSelectedRoundStatus('');
+    }
+  };
+
   const fetchSavingRules = async (roundId) => {
-    setError('');
-    setMessage('');
     try {
       const res = await axios.get(
         `http://localhost:5000/api/savingRulesRoutes/getRulesForSelectedRound/${iki_id}/${roundId}`,
         { headers }
       );
+
+      if (Object.keys(res.data).length === 0) {
+        resetForm();
+        setMessage('No existing rules for this round.');
+        return;
+      }
+
       setRules({
         saving_ratio: res.data.saving_ratio,
         time_delay_penalty: res.data.time_delay_penalty,
@@ -145,18 +137,7 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
       });
       setMessage('Loaded existing rules for this round.');
     } catch (err) {
-      if (err.response?.status === 404) {
-        setRules({
-          saving_ratio: '',
-          time_delay_penalty: '',
-          date_delay_penalty: '',
-          time_limit_minutes: '',
-          interest_rate_percent: '',
-        });
-        setMessage('No existing rules for selected round.');
-      } else {
-        setError('Failed to fetch existing rules.');
-      }
+      setError('Failed to fetch existing rules.');
     }
   };
 
@@ -171,15 +152,14 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
     if (loading) return;
 
     if (!selectedRoundId) {
-      setError('Please select a round to set saving rules for.');
+      setError('Please select a round.');
       return;
     }
 
-    // Disable submit if round status is not 'upcoming'
-   if (selectedRoundStatus === 'completed' || selectedRoundStatus === 'active') {
-  setError('You can only update rules for upcoming or draft rounds.');
-  return;
-}
+    if (selectedRoundStatus === 'active' || selectedRoundStatus === 'completed') {
+      setError('Editing is allowed only for upcoming rounds.');
+      return;
+    }
 
     const payload = {
       iki_id,
@@ -208,15 +188,14 @@ const SavingRulesForm = ({ iki_id: propIkiId }) => {
       );
       setMessage('Saving rules saved successfully.');
     } catch (err) {
-      setError(err.response?.data?.message || 'An unexpected error occurred while saving rules.');
+      setError(err.response?.data?.message || 'An error occurred while saving rules.');
     } finally {
       setLoading(false);
     }
   };
 
-// Disable form inputs if round status is 'completed' or 'active'
-const isDisabled = selectedRoundStatus === 'completed' || selectedRoundStatus === 'active';
-
+  const isDisabled =
+    selectedRoundStatus === 'completed' || selectedRoundStatus === 'active';
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md max-w-xl mx-auto">
@@ -238,11 +217,9 @@ const isDisabled = selectedRoundStatus === 'completed' || selectedRoundStatus ==
           disabled={loading}
         >
           <option value="">-- Select a round --</option>
-          {/* To show all rounds, not only upcoming, you can extend the rounds array or fetch all */}
-          {upcomingRounds.map((round) => (
+          {rounds.map((round) => (
             <option key={round.round_id} value={round.round_id}>
-              {round.round_year} | {new Date(round.start_date).toLocaleDateString()} -{' '}
-              {new Date(round.end_date).toLocaleDateString()}
+              {round.round_year} | Round {round.round_number} ({round.round_status})
             </option>
           ))}
         </select>
@@ -251,79 +228,36 @@ const isDisabled = selectedRoundStatus === 'completed' || selectedRoundStatus ==
       {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
       {message && <p className="text-green-600 text-sm mt-2">{message}</p>}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block mb-1 font-medium">Saving Ratio</label>
-          <input
-            type="number"
-            step="0.01"
-            name="saving_ratio"
-            value={rules.saving_ratio}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-            disabled={loading || isDisabled}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Time Delay Penalty</label>
-          <input
-            type="number"
-            step="0.01"
-            name="time_delay_penalty"
-            value={rules.time_delay_penalty}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-            disabled={loading || isDisabled}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Date Delay Penalty</label>
-          <input
-            type="number"
-            step="0.01"
-            name="date_delay_penalty"
-            value={rules.date_delay_penalty}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-            disabled={loading || isDisabled}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Time Limit (Minutes)</label>
-          <input
-            type="number"
-            name="time_limit_minutes"
-            value={rules.time_limit_minutes}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-            min="0"
-            disabled={loading || isDisabled}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Interest Rate (%)</label>
-          <input
-            type="number"
-            step="0.01"
-            name="interest_rate_percent"
-            value={rules.interest_rate_percent}
-            onChange={handleChange}
-            className="w-full border border-gray-300 p-2 rounded"
-            required
-            min="0"
-            disabled={loading || isDisabled}
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 mt-4">
+        {[
+          { label: 'Saving Ratio', name: 'saving_ratio' },
+          { label: 'Time Delay Penalty', name: 'time_delay_penalty' },
+          { label: 'Date Delay Penalty', name: 'date_delay_penalty' },
+          { label: 'Time Limit (Minutes)', name: 'time_limit_minutes' },
+          { label: 'Interest Rate (%)', name: 'interest_rate_percent' },
+        ].map(({ label, name }) => (
+          <div key={name}>
+            <label className="block mb-1 font-medium">{label}</label>
+            <input
+              type="number"
+              step="0.01"
+              name={name}
+              value={rules[name]}
+              onChange={handleChange}
+              className="w-full border border-gray-300 p-2 rounded"
+              required
+              disabled={loading || isDisabled}
+            />
+          </div>
+        ))}
 
         <button
           type="submit"
           disabled={loading || isDisabled}
           className={`py-2 rounded text-white ${
-            loading || isDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+            loading || isDisabled
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
           }`}
         >
           {loading ? 'Saving...' : 'Save Rules'}

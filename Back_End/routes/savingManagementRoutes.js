@@ -645,6 +645,8 @@ router.get('/saving-slots/:iki_id', async (req, res) => {
 });
 
 
+/* The above code is a JavaScript function that handles a POST request to create a new saving record in
+a database. Here is a summary of what the code does: */
 // router.post('/newSaving', async (req, res) => {
 //   await poolConnect;
 //   const { slot_id, member_id, amount, phone_used } = req.body;
@@ -978,311 +980,358 @@ router.get('/saving-slots/:iki_id', async (req, res) => {
 // });
 
 
-async function updatePaymentStatusInDb(reference, newStatus) {
-  await poolConnect;
-  const request = pool.request();
-  const result = await request
-    .input('reference', sql.VarChar(100), reference)
-    .input('status', sql.VarChar(50), newStatus)
-    .query(`
-      UPDATE member_saving_activities
-      SET payment_status = @status
-      WHERE momo_reference_id = @reference
-    `);
-
-  if (result.rowsAffected[0] === 0) {
-    console.warn(`⚠️ No saving activity found with reference: ${reference}`);
-  } else {
-    console.log(`🔄 Payment status updated to '${newStatus}' for reference: ${reference}`);
-  }
-}
-
-router.post('/payment-webhook', async (req, res) => {
-  const requestHash = req.get('X-Paypack-Signature');
-  const secret = process.env.PAYPACK_WEBHOOK_SIGN_KEY;
-
-  if (!requestHash || !secret) {
-    console.warn('🚫 Missing Paypack signature or secret');
-    return res.status(400).json({ message: 'Signature verification failed.' });
-  }
-
-  const computedHash = crypto
-    .createHmac('sha256', secret)
-    .update(req.rawBody)
-    .digest('base64');
-
-  if (computedHash !== requestHash) {
-    console.warn('🚫 Invalid webhook signature — rejected.');
-    return res.status(403).json({ message: 'Invalid signature.' });
-  }
-
-  console.log('📩 Valid webhook received from Paypack.');
-
-  try {
-    const { ref, status } = req.body;
-
-    if (!ref || !status) {
-      return res.status(400).json({ message: 'Invalid webhook payload.' });
-    }
-
-    const statusLower = status.toLowerCase();
-
-    // Update DB
-    await updatePaymentStatusInDb(ref, statusLower);
-
-    // Fetch member details
-    await poolConnect;
-    const request = pool.request();
-    const result = await request
-      .input('reference', sql.VarChar(100), ref)
-      .query(`
-        SELECT member_id, phone_used, saved_amount, slot_id
-        FROM member_saving_activities
-        WHERE momo_reference_id = @reference
-      `);
-
-    if (result.recordset.length === 0) {
-      console.warn(`⚠️ No saving activity found for webhook ref: ${ref}`);
-      return res.status(200).json({ message: 'No matching saving activity.' });
-    }
-
-    const saving = result.recordset[0];
-
-    // Send SMS Notification
-    let sms = '';
-    if (statusLower === 'successful') {
-      sms = `Hello! Your saving of ${saving.saved_amount} RWF for slot ${saving.slot_id} has been confirmed successfully. Thank you!`;
-    } else if (statusLower === 'failed') {
-      sms = `Unfortunately, your saving payment for slot ${saving.slot_id} failed. Please try again.`;
-    }
-
-    if (sms) {
-      await sendCustomSms(saving.phone_used, sms);
-      console.log(`📤 SMS sent to ${saving.phone_used} regarding payment ${statusLower}`);
-    }
-
-    res.status(200).json({ message: 'Webhook processed successfully.' });
-  } catch (err) {
-    console.error('❌ Webhook error:', err.message);
-    res.status(500).json({ message: 'Internal error', error: err.message });
-  }
-});
 
 
 // === /newSaving route with Real Payment Integration ===
 // === MAIN ROUTE ===
 
-// This should come after slotResult
+// router.post('/newSaving', async (req, res) => {
+//   const { slot_id, member_id, amount, phone } = req.body;
+//   if (!slot_id || !member_id || !amount) {
+//     return res.status(400).json({ message: 'slot_id, member_id, and amount are required.' });
+//   }
+
+//   let phoneToUse = phone || (await getMemberPhone(member_id));
+//   if (!phoneToUse) {
+//     return res.status(400).json({ message: 'Phone number is required.' });
+//   }
+
+//   await poolConnect;
+//   const transaction = new sql.Transaction(pool);
+//   let slotResult;
+
+//   try {
+//     await transaction.begin();
+
+//     slotResult = await transaction.request()
+//       .input('slot_id', sql.Int, slot_id)
+//       .query(`
+//         SELECT s.*, r.saving_ratio, r.time_limit_minutes, r.round_id
+//         FROM ikimina_saving_slots s
+//         JOIN ikimina_saving_rules r ON s.round_id = r.round_id
+//         WHERE s.slot_id = @slot_id
+//       `);
+
+//     const duplicateCheck = await pool.request()
+//       .input('slot_id', sql.Int, slot_id)
+//       .input('member_id', sql.Int, member_id)
+//       .query(`SELECT * FROM member_saving_activities WHERE slot_id = @slot_id AND member_id = @member_id`);
+    
+//     if (duplicateCheck.recordset.length > 0) {
+//       await transaction.rollback();
+//       return res.status(409).json({ message: 'You already saved for this slot.' });
+//     }
+
+//     await transaction.commit();
+//   } catch (err) {
+//     try { await transaction.rollback(); } catch {}
+//     console.error('DB Transaction Error:', err);
+//     return res.status(500).json({ message: 'DB error.', error: err.message });
+//   }
+
+//   // Step 2: Initiate cashin
+//   let paypackResponse;
+//   try {
+//     paypackResponse = await cashin({
+//       amount,
+//       phone: phoneToUse,
+//       idempotencyKey: `${slot_id}_${member_id}_${Date.now()}`.slice(0, 32),
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: 'Cashin failed.', error: err.message });
+//   }
+
+//   const paymentRef = paypackResponse.ref || paypackResponse.reference || paypackResponse.id;
+//   if (!paymentRef) {
+//     return res.status(500).json({ message: 'No payment reference returned.' });
+//   }
+
+//   // Step 3: Insert saving as pending
+//   try {
+//     await handlePendingSaving({
+//       slotResult,  // <-- FIXED here
+//       slot_id,
+//       member_id,
+//       amount,
+//       phoneToUse,
+//       paymentRef
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: 'Insert saving failed.', error: err.message });
+//   }
+//   // Respond immediately
+//   return res.status(202).json({
+//     message: 'Saving initiated. Please confirm payment on your phone.',
+//     reference: paymentRef,
+//   });
+// });
+
+
+
+
 router.post('/newSaving', async (req, res) => {
   const { slot_id, member_id, amount, phone } = req.body;
   if (!slot_id || !member_id || !amount) {
     return res.status(400).json({ message: 'slot_id, member_id, and amount are required.' });
   }
 
-  let phoneToUse = phone || (await getMemberPhone(member_id));
-  if (!phoneToUse) {
-    return res.status(400).json({ message: 'Phone number is required.' });
-  }
-
   await poolConnect;
-  const transaction = new sql.Transaction(pool);
-  let slotResult;
 
   try {
-    await transaction.begin();
-
-    slotResult = await transaction.request()
+    // Fetch slot and related info including saving rules and round status
+    const slotResult = await pool.request()
       .input('slot_id', sql.Int, slot_id)
-      .query(`SELECT ... FROM ikimina_saving_slots ... WHERE s.slot_id = @slot_id`); // your full query here
+      .query(`
+        SELECT s.slot_id, s.slot_date, s.slot_time, s.iki_id, s.round_id,
+               sr.saving_ratio, sr.time_delay_penalty, sr.date_delay_penalty, sr.time_limit_minutes,
+               r.round_status,
+               i.iki_name,
+               l.cell,
+               l.village
+        FROM ikimina_saving_slots s
+        JOIN dbo.ikimina_rounds r ON s.round_id = r.round_id
+        LEFT JOIN ikimina_saving_rules sr ON s.iki_id = sr.iki_id AND s.round_id = sr.round_id
+        JOIN ikimina_info i ON s.iki_id = i.iki_id
+        JOIN ikimina_locations l ON i.location_id = l.location_id
+        WHERE s.slot_id = @slot_id
+      `);
 
     if (!slotResult.recordset.length) {
-      await transaction.rollback();
-      return res.status(404).json({ message: 'Slot not found.' });
+      return res.status(404).json({ message: 'Invalid slot. The specified slot was not found.' });
     }
 
+    const slot = slotResult.recordset[0];
+    if (slot.round_status !== 'active') {
+      return res.status(400).json({ message: 'You cannot save to this round because it is not active.' });
+    }
+
+    // Validate saving amount with saving_ratio
+    if (amount < slot.saving_ratio || amount % slot.saving_ratio !== 0) {
+      return res.status(400).json({
+        message: `Saving amount must be at least ${slot.saving_ratio} and a multiple of ${slot.saving_ratio}.`
+      });
+    }
+
+    // Check duplicate saving for this slot and member
     const duplicateCheck = await pool.request()
       .input('slot_id', sql.Int, slot_id)
       .input('member_id', sql.Int, member_id)
-      .query(`SELECT * FROM member_saving_activities WHERE slot_id = @slot_id AND member_id = @member_id`);
-    
+      .query(`SELECT 1 FROM member_saving_activities WHERE slot_id = @slot_id AND member_id = @member_id`);
+
     if (duplicateCheck.recordset.length > 0) {
-      await transaction.rollback();
       return res.status(409).json({ message: 'You already saved for this slot.' });
     }
 
-    await transaction.commit();
-  } catch (err) {
-    try { await transaction.rollback(); } catch {}
-    return res.status(500).json({ message: 'DB error.', error: err.message });
-  }
+    // Get phone to use
+    const phoneToUse = phone || (await getMemberPhone(member_id));
+    if (!phoneToUse) {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
 
-  // Step 2: Initiate cashin
-  let paypackResponse;
-  try {
-    paypackResponse = await cashin({
-      amount,
-      phone: phoneToUse,
-      idempotencyKey: `${slot_id}_${member_id}_${Date.now()}`.slice(0, 32),
+    // Step 2: Initiate cashin payment
+    let paypackResponse;
+    try {
+      paypackResponse = await cashin({
+        amount,
+        phone: phoneToUse,
+        idempotencyKey: `${slot_id}_${member_id}_${Date.now()}`.slice(0, 32),
+      });
+    } catch (err) {
+      return res.status(500).json({ message: 'Cashin failed.', error: err.message });
+    }
+
+    const paymentRef = paypackResponse.ref || paypackResponse.reference || paypackResponse.id;
+    if (!paymentRef) {
+      return res.status(500).json({ message: 'No payment reference returned.' });
+    }
+
+    // Calculate penalty and insert saving as pending, along with penalty logs if needed
+    // Current time in UTC and Kigali timezone
+    const nowUtc = dayjs().utc();
+    const nowKigali = nowUtc.tz('Africa/Kigali');
+
+    // Prepare slot time string HH:mm:ss
+    let slotTimeStr = null;
+    if (slot.slot_time) {
+      if (typeof slot.slot_time === 'string') {
+        slotTimeStr = slot.slot_time.length >= 8 ? slot.slot_time.substr(0, 8) : null;
+      } else if (slot.slot_time instanceof Date) {
+        slotTimeStr = slot.slot_time.toISOString().substr(11, 8);
+      }
+    }
+
+    // Scheduled datetime in Kigali timezone and UTC
+    const scheduledKigali = dayjs.tz(`${dayjs(slot.slot_date).format('YYYY-MM-DD')}T${slotTimeStr}`, 'Africa/Kigali');
+    const scheduledUtc = scheduledKigali.utc();
+
+    // Deadline is scheduled time + time limit in minutes
+    const deadlineUtc = scheduledUtc.add(slot.time_limit_minutes || 0, 'minute');
+
+    // Date-only for penalty logic
+    const slotDate = scheduledKigali.startOf('day');
+    const nowDate = nowKigali.startOf('day');
+
+    let penaltyType = null, penaltyAmount = 0, isLate = 0;
+
+    if (nowDate.isBefore(slotDate)) {
+      // Early saving, no penalty
+      isLate = 0;
+    } else if (nowDate.isSame(slotDate)) {
+      // Same day → check if after deadline
+      if (nowUtc.isAfter(deadlineUtc)) {
+        penaltyType = 'time';
+        penaltyAmount = slot.time_delay_penalty || 0;
+        isLate = 1;
+      }
+    } else {
+      // Saved after scheduled date → date penalty
+      penaltyType = 'date';
+      penaltyAmount = slot.date_delay_penalty || 0;
+      isLate = 1;
+    }
+
+    // Insert saving record as pending payment
+    const insertResult = await pool.request()
+      .input('slot_id', sql.Int, slot_id)
+      .input('member_id', sql.Int, member_id)
+      .input('saved_amount', sql.Decimal(10, 2), amount)
+      .input('phone_used', sql.VarChar(20), phoneToUse)
+      .input('saved_at', sql.DateTime, nowUtc.toDate())
+      .input('penalty_applied', sql.Decimal(10, 2), penaltyAmount)
+      .input('is_late', sql.Bit, isLate)
+      .input('payment_status', sql.VarChar(20), 'pending')
+      .input('momo_reference_id', sql.VarChar(100), paymentRef)
+      .query(`
+        INSERT INTO member_saving_activities
+        (slot_id, member_id, saved_amount, phone_used, saved_at, penalty_applied, is_late, payment_status, momo_reference_id)
+        OUTPUT inserted.save_id
+        VALUES (@slot_id, @member_id, @saved_amount, @phone_used, @saved_at, @penalty_applied, @is_late, @payment_status, @momo_reference_id)
+      `);
+
+    const save_id = insertResult.recordset[0].save_id;
+
+    // Log penalty if late
+    if (isLate === 1) {
+      const actualSavingTime = new Date(Date.UTC(1970, 0, 1, nowUtc.hour(), nowUtc.minute(), nowUtc.second()));
+      const allowedTimeLimit = new Date(Date.UTC(1970, 0, 1, deadlineUtc.hour(), deadlineUtc.minute(), deadlineUtc.second()));
+
+      await pool.request()
+        .input('save_id', sql.Int, save_id)
+        .input('member_id', sql.Int, member_id)
+        .input('iki_id', sql.Int, slot.iki_id)
+        .input('slot_id', sql.Int, slot.slot_id)
+        .input('penalty_type', sql.VarChar(10), penaltyType)
+        .input('penalty_amount', sql.Decimal(10, 2), penaltyAmount)
+        .input('rule_time_limit_minutes', sql.Int, slot.time_limit_minutes)
+        .input('actual_saving_time', sql.Time, actualSavingTime)
+        .input('allowed_time_limit', sql.Time, allowedTimeLimit)
+        .input('saving_date', sql.Date, nowUtc.format('YYYY-MM-DD'))
+        .query(`
+          INSERT INTO penalty_logs
+          (save_id, member_id, iki_id, slot_id, penalty_type, penalty_amount, rule_time_limit_minutes, actual_saving_time, allowed_time_limit, saving_date)
+          VALUES (@save_id, @member_id, @iki_id, @slot_id, @penalty_type, @penalty_amount, @rule_time_limit_minutes, @actual_saving_time, @allowed_time_limit, @saving_date)
+        `);
+    }
+
+    // Fetch member info for notifications
+    const memberQuery = `
+      SELECT member_names AS member_name, member_email, member_phone_number
+      FROM members_info
+      WHERE member_id = @member_id
+    `;
+    const memberResult = await pool.request()
+      .input('member_id', sql.Int, member_id)
+      .query(memberQuery);
+
+    const memberInfo = memberResult.recordset[0];
+    const locationString = `${slot.cell}, ${slot.village}`;
+
+    // Prepare notification messages
+    const scheduledDisplay = scheduledKigali.format('YYYY-MM-DD HH:mm:ss');
+    const actualSavingDisplay = nowKigali.format('YYYY-MM-DD HH:mm:ss');
+    const deadlineDisplay = deadlineUtc.tz('Africa/Kigali').format('YYYY-MM-DD HH:mm:ss');
+
+    let smsText = `Dear ${memberInfo.member_name}, your saving of ${amount} RWF on "${slot.iki_name}" at "${locationString}" on ${scheduledDisplay} was recorded successfully. Thank you!`;
+    let emailHtml = `
+      <p>Dear ${memberInfo.member_name},</p>
+      <p>Your saving of <strong>${amount}</strong> on <strong>${slot.iki_name}</strong> located at <strong>${locationString}</strong> on <strong>${scheduledDisplay}</strong> has been recorded successfully.</p>
+      <p>Thank you for saving with us!</p>
+    `;
+
+    if (isLate === 1) {
+      const penaltyReason = penaltyType === 'date' ? 
+        'You saved after your group’s scheduled date' : 
+        'You saved after the allowed time';
+
+      smsText = `Dear ${memberInfo.member_name}, your saving of ${amount} for Ikimina "${slot.iki_name}" at "${locationString}" was recorded, but ⚠️ penalty of ${penaltyAmount} applied due to ${penaltyReason}. Scheduled: ${scheduledDisplay}, Actual: ${actualSavingDisplay}, Deadline: ${deadlineDisplay}.`;
+
+      emailHtml = `
+        <p>Dear ${memberInfo.member_name},</p>
+        <p>Your saving of <strong>${amount}</strong> for Ikimina <strong>${slot.iki_name}</strong> located at <strong>${locationString}</strong> has been recorded.</p>
+        <p><strong>Penalty applied:</strong> ${penaltyAmount}</p>
+        <p>Reason: ${penaltyReason}</p>
+        <p>Scheduled Date & Time: ${scheduledDisplay}</p>
+        <p>Actual Saving Date & Time: ${actualSavingDisplay}</p>
+        <p>Allowed Deadline: ${deadlineDisplay}</p>
+        <p>Thank you for saving with us!</p>
+      `;
+    }
+
+    // Send notifications (async but await to catch errors)
+    let smsSent = 0, emailSent = 0, smsError = null, emailError = null;
+
+    try {
+      const [smsResult, emailResult] = await Promise.allSettled([
+        sendCustomSms(phoneToUse, smsText),
+        sendCustomEmail(memberInfo.member_email, `Saving Confirmation for Ikimina "${slot.iki_name}"`, emailHtml),
+      ]);
+
+      smsSent = smsResult.status === 'fulfilled' ? 1 : 0;
+      emailSent = emailResult.status === 'fulfilled' ? 1 : 0;
+
+      smsError = smsSent ? null : (smsResult.reason?.message || 'Unknown SMS error');
+      emailError = emailSent ? null : (emailResult.reason?.message || 'Unknown Email error');
+    } catch (notifyErr) {
+      console.error('Notification error:', notifyErr);
+      smsSent = 0;
+      emailSent = 0;
+      smsError = emailError = notifyErr.message || 'Unknown notification error';
+    }
+
+    // Log notification results
+    await pool.request()
+      .input('save_id', sql.Int, save_id)
+      .input('member_id', sql.Int, member_id)
+      .input('iki_id', sql.Int, slot.iki_id)
+      .input('slot_id', sql.Int, slot.slot_id)
+      .input('sms_sent', sql.Bit, smsSent)
+      .input('email_sent', sql.Bit, emailSent)
+      .input('sms_error', sql.NVarChar(sql.MAX), smsError)
+      .input('email_error', sql.NVarChar(sql.MAX), emailError)
+      .query(`
+        INSERT INTO notification_logs
+        (save_id, member_id, iki_id, slot_id, sms_sent, email_sent, sms_error, email_error, sent_at)
+        VALUES
+        (@save_id, @member_id, @iki_id, @slot_id, @sms_sent, @email_sent, @sms_error, @email_error, GETDATE())
+      `);
+
+    // Respond success
+    return res.status(202).json({
+      message: 'Saving initiated and recorded as pending payment. Please confirm payment on your phone.',
+      reference: paymentRef,
+      penalty_applied: penaltyAmount,
+      is_late: !!isLate,
+      notification: { smsSent: !!smsSent, emailSent: !!emailSent }
     });
+
   } catch (err) {
-    return res.status(500).json({ message: 'Cashin failed.', error: err.message });
+    console.error('Error in /newSaving:', err);
+    return res.status(500).json({ message: 'An error occurred.', error: err.message });
   }
-
-  const paymentRef = paypackResponse.ref || paypackResponse.reference || paypackResponse.id;
-  if (!paymentRef) {
-    return res.status(500).json({ message: 'No payment reference returned.' });
-  }
-
-  // Step 3: Insert saving as pending
-  try {
-    await insertPendingSaving({
-      slot: slotResult.recordset[0],
-      slot_id,
-      member_id,
-      amount,
-      phoneToUse,
-      paymentRef
-    });
-  } catch (err) {
-    return res.status(500).json({ message: 'Insert saving failed.', error: err.message });
-  }
-
-  // Step 4: Start polling in background (don’t await)
-  pollAndUpdateStatus(paymentRef, phoneToUse).catch(console.error);
-
-  // Respond immediately
-  return res.status(202).json({
-    message: 'Saving initiated. Please confirm payment on your phone.',
-    reference: paymentRef,
-  });
 });
 
 
 // Save to DB
-async function updatePaymentStatusInDb(reference, newStatus) {
-  await poolConnect;
-  const result = await pool.request()
-    .input('reference', sql.VarChar(100), reference)
-    .input('status', sql.VarChar(50), newStatus)
-    .query(`
-      UPDATE member_saving_activities
-      SET payment_status = @status
-      WHERE momo_reference_id = @reference
-    `);
-
-  if (result.rowsAffected[0] === 0) {
-    console.warn(`No saving activity found with reference: ${reference}`);
-  } else {
-    console.log(`Payment status updated to '${newStatus}' for ${reference}`);
-  }
-}
-
-// Get save data
-async function getSaveData(reference) {
-  await poolConnect;
-  const result = await pool.request()
-    .input('reference', sql.VarChar(100), reference)
-    .query(`SELECT slot_id, member_id, saved_amount, phone_used FROM member_saving_activities WHERE momo_reference_id = @reference`);
-  return result.recordset[0];
-}
-
-// Notify member
-
-async function fallbackCheckViaEvents(reference, phone) {
-  try {
-    const result = await getTransactionEvents({ referenceKey: reference, phone });
-
-    const successful = result.transactions?.find(
-      (t) => t.event_kind === 'transaction:processed' &&
-             t.data?.status?.toLowerCase() === 'successful'
-    );
-
-    if (successful) {
-      console.log('✅ Success via fallback event log');
-
-      await updatePaymentStatusInDb(reference, 'successful');
-      await notifySuccess(reference);
-
-      return true;
-    }
-
-    console.warn('⚠️ Fallback failed: no successful event found.');
-    return false;
-  } catch (err) {
-    console.error('❌ Error during fallback events:', err.message);
-    return false;
-  }
-}
-async function notifySuccess(reference) {
-  await poolConnect;
-  const request = pool.request();
-  const result = await request
-    .input('reference', sql.VarChar(100), reference)
-    .query(`
-      SELECT member_id, saved_amount, phone_used, slot_id, i.iki_name, i.iki_email
-      FROM member_saving_activities s
-      JOIN ikimina_saving_slots sl ON s.slot_id = sl.slot_id
-      JOIN ikimina_info i ON sl.iki_id = i.iki_id
-      WHERE s.momo_reference_id = @reference
-    `);
-
-  if (!result.recordset.length) {
-    console.warn(`⚠️ No data found for reference: ${reference}`);
-    return;
-  }
-
-  const { saved_amount, phone_used, iki_name, iki_email } = result.recordset[0];
-
-  const message = `✅ Thanks! Your saving of ${saved_amount} RWF for ${iki_name} has been confirmed successfully.`;
-
-  await sendCustomSms(phone_used, message);
-  await sendCustomEmail(iki_email, 'Saving Confirmed', message);
-
-  console.log(`📤 Confirmation sent to ${phone_used}`);
-}
-
-
-// Poll background
-async function pollAndUpdateStatus(reference, phone) {
-  let status = 'pending';
-  let attempts = 0;
-
-  while (status === 'pending' && attempts < 10) {
-    await new Promise(res => setTimeout(res, 5000)); // Wait 5 seconds
-
-    try {
-      const result = await getTransactionStatus(reference);
-      status = result.status?.toLowerCase() || 'pending';
-
-      console.log(`⏳ Attempt ${attempts + 1}: Status = ${status}`);
-      
-      if (status === 'successful') {
-        await updatePaymentStatusInDb(reference, 'successful');
-        await notifySuccess(reference);
-        return true;
-      }
-
-    } catch (err) {
-      const message = err.response?.data?.message?.toLowerCase() || '';
-      if (message.includes('not found')) {
-        attempts++;
-        continue;
-      }
-      console.error('❌ Error checking transaction status:', err.message);
-      break;
-    }
-
-    attempts++;
-  }
-
-  // Fallback to events if still not successful
-  if (status !== 'successful') {
-    const fallbackWorked = await fallbackCheckViaEvents(reference, phone);
-    return fallbackWorked;
-  }
-
-  return false;
-}
 // Save pending record
 async function handlePendingSaving({ slotResult, slot_id, member_id, phoneToUse, amount, paymentRef }) {
   const slot = slotResult.recordset[0];
@@ -1328,5 +1377,6 @@ async function handlePendingSaving({ slotResult, slot_id, member_id, phoneToUse,
 
   return { save_id: result.recordset[0].save_id };
 }
+
 
 module.exports = router;

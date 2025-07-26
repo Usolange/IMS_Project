@@ -27,9 +27,8 @@ const links = [
       { to: '/savingManagementPage/rules', label: 'Saving Rules', icon: SlidersHorizontal },
     ]
   },
-  { to: '/penaltyManagement', icon: FaExclamationTriangle, label: 'Penalty Management' },
-  { to: '/loans', icon: FaMoneyBill, label: 'Loans' },
-  { to: '/settings', icon: FaCog, label: 'Settings' }
+  { to: '/penaltyLogsPage', icon: FaExclamationTriangle, label: 'Penalties' },
+  { to: '/loanInfoPage', icon: FaMoneyBill, label: 'Loans' },
 ];
 
 export default function Layout() {

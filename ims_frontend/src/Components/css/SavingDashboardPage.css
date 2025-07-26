@@ -1,0 +1,88 @@
+/* SavingDashboardPage.css */
+
+div {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #2c3e50;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #117a65;
+  user-select: none;
+}
+
+/* Chart container */
+section {
+  margin-bottom: 2rem;
+}
+
+/* Table container */
+section.overflow-x-auto {
+  overflow-x: auto;
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px; /* horizontal scroll if container smaller */
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  font-size: 14px;
+}
+
+/* Table header */
+thead {
+  background-color: #117a65;
+  color: #fff;
+  user-select: none;
+}
+
+thead th {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 2px solid #0e5e4a;
+  white-space: nowrap;
+}
+
+/* Table body */
+tbody tr {
+  transition: background-color 0.2s ease-in-out;
+}
+
+tbody tr:hover {
+  background-color: #e8f8f5;
+  cursor: default;
+}
+
+tbody td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Zebra striping */
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  table {
+    min-width: 100%;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  section {
+    margin-bottom: 1rem;
+  }
+  table {
+    font-size: 12px;
+  }
+}

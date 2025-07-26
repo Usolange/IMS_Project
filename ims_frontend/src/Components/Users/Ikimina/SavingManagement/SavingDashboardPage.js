@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import axios from 'axios';
+import '../../../CSS/SavingDashboardPage.css';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer
 } from 'recharts';
@@ -87,24 +88,24 @@ const SavingDashboardPage = () => {
       {/* Table */}
       <section className="mb-8 overflow-x-auto">
         <h2 className="text-lg font-semibold mb-2">Saving Activities</h2>
-        <table className="min-w-full bg-white shadow rounded">
-          <thead className="bg-gray-100 text-sm">
+        <table>
+          <thead>
             <tr>
-              <th className="p-2">Member</th>
-              <th className="p-2">Amount</th>
-              <th className="p-2">Saved At</th>
-              <th className="p-2">Penalty?</th>
-              <th className="p-2">Phone</th>
+              <th>Member</th>
+              <th>Amount</th>
+              <th>Saved At</th>
+              <th>Penalty?</th>
+              <th>Phone</th>
             </tr>
           </thead>
           <tbody>
             {savingActivities.map(a => (
-              <tr key={a.save_id} className="hover:bg-gray-50 text-sm">
-                <td className="p-2">{memberIdToName[a.member_id] || a.member_id}</td>
-                <td className="p-2">{a.saved_amount.toLocaleString()}</td>
-                <td className="p-2">{new Date(a.saved_at).toLocaleString()}</td>
-                <td className="p-2">{a.penalty_applied ? 'Yes' : 'No'}</td>
-                <td className="p-2">{a.phone_used}</td>
+              <tr key={a.save_id} className="hover:bg-gray-50">
+                <td>{memberIdToName[a.member_id] || a.member_id}</td>
+                <td>{a.saved_amount.toLocaleString()}</td>
+                <td>{new Date(a.saved_at).toLocaleString()}</td>
+                <td>{a.penalty_applied ? 'Yes' : 'No'}</td>
+                <td>{a.phone_used}</td>
               </tr>
             ))}
           </tbody>

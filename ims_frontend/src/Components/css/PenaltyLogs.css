@@ -1,0 +1,112 @@
+/* PenaltyLogs.css */
+
+/* Container */
+.penalty-logs-container {
+  width: 100%;
+  min-width: fit-content;
+  padding: 20px;
+  background: #fefefe;
+  border-radius: 10px;
+  color: #2c3e50;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Title */
+.penalty-logs-container h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #117a65;
+  user-select: none;
+}
+
+.ikimina-name {
+  color: #0d6efd;
+}
+
+/* Filter label and select */
+.penalty-logs-container label {
+  font-weight: 600;
+  margin-right: 8px;
+  user-select: none;
+}
+
+.penalty-logs-container select {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Table styles */
+.penalty-logs-container table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; /* triggers horizontal scroll if container narrower */
+  font-size: 14px;
+  background-color: #fff;
+  table-layout: auto;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Table header */
+.penalty-logs-container table thead th {
+  background-color: #117a65;
+  color: white;
+  font-weight: bold;
+  text-align: left;
+  padding: 12px 10px;
+  border: 1px solid #0e5e4a;
+  white-space: nowrap;
+}
+
+/* Table body cells */
+.penalty-logs-container table tbody td {
+  padding: 10px 8px;
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  vertical-align: middle;
+}
+
+/* Alternate row background */
+.penalty-logs-container table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+.penalty-logs-container table tbody tr:hover {
+  background-color: #e8f8f5;
+  transition: background-color 0.2s ease-in-out;
+  cursor: default;
+}
+
+/* Placeholder for empty cells */
+.penalty-logs-container table tbody td:empty::before {
+  content: '—';
+  color: #bbb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .penalty-logs-container table {
+    min-width: 100%;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .penalty-logs-container {
+    padding: 10px;
+  }
+}

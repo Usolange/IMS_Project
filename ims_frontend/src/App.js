@@ -43,6 +43,9 @@ import SavingDashboardPage from './Components/Users/Ikimina/SavingManagement/Sav
 import RoundManagement from './Components/Users/Ikimina/SavingManagement/RoundManagement';
 import SlotManager from './Components/Users/Ikimina/SavingManagement/SlotManager';
 import SavingManagementPage from './Components/Users/Ikimina/SavingManagement/SavingManagementPage';
+import PenaltyLogsPage from './Components/Users/Ikimina/SavingManagement/PenaltyLogsPage';
+import LoanInfoPage from './Components/Users/Ikimina/SavingManagement/LoanInfoPage';
+
 
 
 import MeLayout from './Components/Users/Members/meLayout';
@@ -90,6 +93,8 @@ export default function App() {
       {/* Ikimina Layout */}
       <Route element={<IkLayout />}>
         <Route path="/ikiminaDashboard" element={<RoleProtectedRoute allowedRoles={['ikimina']}><IkiminaDashboard /></RoleProtectedRoute>} />
+        <Route path="/penaltyLogsPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><PenaltyLogsPage /></RoleProtectedRoute>} />
+        <Route path="/loanInfoPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><LoanInfoPage /></RoleProtectedRoute>} />
         <Route path="/MemberManagementPage" element={<RoleProtectedRoute allowedRoles={['ikimina']}><MemberManagementPage /></RoleProtectedRoute>}>
           <Route path="addNewMember" element={<MemberManagementPage />} />
           <Route path="addGuardianMember" element={<MemberManagementPage />} />
