@@ -897,87 +897,6 @@ a database. Here is a summary of what the code does: */
 //   }
 // });
 
-// // === Pay Penalty Route ===
-// router.post('/payPenalty', async (req, res) => {
-//   await poolConnect;
-//   const { slot_id, member_id } = req.body;
-
-//   if (!slot_id || !member_id) {
-//     return res.status(400).json({ message: 'Missing required fields: slot_id and member_id.' });
-//   }
-
-//   try {
-//     const checkQuery = `
-//       SELECT * FROM penalty_logs 
-//       WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
-//     `;
-//     const checkResult = await pool
-//       .request()
-//       .input('slot_id', sql.Int, slot_id)
-//       .input('member_id', sql.Int, member_id)
-//       .query(checkQuery);
-
-//     if (checkResult.recordset.length === 0) {
-//       return res.status(404).json({ message: 'Unpaid penalty not found for this member and slot.' });
-//     }
-
-//     const updateQuery = `
-//       UPDATE penalty_logs 
-//       SET is_paid = 1, paid_at = GETDATE() 
-//       WHERE slot_id = @slot_id AND member_id = @member_id
-//     `;
-//     await pool
-//       .request()
-//       .input('slot_id', sql.Int, slot_id)
-//       .input('member_id', sql.Int, member_id)
-//       .query(updateQuery);
-
-//     // Fetch member contact details
-//     const memberQuery = `
-//       SELECT member_phone_number, member_email, member_names 
-//       FROM Members_info 
-//       WHERE member_id = @member_id
-//     `;
-//     const memberInfo = await pool
-//       .request()
-//       .input('member_id', sql.Int, member_id)
-//       .query(memberQuery);
-
-//     if (memberInfo.recordset.length === 0) {
-//       return res.status(404).json({ message: 'Member not found.' });
-//     }
-
-//     const { member_phone_number, member_email, member_names } = memberInfo.recordset[0];
-
-//     // Construct message
-//     const message = `Hello ${member_names}, your penalty for slot ${slot_id} has been marked as paid. Thank you.`;
-
-//     // Send SMS & Email (parallel)
-//     const [smsResult, emailResult] = await Promise.allSettled([
-//       sendCustomSms(member_phone_number, message),
-//       sendCustomEmail(member_email, 'Penalty Paid', message),
-//     ]);
-
-//     const smsSent = smsResult.status === 'fulfilled';
-//     const smsError = smsSent ? null : smsResult.reason.message;
-
-//     const emailSent = emailResult.status === 'fulfilled';
-//     const emailError = emailSent ? null : emailResult.reason.message;
-
-
-//     res.status(200).json({
-//       message: `Penalty for ${member_names} has been paid successfully and notifications sent.`,
-//       smsSent,
-//       emailSent,
-//       smsError,
-//       emailError,
-//     });
-
-//   } catch (error) {
-//     console.error('❌ Error processing penalty payment:', error);
-//     res.status(500).json({ message: 'Internal server error.', error: error.message });
-//   }
-// });
 
 
 
@@ -1068,7 +987,7 @@ a database. Here is a summary of what the code does: */
 
 
 
-
+// // === Pay newSaving Route ===
 router.post('/newSaving', async (req, res) => {
   const { slot_id, member_id, amount, phone } = req.body;
   if (!slot_id || !member_id || !amount) {
@@ -1327,6 +1246,88 @@ router.post('/newSaving', async (req, res) => {
   } catch (err) {
     console.error('Error in /newSaving:', err);
     return res.status(500).json({ message: 'An error occurred.', error: err.message });
+  }
+});
+
+// // === Pay Penalty Route ===
+router.post('/payPenalty', async (req, res) => {
+  await poolConnect;
+  const { slot_id, member_id } = req.body;
+
+  if (!slot_id || !member_id) {
+    return res.status(400).json({ message: 'Missing required fields: slot_id and member_id.' });
+  }
+
+  try {
+    const checkQuery = `
+      SELECT * FROM penalty_logs 
+      WHERE slot_id = @slot_id AND member_id = @member_id AND is_paid = 0
+    `;
+    const checkResult = await pool
+      .request()
+      .input('slot_id', sql.Int, slot_id)
+      .input('member_id', sql.Int, member_id)
+      .query(checkQuery);
+
+    if (checkResult.recordset.length === 0) {
+      return res.status(404).json({ message: 'Unpaid penalty not found for this member and slot.' });
+    }
+
+    const updateQuery = `
+      UPDATE penalty_logs 
+      SET is_paid = 1, paid_at = GETDATE() 
+      WHERE slot_id = @slot_id AND member_id = @member_id
+    `;
+    await pool
+      .request()
+      .input('slot_id', sql.Int, slot_id)
+      .input('member_id', sql.Int, member_id)
+      .query(updateQuery);
+
+    // Fetch member contact details
+    const memberQuery = `
+      SELECT member_phone_number, member_email, member_names 
+      FROM Members_info 
+      WHERE member_id = @member_id
+    `;
+    const memberInfo = await pool
+      .request()
+      .input('member_id', sql.Int, member_id)
+      .query(memberQuery);
+
+    if (memberInfo.recordset.length === 0) {
+      return res.status(404).json({ message: 'Member not found.' });
+    }
+
+    const { member_phone_number, member_email, member_names } = memberInfo.recordset[0];
+
+    // Construct message
+    const message = `Hello ${member_names}, your penalty for slot ${slot_id} has been marked as paid. Thank you.`;
+
+    // Send SMS & Email (parallel)
+    const [smsResult, emailResult] = await Promise.allSettled([
+      sendCustomSms(member_phone_number, message),
+      sendCustomEmail(member_email, 'Penalty Paid', message),
+    ]);
+
+    const smsSent = smsResult.status === 'fulfilled';
+    const smsError = smsSent ? null : smsResult.reason.message;
+
+    const emailSent = emailResult.status === 'fulfilled';
+    const emailError = emailSent ? null : emailResult.reason.message;
+
+
+    res.status(200).json({
+      message: `Penalty for ${member_names} has been paid successfully and notifications sent.`,
+      smsSent,
+      emailSent,
+      smsError,
+      emailError,
+    });
+
+  } catch (error) {
+    console.error('❌ Error processing penalty payment:', error);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
 });
 

@@ -376,10 +376,18 @@ router.get('/rounds/forikimina/:iki_id', async (req, res) => {
   }
 });
 
-
+// loans route
 router.get('/loans/forikimina/:iki_id', async (req, res) => {
   const { iki_id } = req.params;
-  const { round_id, mode } = req.query;
+  const {
+    round_id,
+    mode,
+    status,
+    request_from,
+    request_to,
+    payment_from,
+    payment_to,
+  } = req.query;
 
   try {
     await poolConnect;
@@ -388,12 +396,37 @@ router.get('/loans/forikimina/:iki_id', async (req, res) => {
     request.input('iki_id', sql.Int, iki_id);
 
     let whereClause = 'WHERE l.iki_id = @iki_id';
+
     if (mode === 'current') {
       whereClause += " AND ir.round_status IN ('active', 'completed')";
     }
+
     if (round_id && round_id !== 'all') {
       request.input('round_id', sql.Int, round_id);
       whereClause += ' AND l.round_id = @round_id';
+    }
+
+    if (status) {
+      request.input('status', sql.VarChar(50), status.toLowerCase());
+      whereClause += ' AND LOWER(l.status) = LOWER(@status)';
+    }
+
+    if (request_from) {
+      request.input('request_from', sql.Date, request_from);
+      whereClause += ' AND l.request_date >= @request_from';
+    }
+    if (request_to) {
+      request.input('request_to', sql.Date, request_to);
+      whereClause += ' AND l.request_date <= @request_to';
+    }
+
+    if (payment_from) {
+      request.input('payment_from', sql.Date, payment_from);
+      whereClause += ' AND rp.latest_payment_date >= @payment_from';
+    }
+    if (payment_to) {
+      request.input('payment_to', sql.Date, payment_to);
+      whereClause += ' AND rp.latest_payment_date <= @payment_to';
     }
 
     const query = `
@@ -481,6 +514,7 @@ router.get('/loans/forikimina/:iki_id', async (req, res) => {
       ) rp
 
       ${whereClause}
+
       ORDER BY l.request_date DESC
     `;
 
@@ -491,5 +525,6 @@ router.get('/loans/forikimina/:iki_id', async (req, res) => {
     res.status(500).json({ error: 'Failed to load loans' });
   }
 });
+
 
 module.exports = router;

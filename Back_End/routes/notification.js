@@ -1,19 +1,17 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
-const twilio = require('twilio');
+const axios = require('axios');
 
 const {
-  TWILIO_SID,
-  TWILIO_AUTH_TOKEN,
-  TWILIO_PHONE_NUMBER,
+  MISTA_API_TOKEN,
+  MISTA_SENDER_ID,
   SMTP_HOST,
   SMTP_PORT,
   SMTP_USER,
   SMTP_PASS,
 } = process.env;
 
-const client = twilio(TWILIO_SID, TWILIO_AUTH_TOKEN);
-
+// === Nodemailer Setup ===
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
   port: Number(SMTP_PORT) || 587,
@@ -21,28 +19,58 @@ const transporter = nodemailer.createTransport({
   auth: { user: SMTP_USER, pass: SMTP_PASS },
 });
 
+// === Mista.io SMS Sender ===
 async function sendSms(phone, code, pass) {
+  const message = `Your member credentials:\nCode: ${code}\nPassword: ${pass}`;
+  const formattedPhone = phone.startsWith('+') ? phone : `+25${phone}`;
   try {
-    return await client.messages.create({
-      body: `Your member credentials:\nCode: ${code}\nPassword: ${pass}`,
-      from: TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
+    const response = await axios.post(
+      'https://api.mista.io/sms',
+      {
+        to: formattedPhone,
+        sender_id: MISTA_SENDER_ID || 'Ikimina',
+        message: message,
+        type: 'plain',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${MISTA_API_TOKEN}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    console.log(`✅ SMS sent to ${formattedPhone}`, response.data);
+    return response.data;
   } catch (err) {
-    console.error('sendSms error:', err);
+    console.error('❌ sendSms error:', err.response?.data || err.message);
     throw err;
   }
 }
 
 async function sendCustomSms(phone, text) {
+  const formattedPhone = phone.startsWith('+') ? phone : `+25${phone}`;
   try {
-    return await client.messages.create({
-      body: text,
-      from: TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
+    const response = await axios.post(
+      'https://api.mista.io/sms',
+      {
+        to: formattedPhone,
+        sender_id: MISTA_SENDER_ID || 'Ikimina',
+        message: text,
+        type: 'plain',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${MISTA_API_TOKEN}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    console.log(`✅ Custom SMS sent to ${formattedPhone}`, response.data);
+    return response.data;
   } catch (err) {
-    console.error('sendCustomSms error:', err);
+    console.error('❌ sendCustomSms error:', err.response?.data || err.message);
     throw err;
   }
 }
@@ -66,23 +94,28 @@ async function sendEmail(email, code, pass, name, iki_name, location) {
     `,
   };
   try {
-    return await transporter.sendMail(mailOptions);
+    const response = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent to ${email}`);
+    return response;
   } catch (err) {
-    console.error('sendEmail error:', err);
+    console.error('❌ sendEmail error:', err.message || err);
     throw err;
   }
 }
 
 async function sendCustomEmail(email, subject, htmlContent) {
+  const mailOptions = {
+    from: `"Ikimina Management System" <${SMTP_USER}>`,
+    to: email,
+    subject,
+    html: htmlContent,
+  };
   try {
-    return await transporter.sendMail({
-      from: `"Ikimina Management System" <${SMTP_USER}>`,
-      to: email,
-      subject,
-      html: htmlContent,
-    });
+    const response = await transporter.sendMail(mailOptions);
+    console.log(`✅ Custom Email sent to ${email}`);
+    return response;
   } catch (err) {
-    console.error('sendCustomEmail error:', err);
+    console.error('❌ sendCustomEmail error:', err.message || err);
     throw err;
   }
 }
